@@ -10,15 +10,15 @@ describe("buildDashboard", () => {
   it("composes the hero AI Sentiment Gap from live feeds + lists every leg", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155); // (155-100)/110 = 0.5 percentile
+    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155); // (155-105)/200 = 0.25 percentile
 
     const d = await buildDashboard("ai");
     expect(d.title).toBe("AI");
     expect(d.hero.beliefProb).toBeCloseTo(0.72, 6);
     expect(d.hero.beliefSource).toBe("live");
     expect(d.hero.assetSymbol).toBe("NVDA");
-    expect(d.hero.assetBandPercentile).toBeCloseTo(0.5, 6);
-    expect(d.hero.gapPct).toBeCloseTo(22, 6); // 72 - 50
+    expect(d.hero.assetBandPercentile).toBeCloseTo(0.25, 6);
+    expect(d.hero.gapPct).toBeCloseTo(47, 6); // 72 - 25
     expect(d.hero.direction).toBe("belief-higher");
 
     const preds = d.legs.filter((l) => l.kind === "prediction");

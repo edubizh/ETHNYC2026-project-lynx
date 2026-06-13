@@ -54,3 +54,11 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - [ ] (USER, optional) Fund Arc smart account from faucet.circle.com + one USDC-gas Paymaster userOp
 - [ ] (USER) LI.FI live entry — tune the amount/fee floor first (demo uses pre-funded Polygon wallet fallback)
 - [ ] (USER) Record 90s demo video (docs/demo-script.md), naming each sponsor tool
+
+## Functionality v2 — buckets + securities (display/anchor model)
+> This session = data/contracts. Frontend (visual + branding Project-Lynx→Traditional Predictions) = separate Claude Code session. Design system in PRODUCT.md/DESIGN.md/design/.
+- [x] Lock model: securities = display/anchor only (not buyable in-app); each carries an availability tag (LIVE-UNISWAP / TOKENIZED-BUT-GATED / NO-TOKENIZED-VERSION).
+- [ ] Slice 1 (in progress): data model — `Security`+`Availability` types + `securities[]`; AI bucket on new shape; fix the stale analyst band. (TDD)
+- [ ] Slice 2: add demo-ready buckets (Crypto, Macro/Fed, Geopolitics/Conflict, US Politics) from verified ids (bg verification agent).
+- [ ] Slice 3: wire `securities[]` into the dashboard service/view (per-security pricing, availability passthrough, gap from headline security).
+- [ ] Slice 4: multi-leg one-signature entry (EnterBasket batch fn + LI.FI contractCalls) — buy the whole index in one sig.

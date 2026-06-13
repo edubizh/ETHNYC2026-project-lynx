@@ -1,4 +1,9 @@
-import type { Theme } from "./types";
+import type { Theme, Security } from "./types";
+
+// Illustrative published analyst bear/bull band for NVDA, shared by display.analystBand and the NVDA
+// security so they never drift. Widened from the stale {100,210} (which pinned a live ~$200 price at the
+// top and produced a misleading ~45-pt gap) so the price now sits mid-band. Refresh/source over time.
+const AI_BAND: { low: number; high: number } = { low: 105, high: 305 };
 
 // conditionIds, questionIds, outcomeTokenIds, seedBeliefProb and the asset token are all VERIFIED
 // on-chain / via Gamma (2026-06-13). The OpenAI-not-IPO leg (ends 2027-01-01) is the PRIMARY
@@ -47,10 +52,21 @@ const THEMES: Record<string, Theme> = {
     ],
     display: {
       assetSymbol: "NVDA",
-      // Published analyst bear/bull band for NVDA (illustrative targets, shown in the UI).
-      analystBand: { low: 100, high: 210 },
+      analystBand: AI_BAND,
       // Seed values for the offline/no-key demo.
       fallback: { beliefProb: 0.51, equityPrice: 165, assetLegPriceUsd: 4300 },
+      // Thematically-related securities — display/anchor only. NVDA is not Uniswap-tradeable for a
+      // US/ungated user (xStocks NVDAx live on Solana, US-gated), so it renders an honest badge, not a buy.
+      securities: [
+        {
+          ticker: "NVDA",
+          name: "NVIDIA",
+          analystBand: AI_BAND,
+          availability: "TOKENIZED-BUT-GATED",
+          chain: "solana",
+          note: "xStocks (NVDAx) trade on Solana; US-gated — display-only here.",
+        },
+      ],
     },
   },
 };
@@ -68,4 +84,17 @@ export function listThemes(): Theme[] {
 export function themeWeightsSumToOne(slug: string): boolean {
   const sum = getTheme(slug).legs.reduce((a, l) => a + l.weight, 0);
   return Math.abs(sum - 1) < 1e-9;
+}
+
+/** The thematically-related securities shown inside a bucket (display/anchor layer). */
+export function getSecurities(slug: string): Security[] {
+  return getTheme(slug).display.securities;
+}
+
+/** The headline security (the one whose analyst band drives the hero gap) — matched by `assetSymbol`. */
+export function getHeadlineSecurity(slug: string): Security {
+  const t = getTheme(slug);
+  const sec = t.display.securities.find((s) => s.ticker === t.display.assetSymbol);
+  if (!sec) throw new Error(`No headline security (${t.display.assetSymbol}) in theme: ${slug}`);
+  return sec;
 }
