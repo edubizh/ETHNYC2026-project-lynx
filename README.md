@@ -57,7 +57,7 @@ UNISWAP_API_KEY=… POLYGON_RPC=… PRIVATE_KEY=0x… npx tsx scripts/runPrizeSw
 | Artifact | Chain | Tx hash |
 |---|---|---|
 | `EnterBasket` deployment | Polygon 137 | [`0xb71430e8a5baa6b616ae8dc06c13597ff33c31ad89561263b42fe94d08cde4b7`](https://polygonscan.com/tx/0xb71430e8a5baa6b616ae8dc06c13597ff33c31ad89561263b42fe94d08cde4b7) |
-| Uniswap standalone `/swap` ($7k) | Polygon 137 | `<record from scripts/runPrizeSwap.ts>` |
+| **Uniswap standalone `/swap` ($7k)** | Polygon 137 | [`0x23a05c509b64c36ef38671d19a965f8464ca1c2876848637924972a72327cbde`](https://polygonscan.com/tx/0x23a05c509b64c36ef38671d19a965f8464ca1c2876848637924972a72327cbde) ✅ status 1, via Universal Router `0x1095…`, delivered wstETH |
 | `EnterBasket` entry (via LI.FI) | Polygon 137 | `<record after executeRoute>` |
 | Arc USDC-gas Paymaster tx | Arc 5042002 | `<record from the passkey flow>` |
 
