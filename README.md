@@ -50,12 +50,15 @@ UNISWAP_API_KEY=… POLYGON_RPC=… PRIVATE_KEY=0x… npx tsx scripts/runPrizeSw
 - ⏳ **Deploy `EnterBasket`** (set `NEXT_PUBLIC_ENTER_BASKET`) and run a real **LI.FI `executeRoute`** entry from a funded Ethereum/Base wallet; record the tx hashes.
 - ⚠️ **LI.FI amount tuning — required before the live entry.** `buildEnterQuote` currently passes equal source/destination amounts; bridge + swap fees mean the destination arrives with slightly **less USDC.e** than the fixed `EnterBasket` call demands, which would revert. Before a live run, set the basket amount below the guaranteed-arrival floor or switch to LI.FI exact-output (`toAmount`) semantics (confirm against a live `get-quote-with-calls`). The 90s demo uses a **pre-funded "already-bridged" Polygon wallet**, so this never blocks the live beat.
 
-## Recorded tx hashes (fill at the booth)
+## Recorded tx hashes (real, on-chain)
+
+**`EnterBasket` deployed (Polygon 137):** [`0x5c36C4F32C437420b8c8E1018E64C1496F69E1d0`](https://polygonscan.com/address/0x5c36C4F32C437420b8c8E1018E64C1496F69E1d0) — on-chain-verified wiring (`adapter()` = NegRiskAdapter, `usdce()` = USDC.e).
 
 | Artifact | Chain | Tx hash |
 |---|---|---|
+| `EnterBasket` deployment | Polygon 137 | [`0xb71430e8a5baa6b616ae8dc06c13597ff33c31ad89561263b42fe94d08cde4b7`](https://polygonscan.com/tx/0xb71430e8a5baa6b616ae8dc06c13597ff33c31ad89561263b42fe94d08cde4b7) |
 | Uniswap standalone `/swap` ($7k) | Polygon 137 | `<record from scripts/runPrizeSwap.ts>` |
-| `EnterBasket` entry (via LI.FI) | Polygon 137 | `<record after deploy + executeRoute>` |
+| `EnterBasket` entry (via LI.FI) | Polygon 137 | `<record after executeRoute>` |
 | Arc USDC-gas Paymaster tx | Arc 5042002 | `<record from the passkey flow>` |
 
 ## Hard constraints (do not relitigate — see `docs/03`)
