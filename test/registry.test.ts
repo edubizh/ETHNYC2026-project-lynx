@@ -18,21 +18,40 @@ describe("basket registry", () => {
     expect(() => getTheme("nope")).toThrow(/Unknown theme/);
   });
 
-  it("has no unresolved placeholders and real 0x ids on every prediction leg", () => {
-    const t = getTheme("ai");
-    for (const leg of t.legs) {
-      if (leg.kind !== "prediction") continue;
-      expect(leg.gammaMarketId).toMatch(/^\d+$/); // numeric Gamma id, not REPLACE_*
-      expect(leg.conditionId).toMatch(/^0x[0-9a-f]{64}$/);
-      expect(leg.questionId).toMatch(/^0x[0-9a-f]{64}$/);
-      expect(leg.outcomeTokenIds.yes).toMatch(/^\d+$/);
-      expect(leg.outcomeTokenIds.no).toMatch(/^\d+$/);
+  it("has no unresolved placeholders and real 0x ids on every prediction leg of every bucket", () => {
+    for (const t of listThemes()) {
+      for (const leg of t.legs) {
+        if (leg.kind !== "prediction") continue;
+        expect(leg.gammaMarketId).toMatch(/^\d+$/); // numeric Gamma id, not REPLACE_*
+        expect(leg.conditionId).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(leg.questionId).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(leg.outcomeTokenIds.yes).toMatch(/^\d+$/);
+        expect(leg.outcomeTokenIds.no).toMatch(/^\d+$/);
+      }
+    }
+  });
+});
+
+describe("all demo buckets", () => {
+  const EXPECTED = ["ai", "crypto", "macro", "geopolitics", "us-politics"];
+
+  it("registry contains the five demo-ready buckets", () => {
+    const slugs = listThemes().map((t) => t.slug);
+    for (const s of EXPECTED) expect(slugs).toContain(s);
+  });
+
+  it("every bucket has a prediction leg, an asset leg, weights summing to 1, and a headline security", () => {
+    for (const t of listThemes()) {
+      expect(t.legs.some((l) => l.kind === "prediction")).toBe(true);
+      expect(t.legs.some((l) => l.kind === "asset")).toBe(true);
+      expect(themeWeightsSumToOne(t.slug)).toBe(true);
+      expect(() => getHeadlineSecurity(t.slug)).not.toThrow();
     }
   });
 });
 
 describe("bucket securities (display/anchor model)", () => {
-  const AVAILABILITY = ["LIVE-UNISWAP", "TOKENIZED-BUT-GATED", "NO-TOKENIZED-VERSION"];
+  const AVAILABILITY = ["LIVE-UNISWAP", "DISPLAY-ONLY"];
 
   it("every theme exposes ≥1 security, each with a ticker and a valid availability tag", () => {
     for (const t of listThemes()) {

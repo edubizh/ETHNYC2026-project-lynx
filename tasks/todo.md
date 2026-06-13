@@ -57,8 +57,10 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 
 ## Functionality v2 — buckets + securities (display/anchor model)
 > This session = data/contracts. Frontend (visual + branding Project-Lynx→Traditional Predictions) = separate Claude Code session. Design system in PRODUCT.md/DESIGN.md/design/.
-- [x] Lock model: securities = display/anchor only (not buyable in-app); each carries an availability tag (LIVE-UNISWAP / TOKENIZED-BUT-GATED / NO-TOKENIZED-VERSION).
-- [ ] Slice 1 (in progress): data model — `Security`+`Availability` types + `securities[]`; AI bucket on new shape; fix the stale analyst band. (TDD)
-- [ ] Slice 2: add demo-ready buckets (Crypto, Macro/Fed, Geopolitics/Conflict, US Politics) from verified ids (bg verification agent).
-- [ ] Slice 3: wire `securities[]` into the dashboard service/view (per-security pricing, availability passthrough, gap from headline security).
-- [ ] Slice 4: multi-leg one-signature entry (EnterBasket batch fn + LI.FI contractCalls) — buy the whole index in one sig.
+- [x] Lock model: **non-US** (Polymarket-style geo) + **EVM-only, conform to sponsors**. Securities buyable in-app only when EVM/Uniswap-liquid (`LIVE-UNISWAP`); single-name stocks have no EVM venue → `DISPLAY-ONLY` anchor (tradeable for users off-rail, just not on our rails). Prediction baskets are the executable instrument.
+- [x] Slice 1: data model — `Security`+`Availability` types + `securities[]`; AI bucket on new shape; fix the stale NVDA band. (TDD) — commit a2f25d0
+- [x] Slice 2: all 5 buckets executable (verified NegRisk legs) + `securities[]`; 2-state availability (LIVE-UNISWAP | DISPLAY-ONLY); fixed pinned ITA/DJT bands. 28/28 green. (TDD)
+- [ ] Slice 3: wire `securities[]` into the dashboard service/view (per-security pricing — crypto headline via Uniswap /quote not Finnhub; availability passthrough so the UI renders badges).
+- [ ] Slice 4: multi-leg one-signature entry (EnterBasket batch fn + LI.FI contractCalls) — buy the whole index in one sig (today "Enter" buys only the primary leg).
+- [ ] Reconcile design docs (PRODUCT.md / DESIGN.md / design/content-model.md) to the non-US + EVM availability framing (currently say "US-gated / display-only").
+- [ ] Known refinement: the Sentiment Gap is a naive |belief − bandPercentile|; for inversely-correlated pairs (e.g. "no Fed cuts" ↔ TLT) it can read large even when consistent. Consider a correlation-aware gap later.

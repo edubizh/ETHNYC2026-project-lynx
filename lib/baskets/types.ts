@@ -16,23 +16,27 @@ export type PredictionLeg = {
 export type AssetLeg = { kind: "asset"; label: string; token: `0x${string}`; weight: number };
 export type Leg = PredictionLeg | AssetLeg;
 
-/** Whether a thematically-related security can actually be traded on Uniswap, or is shown for context only.
- *  As of 2026 no tokenized stock is openly Uniswap-tradeable by a US/ungated user, so equities are display-only. */
-export type Availability = "LIVE-UNISWAP" | "TOKENIZED-BUT-GATED" | "NO-TOKENIZED-VERSION";
+/** Whether a security is buyable on our EVM/Uniswap rails, or shown as the (off-rail) analyst anchor.
+ *  We stay EVM-only and conform to the sponsors (Uniswap/LI.FI), so single-name tokenized stocks — which
+ *  have no EVM/Uniswap venue (they live on Solana/CEX/issuer rails) — are DISPLAY-ONLY anchors here, even
+ *  though eligible (non-US) users can trade them elsewhere. Crypto/RWA with real Uniswap liquidity is LIVE-UNISWAP. */
+export type Availability = "LIVE-UNISWAP" | "DISPLAY-ONLY";
 
-/** A tokenized real-world security thematically tied to a bucket. Display/anchor layer — NOT bought in-app.
- *  Each carries an availability tag so the UI renders an honest badge instead of implying a buy. */
+/** A real-world asset/security thematically tied to a bucket. LIVE-UNISWAP entries are buyable on-chain via
+ *  Uniswap/LI.FI; DISPLAY-ONLY entries are the legible analyst anchor that drives the Sentiment Gap (not bought in-app). */
 export type Security = {
   ticker: string;
   name: string;
+  /** On-chain ERC-20 (Polygon) for LIVE-UNISWAP securities — used to price via Uniswap /quote. */
+  token?: `0x${string}`;
   /** Display spot price (equities feed for stocks; Uniswap /quote for on-chain assets). */
   priceUsd?: number;
   /** Published analyst bear/bull band (bear=low, bull=high) — drives the headline security's percentile. */
   analystBand?: { low: number; high: number };
   availability: Availability;
-  /** Where the tokenized form (if any) lives, e.g. "solana", "polygon". */
+  /** Where the asset trades, e.g. "polygon" (Uniswap) or "solana/CEX" (off-rail, display-only). */
   chain?: string;
-  /** Honest one-liner on tradeability / gating, surfaced in the badge tooltip. */
+  /** Honest one-liner on tradeability, surfaced in the badge tooltip. */
   note?: string;
 };
 

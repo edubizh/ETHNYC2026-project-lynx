@@ -62,10 +62,172 @@ const THEMES: Record<string, Theme> = {
           ticker: "NVDA",
           name: "NVIDIA",
           analystBand: AI_BAND,
-          availability: "TOKENIZED-BUT-GATED",
-          chain: "solana",
-          note: "xStocks (NVDAx) trade on Solana; US-gated — display-only here.",
+          availability: "DISPLAY-ONLY",
+          chain: "solana/CEX",
+          note: "Tradeable for eligible users as NVDAx (xStocks, Solana) / CEX — no EVM-Uniswap venue, so it's the analyst anchor here.",
         },
+        {
+          ticker: "wstETH",
+          name: "Lido Wrapped Staked ETH",
+          token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
+          availability: "LIVE-UNISWAP",
+          chain: "polygon",
+          note: "The buyable on-chain AI/risk-on asset leg.",
+        },
+      ],
+    },
+  },
+
+  // CRYPTO — executable NegRisk "best performer 2026" leg + buyable WBTC asset leg.
+  crypto: {
+    slug: "crypto",
+    title: "Crypto",
+    legs: [
+      {
+        kind: "prediction",
+        label: "Bitcoin is the best performer in 2026 (vs Gold & S&P 500)",
+        gammaMarketId: "950852",
+        conditionId: "0xb276435811dc77171602f790db2b5900e780adfadb7cff57e547d58fb1a8215f",
+        questionId: "0x339a89111ad048709ef27ac9da11e70a28ceaae3a4f494e949c9d68be7c39a00",
+        outcomeTokenIds: {
+          yes: "108251591904413063139495882252154135107497878738832930637657538583440424739851",
+          no: "95097331309577172647133042426866339261719483395475071583274489760894986349855",
+        },
+        seedBeliefProb: 0.165,
+        weight: 0.4,
+      },
+      { kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", weight: 0.6 },
+    ],
+    display: {
+      assetSymbol: "WBTC",
+      analystBand: { low: 45000, high: 95000 },
+      fallback: { beliefProb: 0.165, equityPrice: 64317, assetLegPriceUsd: 64317 },
+      securities: [
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", analystBand: { low: 45000, high: 95000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable ETH exposure on Uniswap (Polygon)." },
+        { ticker: "COIN", name: "Coinbase Global", availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Crypto-beta equity; tradeable for eligible users via xStocks/CEX — no EVM-Uniswap venue, shown as anchor." },
+      ],
+    },
+  },
+
+  // MACRO & FED — executable NegRisk "no Fed cuts in 2026" leg + buyable wstETH asset leg.
+  macro: {
+    slug: "macro",
+    title: "Macro & Fed",
+    legs: [
+      {
+        kind: "prediction",
+        label: "No Fed rate cuts in 2026",
+        gammaMarketId: "616902",
+        conditionId: "0xd4e77ba6f29fc093509d24f508631abd445ecf506bbdc9c4c80e60256a318527",
+        questionId: "0xdcd7daabcacdc4ecf4f9a48d0a2708b52f356dd086c8070992136da62eb72b00",
+        outcomeTokenIds: {
+          yes: "12403602920039269077597917340921667997547115084613238528792639013246536343316",
+          no: "21294592205022969346730955103773391901993330222644504059576935265667917187903",
+        },
+        seedBeliefProb: 0.7685,
+        weight: 0.5,
+      },
+      { kind: "asset", label: "Rate-sensitive risk asset (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", weight: 0.5 },
+    ],
+    display: {
+      assetSymbol: "TLT",
+      analystBand: { low: 82, high: 108 },
+      fallback: { beliefProb: 0.7685, equityPrice: 95, assetLegPriceUsd: 4300 },
+      securities: [
+        { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", analystBand: { low: 82, high: 108 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline rates anchor — no EVM-Uniswap venue; shown for the belief-vs-rates cross." },
+        { ticker: "GLD", name: "SPDR Gold Shares", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Real-asset hedge vs higher-for-longer." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain rate-sensitive risk asset." },
+      ],
+    },
+  },
+
+  // GEOPOLITICS & CONFLICT — executable NegRisk "next leader" ladders (Iran, Venezuela) + buyable wstETH.
+  geopolitics: {
+    slug: "geopolitics",
+    title: "Geopolitics & Conflict",
+    legs: [
+      {
+        kind: "prediction",
+        label: "Mojtaba Khamenei is Iran's head of state at end of 2026",
+        gammaMarketId: "1469737",
+        conditionId: "0x25fb28382075f418a944a781a9f8840e2f541152eea0d9798d1cabfa1466adbb",
+        questionId: "0xd72f68ada62aff9ba67dd2cbb56fabec9928aa198daafbd8042ac18ccabec003",
+        outcomeTokenIds: {
+          yes: "111988618077786263362718284278451225707405623288593888751575373086664059387290",
+          no: "42006549920912635238720143234628794318400295281074422564226738635663399130499",
+        },
+        seedBeliefProb: 0.793,
+        weight: 0.25,
+      },
+      {
+        kind: "prediction",
+        label: "Nicolás Maduro is Venezuela's leader at end of 2026",
+        gammaMarketId: "1105744",
+        conditionId: "0x67f3f8d0a0ecdfc008c99650284a4674388a8c3029b0eb7ca0abd65dde8d996f",
+        questionId: "0x45ec1f7704d0ddd047e70443e830028d8801671283883ad1b46a29659488b604",
+        outcomeTokenIds: {
+          yes: "37090128566507509913630589460372620352013766554886380785463533062224343545231",
+          no: "21527446005162722668702146847806837944786417986794925592709069062391666573103",
+        },
+        seedBeliefProb: 0.7295,
+        weight: 0.25,
+      },
+      { kind: "asset", label: "Risk asset (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", weight: 0.5 },
+    ],
+    display: {
+      assetSymbol: "ITA",
+      analystBand: { low: 150, high: 300 },
+      fallback: { beliefProb: 0.793, equityPrice: 230, assetLegPriceUsd: 4300 },
+      securities: [
+        { ticker: "ITA", name: "iShares U.S. Aerospace & Defense ETF", analystBand: { low: 150, high: 300 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline conflict-beta anchor — no EVM-Uniswap venue." },
+        { ticker: "LMT", name: "Lockheed Martin", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
+      ],
+    },
+  },
+
+  // US POLITICS — executable NegRisk 2028 nomination legs (Newsom, AOC) + buyable wstETH.
+  "us-politics": {
+    slug: "us-politics",
+    title: "US Politics",
+    legs: [
+      {
+        kind: "prediction",
+        label: "Newsom wins the 2028 Democratic nomination",
+        gammaMarketId: "559652",
+        conditionId: "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
+        questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814700",
+        outcomeTokenIds: {
+          yes: "54533043819946592547517511176940999955633860128497669742211153063842200957669",
+          no: "87854174148074652060467921081181402357467303721471806610111179101805869578687",
+        },
+        seedBeliefProb: 0.2325,
+        weight: 0.25,
+      },
+      {
+        kind: "prediction",
+        label: "AOC wins the 2028 Democratic nomination",
+        gammaMarketId: "559653",
+        conditionId: "0xe6bcc2f1dd025ce5e1833190f7c60a71171c94f805df55b9ab0ded695ec93565",
+        questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814701",
+        outcomeTokenIds: {
+          yes: "107064985435494333113391038470401719113272800530429703182710416066774068907304",
+          no: "65176072261324737856085688071627118509549293922582857186996392180609764586527",
+        },
+        seedBeliefProb: 0.0885,
+        weight: 0.25,
+      },
+      { kind: "asset", label: "Risk asset (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", weight: 0.5 },
+    ],
+    display: {
+      assetSymbol: "DJT",
+      analystBand: { low: 3, high: 14 },
+      fallback: { beliefProb: 0.2325, equityPrice: 8, assetLegPriceUsd: 4300 },
+      securities: [
+        { ticker: "DJT", name: "Trump Media & Technology Group", analystBand: { low: 3, high: 14 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline politically-correlated equity — no EVM-Uniswap venue." },
+        { ticker: "GEO", name: "GEO Group", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Policy-sensitive equity." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
       ],
     },
   },
