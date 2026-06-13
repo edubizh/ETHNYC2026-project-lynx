@@ -65,3 +65,11 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - [ ] Slice 4b: fold the on-chain asset leg (wstETH/WBTC) into the entry route (needs swap calldata / LI.FI token delivery); today the deposit splits across the prediction markets only.
 - [ ] Reconcile design docs (PRODUCT.md / DESIGN.md / design/content-model.md) to the non-US + EVM availability framing (currently say "US-gated / display-only").
 - [ ] Known refinement: the Sentiment Gap is a naive |belief − bandPercentile|; for inversely-correlated pairs (e.g. "no Fed cuts" ↔ TLT) it can read large even when consistent. Consider a correlation-aware gap later.
+
+## Design implementation (from Claude design handoff bundle)
+> Bundle in `design/mocks/` (gitignored — heavy PNGs). MONOCHROME system: white #FFFFFF = numbers/headings, silver #E8EBEF = asset voice (◆), steel #8A95A6 = belief voice (●); green/red functional only; never red/green heat. This SUPERSEDES the amber/azure in DESIGN.md (the user retheme'd in Claude design). Fonts: Inter Tight + IBM Plex Sans + IBM Plex Mono.
+- [x] Fonts wired (layout) + **BROWSE mindshare treemap** (app/page.tsx): tiles sized by mindshare (lib/mindshare.ts seeds), up/down via graphite brightness + sparkline tone + ▲/▼ (no red/green); AI flagship + Others tile; every tile links to its bucket. tsc clean, 35/35 green, renders.
+- [ ] DASHBOARD redesign (app/theme/[slug]/page.tsx): graph-forward + buy-at-top — Arc NAV bar, inline buy w/ allocation split, Sentiment Gap meter, Analyst Band + 30d chart, prediction-market cards + asset-leg card, ANCHOR security row. Generalize to any bucket; wire to buildDashboard (securities[] ready).
+- [ ] Account slide-over panel + 4-step Enter sheet (Connect/Review/Sign/Result + refund) wired to the LI.FI multi-call + Arc passkey.
+- [ ] globals.css → monochrome tokens; retire old MVP components (DivergencePanel/AnalystBand/BasketTable/AccountBar/EnterButton old styling).
+- [ ] Replace mindshare SEEDS with real 24h activity; wire timeframe filter + search.
