@@ -31,6 +31,34 @@ export function othersMindshare(): { mindshare: number; sectors: number } {
   return { mindshare: Math.max(0, Math.round((100 - covered) * 10) / 10), sectors: 3 };
 }
 
+/** Per-bucket status badge + one-line thesis shown on the dashboard header. */
+export type BucketMeta = { status: string; thesis: string };
+const META: Record<string, BucketMeta> = {
+  ai: {
+    status: "Flagship",
+    thesis: "Belief markets price the AI model race and OpenAI's path to IPO; NVDA is the analyst-banded asset proxy.",
+  },
+  crypto: {
+    status: "Demo-ready",
+    thesis: "Belief odds on Bitcoin's 2026 performance vs. the on-chain asset itself — the one bucket where the asset is the theme.",
+  },
+  macro: {
+    status: "Demo-ready",
+    thesis: "The Fed rate-cut path and recession odds vs. a long-duration Treasury proxy.",
+  },
+  geopolitics: {
+    status: "Demo-ready",
+    thesis: "Conflict and leadership odds vs. defense and safe-haven anchors.",
+  },
+  "us-politics": {
+    status: "Demo-ready",
+    thesis: "The 2028 Democratic nomination race vs. policy-sensitive equities.",
+  },
+};
+export function getBucketMeta(slug: string): BucketMeta {
+  return META[slug] ?? { status: "Demo-ready", thesis: "" };
+}
+
 /** A 2-letter tile code from a bucket title (AI, CR, US, GE, MA). */
 export function tileCode(slug: string): string {
   const title = getTheme(slug).title;
