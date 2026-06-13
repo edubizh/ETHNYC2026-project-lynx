@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; }
+  /* 1500x500 — X / Twitter banner ratio (matches reference) */
+  .banner {
+    position: relative;
+    width: 1500px;
+    height: 500px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 140% at 38% 30%, #20242B 0%, #15171C 42%, #0B0C0F 100%);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+  /* faint diagonal sheen + corner vignette for depth */
+  .banner::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 34%),
+      radial-gradient(140% 120% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%);
+    pointer-events: none;
+  }
+
+  .stack {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+    /* whisper-faint reflection — just a hint of glow, not a readable mirror */
+    -webkit-box-reflect: below 10px linear-gradient(transparent 86%, rgba(214,219,225,0.05));
+  }
+  .line {
+    font-weight: 700;
+    font-size: 168px;
+    line-height: 1.0;
+    letter-spacing: 0.085em;
+    white-space: nowrap;
+    /* trim trailing letter-spacing so the block stays optically centered */
+    margin-right: -0.085em;
+  }
+  .hi { color: #F4F6F9; }
+  .lo { color: #646A73; }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="stack">
+      <div class="line"><span class="hi">TRA</span><span class="lo">DI</span><span class="hi">TION</span><span class="lo">AL</span></div>
+      <div class="line"><span class="lo">PRE</span><span class="hi">DI</span><span class="lo">CTIONS</span></div>
+    </div>
+  </div>
+</body>
+</html>
