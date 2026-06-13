@@ -34,7 +34,7 @@ export async function buildPrizeSwap(account: Account, amountUsdc = "1000000"): 
     const sig = await account.signTypedData({
       domain: q.permitData.domain,
       types: q.permitData.types,
-      primaryType: "PermitSingle",
+      primaryType: q.permitData.primaryType ?? "PermitSingle",
       message: q.permitData.values,
     } as any);
     body.permitData = q.permitData;

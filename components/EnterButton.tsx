@@ -23,6 +23,7 @@ const ENTER_BASKET_ABI = [
 ] as const;
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"; // native USDC on Base (source)
+const USDC_ETH = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // native USDC on Ethereum mainnet (source)
 const ENTER_BASKET = process.env.NEXT_PUBLIC_ENTER_BASKET ?? "0x0000000000000000000000000000000000000000";
 const BASKET_USDCE_AMOUNT = "10000000"; // 10 USDC.e (6dp) into the prediction leg
 
@@ -36,11 +37,21 @@ export function EnterButton({ slug }: { slug: string }) {
   async function onEnter() {
     try {
       if (!isConnected) {
-        connect({ connector: connectors[0]! });
+        const connector = connectors[0];
+        if (!connector) {
+          setStatus("No wallet connector available.");
+          return;
+        }
+        connect({ connector });
         return;
       }
       if (!address || !walletClient) {
         setStatus("Connect a wallet on Ethereum or Base first.");
+        return;
+      }
+      const chainId = walletClient.chain?.id;
+      if (chainId !== 1 && chainId !== 8453) {
+        setStatus("Switch your wallet to Ethereum or Base — LI.FI entry never originates on Arc/Polygon.");
         return;
       }
       if (ENTER_BASKET === "0x0000000000000000000000000000000000000000") {
@@ -66,8 +77,8 @@ export function EnterButton({ slug }: { slug: string }) {
       });
 
       const step = await buildEnterQuote({
-        fromChainId: 8453, // Base
-        fromToken: USDC_BASE,
+        fromChainId: chainId as 1 | 8453, // detected connected chain (Ethereum or Base)
+        fromToken: chainId === 1 ? USDC_ETH : USDC_BASE,
         fromAddress: address,
         fromAmount: BASKET_USDCE_AMOUNT, // demo: USDC(6dp) source ~ USDC.e(6dp) dest
         basketUsdceAmount: BASKET_USDCE_AMOUNT,

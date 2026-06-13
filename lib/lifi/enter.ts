@@ -10,21 +10,18 @@ import {
 } from "@lifi/sdk";
 import { ADDR } from "@/lib/addresses"; // client-safe public constants (NOT the server-only config)
 
-let configured = false;
-
-/** Initialize the LI.FI SDK ONCE with an EVM provider backed by the app's wallet client.
- *  v3.6.4 uses createConfig({ integrator }); v4.0.0 renamed it to createClient (same SDKConfig). */
+/** (Re)configure the LI.FI SDK with an EVM provider backed by the CURRENT wallet client.
+ *  Safe to call per action — reconfiguring picks up account/chain changes (no stale signer).
+ *  v3.x uses createConfig({ integrator }); v4.0.0 renamed it to createClient (same SDKConfig). */
 export function initLifi(opts: {
   getWalletClient: () => Promise<unknown>;
   switchChain?: (chainId: number) => Promise<unknown>;
 }): void {
-  if (configured) return;
   createConfig({
     integrator: "project-lynx",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     providers: [EVM({ getWalletClient: opts.getWalletClient as any, switchChain: opts.switchChain as any })],
   });
-  configured = true;
 }
 
 export type EnterQuoteParams = {
