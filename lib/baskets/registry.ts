@@ -1,8 +1,9 @@
 import type { Theme } from "./types";
 
-// conditionIds, questionIds, outcomeTokenIds and the asset token are all VERIFIED on-chain
-// (2026-06-13). The OpenAI-not-IPO leg (ends 2027-01-01) is the PRIMARY always-valid leg and
-// drives the headline odds; the Anthropic leg (ends 2026-06-30) is the secondary/vivid demo leg.
+// conditionIds, questionIds, outcomeTokenIds, seedBeliefProb and the asset token are all VERIFIED
+// on-chain / via Gamma (2026-06-13). The OpenAI-not-IPO leg (ends 2027-01-01) is the PRIMARY
+// always-valid leg and drives the headline odds; the Anthropic leg (ends 2026-06-30) is the
+// secondary/vivid demo leg.
 const THEMES: Record<string, Theme> = {
   ai: {
     slug: "ai",
@@ -19,6 +20,7 @@ const THEMES: Record<string, Theme> = {
           yes: "56615676606297588259337956203332341775475048285080710344367729433788967812170",
           no: "8070607953656787024050950499598687532281829563384949938603247089607814583142",
         },
+        seedBeliefProb: 0.51,
         weight: 0.35,
       },
       // SECONDARY / vivid prediction leg (~89.5% YES) — great demo number, may resolve sooner.
@@ -32,6 +34,7 @@ const THEMES: Record<string, Theme> = {
           yes: "64887172491629329116501561142670952112197574356607923997934182163296576951634",
           no: "12813183214224132107278873250345740614275647031034326420266129033763649478747",
         },
+        seedBeliefProb: 0.895,
         weight: 0.15,
       },
       // NVDA is display-only (equities API); the executable on-chain asset leg is wstETH via Sushi.
@@ -42,6 +45,13 @@ const THEMES: Record<string, Theme> = {
         weight: 0.5,
       },
     ],
+    display: {
+      assetSymbol: "NVDA",
+      // Published analyst bear/bull band for NVDA (illustrative targets, shown in the UI).
+      analystBand: { low: 100, high: 210 },
+      // Seed values for the offline/no-key demo.
+      fallback: { beliefProb: 0.51, equityPrice: 165, assetLegPriceUsd: 4300 },
+    },
   },
 };
 
@@ -49,6 +59,10 @@ export function getTheme(slug: string): Theme {
   const t = THEMES[slug];
   if (!t) throw new Error(`Unknown theme: ${slug}`);
   return t;
+}
+
+export function listThemes(): Theme[] {
+  return Object.values(THEMES);
 }
 
 export function themeWeightsSumToOne(slug: string): boolean {
