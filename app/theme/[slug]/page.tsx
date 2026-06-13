@@ -4,6 +4,7 @@ import { buildDashboard, type DashboardView } from "@/lib/dashboard/service";
 import { getBucketMeta } from "@/lib/mindshare";
 import { ArcAccountBar } from "@/components/ArcAccountBar";
 import { BuyBox, type BuyLeg } from "@/components/BuyBox";
+import { TopBar } from "@/components/TopBar";
 
 export const dynamic = "force-dynamic";
 
@@ -73,30 +74,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0B0E", color: "#FFFFFF", fontFamily: BODY, WebkitFontSmoothing: "antialiased" }}>
-      {/* top bar */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 24,
-          height: 60,
-          padding: "0 28px",
-          background: "rgba(10,11,14,0.82)",
-          backdropFilter: "blur(14px)",
-          borderBottom: "1px solid #2A2D34",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
-          <span style={{ position: "relative", width: 22, height: 22, display: "inline-grid", placeItems: "center" }}>
-            <span style={{ width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", transform: "rotate(45deg)", borderRadius: 2 }} />
-            <span style={{ position: "absolute", width: 22, height: 22, border: "1px solid rgba(232,235,239,0.35)", transform: "rotate(45deg)", borderRadius: 4 }} />
-          </span>
-          <span style={{ fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 15, color: "#FFFFFF" }}>Traditional Predictions</span>
-        </Link>
-      </header>
+      <TopBar />
 
       <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 28px 110px" }}>
         <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#AAB1BC", fontSize: 13.5, textDecoration: "none", marginBottom: 20 }}>
@@ -132,7 +110,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         </div>
 
         {/* Inline buy (primary, at top) */}
-        <BuyBox slug={view.slug} legs={buyLegs} />
+        <BuyBox slug={view.slug} title={view.title} legs={buyLegs} />
 
         {/* Sentiment Gap meter */}
         <section style={{ ...PANEL, padding: "26px 28px 24px", marginBottom: 16 }}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { rankedThemes, othersMindshare, tileCode, getMindshare } from "@/lib/mindshare";
+import { TopBar } from "@/components/TopBar";
 
 const DISPLAY = "'Inter Tight', system-ui, sans-serif";
 const BODY = "'IBM Plex Sans', system-ui, sans-serif";
@@ -139,93 +140,7 @@ export default function Home() {
         WebkitFontSmoothing: "antialiased",
       }}
     >
-      {/* Top bar */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 24,
-          height: 60,
-          padding: "0 28px",
-          background: "rgba(10,11,14,0.82)",
-          backdropFilter: "blur(14px)",
-          borderBottom: "1px solid #2A2D34",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
-          <span style={{ position: "relative", width: 22, height: 22, display: "inline-grid", placeItems: "center" }}>
-            <span
-              style={{
-                width: 13,
-                height: 13,
-                background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)",
-                transform: "rotate(45deg)",
-                borderRadius: 2,
-              }}
-            />
-            <span
-              style={{
-                position: "absolute",
-                width: 22,
-                height: 22,
-                border: "1px solid rgba(232,235,239,0.35)",
-                transform: "rotate(45deg)",
-                borderRadius: 4,
-              }}
-            />
-          </span>
-          <span
-            style={{ fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 15, color: "#FFFFFF", whiteSpace: "nowrap" }}
-          >
-            Traditional Predictions
-          </span>
-        </Link>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              width: "100%",
-              maxWidth: 430,
-              height: 38,
-              padding: "0 13px",
-              background: "#14161B",
-              border: "1px solid #2A2D34",
-              borderRadius: 8,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7A828D" strokeWidth={2}>
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3-3" />
-            </svg>
-            <input
-              placeholder="Search a theme — AI, defense, the Fed…"
-              style={{ flex: 1, background: "transparent", border: 0, outline: "none", color: "#FFFFFF", fontSize: 13.5, fontFamily: BODY }}
-            />
-          </div>
-        </div>
-        <span
-          style={{
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            height: 34,
-            padding: "0 15px",
-            border: "1px solid rgba(232,235,239,0.45)",
-            borderRadius: 8,
-            fontFamily: DISPLAY,
-            fontWeight: 600,
-            fontSize: 13,
-            color: "#E8EBEF",
-          }}
-        >
-          Connect
-        </span>
-      </header>
+      <TopBar />
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "30px 28px 60px" }}>
         {/* header row */}
