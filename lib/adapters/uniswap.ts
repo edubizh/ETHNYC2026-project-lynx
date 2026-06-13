@@ -2,6 +2,7 @@ import { config } from "@/lib/config";
 
 // A read-only price quote still requires a `swapper` in the request; this placeholder is never executed.
 const ORACLE_SWAPPER = "0x000000000000000000000000000000000000dEaD";
+const TIMEOUT_MS = 6000;
 
 /** Price of 1 unit of `token` in USDC via the Uniswap Trading API /quote (oracle, NOT the prize swap).
  *  VERIFIED shape (2026-06-13): the response is `{ routing, quote, permitData }` where `quote` is an
@@ -20,6 +21,7 @@ export async function fetchAssetPrice(token: string, swapper: string = ORACLE_SW
       tokenOutChainId: 137,
       swapper,
     }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Uniswap quote ${res.status}`);
   const q = await res.json();
