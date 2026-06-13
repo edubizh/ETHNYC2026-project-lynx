@@ -6,13 +6,13 @@
 
 ## What Project-Lynx is, in one sentence
 
-> A **non-custodial, thematic prediction-market index + intelligence dashboard**: browse themed buckets (US Politics, Military, AI, …), see a dashboard that compares **what belief-markets imply vs. what real assets are pricing in** (the "divergence" signal), and **enter a theme in one signature** — buying a curated basket of real prediction-market positions + tokenized stocks straight into your own wallet.
+> A **non-custodial, thematic prediction-market index + intelligence dashboard**: browse themed buckets (US Politics, Military, AI, …), see a dashboard that surfaces the **"AI Sentiment Gap"** — belief-market odds vs. the AI-correlated asset's percentile within a published analyst band — and **enter a theme in one signature** — buying a curated basket of real prediction-market positions + tokenized stocks straight into your own wallet.
 
 ## Sponsors (locked): Arc + LI.FI + Uniswap
 
-- **Arc (Circle)** — the account/money layer + chain-abstracted USDC hub. Hits Arc Target A *and* Target B.
-- **LI.FI** — the one-signature cross-chain **assembly/entry** (Composer + Widget).
-- **Uniswap** — the **tokenized-securities** basket legs + the `/quote` price oracle for the dashboard + UniswapX exit.
+- **Arc (Circle)** — the account/USDC-NAV layer. Hits Arc Target A *and* Target B.
+- **LI.FI** — the one-signature **assembly/entry**, entering from Ethereum/Base (Composer + Widget).
+- **Uniswap** — a standalone real Trading-API `/swap` (the $7k prize) + the `/quote` price oracle for the dashboard.
 
 ## How a new session should use this folder
 
@@ -24,7 +24,10 @@ Read in order:
 4. **`03-decisions-and-constraints.md`** — every locked decision + the rationale + the **DO-NOT** list. Read this so you don't relitigate settled choices.
 5. **`04-build-plan-and-derisk.md`** — Day-1 booth checklist, MVP build order, per-prize deliverables, the demo script.
 6. **`05-implementation-plan.md`** — the task-by-task, TDD implementation plan for the MVP (execute this in the new repo).
+7. **`06-mcp-servers.md`** — the MCP server setup + handoff reference.
+
+> **Note:** `01`–`06` contained stale values that were corrected on **2026-06-13** by direct on-chain MCP verification. The corrected facts are authoritative.
 
 ## Status
 
-Design is **locked and approved**. Next step in the new repo: run the Day-1 de-risk checks (`04`), then execute `05-implementation-plan.md` task by task.
+Design **locked**; **Approach B+** (post-audit 2026-06-13). Next: run the Day-0/Day-1 de-risk in `04` (especially: register the Uniswap API key + capture a live `/quote` and `/swap` on Polygon, and capture the real minted ERC-1155 ids via a Tenderly Polygon fork) **BEFORE** writing the prediction leg; then execute `05-implementation-plan.md` task by task.

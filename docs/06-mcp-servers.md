@@ -1,6 +1,6 @@
 # 06 — MCP Servers (setup & handoff)
 
-> Verified live on 2026-06-13 via a real MCP `initialize` handshake against each server (not just "listed"). Config lives in `/.mcp.json` (5 servers) + `/.npmrc`.
+> Verified live on 2026-06-13 via a real MCP `initialize` handshake against each server (not just "listed"). Config lives in `/.mcp.json` (9 servers) + `/.npmrc`.
 
 ## Working servers (committed in `.mcp.json`)
 
@@ -11,6 +11,10 @@
 | **context7** | stdio (npx) | `@upstash/context7-mcp` | `Context7 v3.2.0` | Official Upstash. Up-to-date SDK docs lookup. Optional `CONTEXT7_API_KEY` for higher limits. |
 | **polymarket** | stdio (npx) | `@iqai/mcp-polymarket` | `mcp-polymarket v0.0.18` | Community. **Read-only** (no `POLYMARKET_PRIVATE_KEY`) → odds/market data for the divergence signal. **Requires the `.npmrc` JSR fix below.** |
 | **foundry** | stdio (npx) | `@pranesh.asp/foundry-mcp-server` | boots | Community/experimental. **Needs Foundry installed (`foundryup`)** or every tool errors "Foundry is not installed". No PRIVATE_KEY (build/read only). |
+| **blockscout** | remote HTTP | `https://mcp.blockscout.com/mcp` | connected | No-auth HTTP. On-chain reads (`read_contract`, ABIs, txs) across Polygon/Base/etc — the EVM-read path we'd skipped. |
+| **deepwiki** | remote HTTP | `https://mcp.deepwiki.com/mcp` | connected | No-auth HTTP. AI Q&A over GitHub repos (e.g. Polymarket contracts) for protocol semantics. |
+| **tenderly** | remote HTTP | `https://mcp.tenderly.co/mcp` | connected | **Browser OAuth — sign in via `/mcp`.** Virtual TestNets, tx simulation, ERC-20/asset-change capture. |
+| **prediction** | stdio (npx) | `prediction-mcp` | connected | Community. Cross-venue odds — adds **Kalshi** alongside Polymarket for the divergence signal. Read-only. |
 
 ### `.npmrc` (required for polymarket — committed)
 
@@ -23,8 +27,24 @@ Reason: `@iqai/mcp-polymarket` depends on a JSR module; without this mapping, `n
 ## Gotchas / traps
 
 - ⚠️ **`api.circle.so/mcp` is the WRONG Circle** — that's Circle**.so** (community-platform software); it returns HTTP 405 and is not an MCP endpoint. The correct USDC/Arc Circle is `api.circle.com`. Do not switch.
+- ⚠️ **The wrong `circle.so` can also linger in LOCAL scope and silently OVERRIDE the correct project-scope entry.** Symptom: an OAuth screen asking for **"admin access to a Circle community"**. Fix: `claude mcp remove circle -s local`. The correct `api.circle.com` codegen server needs **NO OAuth**.
+- ⚠️ **A running Claude Code session must be RESTARTED to pick up `.mcp.json` changes.** The CLI `claude mcp list` re-reads config each run, but a live session does not.
 - Community stdio servers auto-run via `npx` at startup. Project-scoped servers show **"pending approval"** until approved via `/mcp` or on restart.
 - **No private keys anywhere** (matches the non-custodial design + org credential policy). Secrets expand from shell env via `${VAR}`; nothing secret is stored in `.mcp.json`.
+
+## Verified-facts checkpoints per MCP (Day-0/1)
+
+Each Day-0/1 build check maps to the MCP that confirms it live:
+
+- **blockscout** — `read_contract` for `NegRiskAdapter.col()` / `wcol()` / `getDetermined()`; verify the Universal Router version deployed on Polygon (137).
+- **lifi** — `get-quote` / `get-quote-with-calls` to confirm the Ethereum/Base→Polygon route + the contract-call shape. Note: `stepSimulation = integrator_not_allowed` (no LI.FI pre-sim available).
+- **polymarket + prediction** — odds + `conditionId`s + `questionId`s for the basket. Use `get_markets_by_tag` / `get_market_by_slug`, **NOT** `search_markets` (it floods).
+- **deepwiki** — `ask_question` on Polymarket/`neg-risk-ctf-adapter` for the `wcol` / `positionId` / `indexSet` semantics.
+- **tenderly** — `create_vnet` + `set_erc20_balance` + `simulate_vnet_transaction` + `get_vnet_simulation_asset_changes` to capture the REAL minted ERC-1155 ids **before** writing transfer code. Use a Tenderly admin RPC as `POLYGON_RPC` in `foundry.toml` to avoid public-RPC rate limits.
+- **context7** — `resolve-library-id` + `query-docs` for `@lifi/sdk` + `@uniswap` SDK signatures.
+- **circle** — `search_circle_documentation` + `get_circle_product_summary` + `list_available_coding_resources` for Modular Wallet / Paymaster codegen.
+
+> **Uniswap + Chainlink have NO MCP.** Use the Uniswap Trading API REST + context7/deepwiki + blockscout instead.
 
 ## Deliberately NOT installed (don't re-research)
 
@@ -36,17 +56,17 @@ Reason: `@iqai/mcp-polymarket` depends on a JSR module; without this mapping, `n
 ```bash
 init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"v","version":"0.0.1"}}}'
 
-# remote (circle / lifi):
+# remote (circle / lifi / blockscout / deepwiki / tenderly):
 curl -sS -X POST <url> \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' -d "$init"
 
-# stdio (context7 / polymarket / foundry):  macOS has no `timeout`; use a perl alarm
+# stdio (context7 / polymarket / foundry / prediction):  macOS has no `timeout`; use a perl alarm
 printf '%s\n' "$init" | perl -e 'alarm 120; exec @ARGV' npx -y <package>
 ```
 
 ## Setup for a fresh session / clone
 
-1. **Approve** the 5 project servers on restart (Claude Code gates project-scoped MCP servers for security).
+1. **Approve** the 9 project servers on restart (Claude Code gates project-scoped MCP servers for security).
 2. **Foundry server only:** `curl -L https://foundry.paradigm.xyz | bash && foundryup`.
-3. **Optional** (higher rate limits, not required): set `CONTEXT7_API_KEY`, `LIFI_API_KEY`. The 4 non-foundry servers work with zero setup.
+3. **Optional** (higher rate limits, not required): set `CONTEXT7_API_KEY`, `LIFI_API_KEY`. The other servers need no setup **except `tenderly`** (one-time browser OAuth via `/mcp`).
