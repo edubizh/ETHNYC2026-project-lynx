@@ -9,6 +9,7 @@ import {
   type RouteExtended,
 } from "@lifi/sdk";
 import { ADDR } from "@/lib/addresses"; // client-safe public constants (NOT the server-only config)
+import type { ContractCall } from "./basket";
 
 /** (Re)configure the LI.FI SDK with an EVM provider backed by the CURRENT wallet client.
  *  Safe to call per action — reconfiguring picks up account/chain changes (no stale signer).
@@ -29,23 +30,21 @@ export type EnterQuoteParams = {
   fromChainId: 1 | 8453;
   fromToken: string;
   fromAddress: string;
-  /** Source-token amount the user funds with (base units of fromToken). */
+  /** Total source-token amount the user funds with (base units of fromToken) — covers every call + fees. */
   fromAmount: string;
-  /** USDC.e amount the destination EnterBasket call consumes (6dp). */
-  basketUsdceAmount: string;
-  enterBasketAddress: string;
-  enterBasketCalldata: string;
-  enterBasketGasLimit?: string;
+  /** One weighted call per market (from buildBasketContractCalls). Composer splits the deposit across them. */
+  contractCalls: ContractCall[];
 };
 
-/** Build the one-signature destination-contract-call quote (the LI.FI Composer "zap").
- *  Bridge destination toToken = native USDC on Polygon (per design). The contract call consumes USDC.e,
- *  so LI.FI inserts the native-USDC → USDC.e hop on Polygon before invoking EnterBasket.
+/** Build the one-signature destination-contract-calls quote (the LI.FI Composer "zap").
+ *  Composer splits the bridged capital across EVERY contractCall — i.e. across the bucket's markets per
+ *  our strategy weights (an index allocation, not a parlay). Bridge toToken = native USDC on Polygon; each
+ *  call consumes USDC.e, so LI.FI inserts the native-USDC → USDC.e hop before invoking EnterBasket.
  *  Returns a LiFiStep — convert it with convertQuoteToRoute() before executeRoute().
- *  NOTE: there is NO LI.FI pre-sim (integrator_not_allowed) and the destination call is NOT atomic;
+ *  NOTE: there is NO LI.FI pre-sim (integrator_not_allowed) and the destination calls are NOT atomic;
  *  EnterBasket is revert-safe (refunds USDC.e to the recipient on internal failure).
- *  CAVEAT: the exact source-vs-destination amount reconciliation for an exact-output basket should be
- *  confirmed against a live get-quote-with-calls at the LI.FI booth. */
+ *  CAVEAT: source-vs-destination amount reconciliation (bridge/swap fees) should be confirmed against a
+ *  live get-quote-with-calls; set the deposit below the guaranteed-arrival floor or use exact-output. */
 export async function buildEnterQuote(p: EnterQuoteParams): Promise<LiFiStep> {
   const req: ContractCallsQuoteRequest = {
     fromChain: p.fromChainId,
@@ -54,16 +53,7 @@ export async function buildEnterQuote(p: EnterQuoteParams): Promise<LiFiStep> {
     toChain: 137,
     toToken: ADDR.usdcNative,
     fromAmount: p.fromAmount,
-    contractCalls: [
-      {
-        fromAmount: p.basketUsdceAmount,
-        fromTokenAddress: ADDR.usdce, // call consumes USDC.e -> LI.FI swaps native USDC -> USDC.e
-        toContractAddress: p.enterBasketAddress,
-        toContractCallData: p.enterBasketCalldata,
-        toContractGasLimit: p.enterBasketGasLimit ?? "500000",
-        toApprovalAddress: p.enterBasketAddress, // executor approves USDC.e to EnterBasket before the call
-      },
-    ],
+    contractCalls: p.contractCalls,
   };
   return getContractCallsQuote(req);
 }

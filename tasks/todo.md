@@ -61,6 +61,7 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - [x] Slice 1: data model — `Security`+`Availability` types + `securities[]`; AI bucket on new shape; fix the stale NVDA band. (TDD) — commit a2f25d0
 - [x] Slice 2: all 5 buckets executable (verified NegRisk legs) + `securities[]`; 2-state availability (LIVE-UNISWAP | DISPLAY-ONLY); fixed pinned ITA/DJT bands. 28/28 green. (TDD)
 - [ ] Slice 3: wire `securities[]` into the dashboard service/view (per-security pricing — crypto headline via Uniswap /quote not Finnhub; availability passthrough so the UI renders badges).
-- [ ] Slice 4: multi-leg one-signature entry (EnterBasket batch fn + LI.FI contractCalls) — buy the whole index in one sig (today "Enter" buys only the primary leg).
+- [x] Slice 4: capital-splitting basket entry — `buildBasketContractCalls` splits the deposit across ALL the bucket's prediction MARKETS per our strategy weights (one weighted LI.FI Composer contractCall each — an index allocation, NOT a parlay); `buildEnterQuote` + `EnterButton` rewired to N calls. No contract redeploy (uses the deployed `EnterBasket`). (TDD, 32/32 green)
+- [ ] Slice 4b: fold the on-chain asset leg (wstETH/WBTC) into the entry route (needs swap calldata / LI.FI token delivery); today the deposit splits across the prediction markets only.
 - [ ] Reconcile design docs (PRODUCT.md / DESIGN.md / design/content-model.md) to the non-US + EVM availability framing (currently say "US-gated / display-only").
 - [ ] Known refinement: the Sentiment Gap is a naive |belief − bandPercentile|; for inversely-correlated pairs (e.g. "no Fed cuts" ↔ TLT) it can read large even when consistent. Consider a correlation-aware gap later.
