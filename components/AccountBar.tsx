@@ -13,7 +13,14 @@ export function AccountBar({ polygonNav }: { polygonNav: number }) {
   async function connectArc(mode: "register" | "login") {
     try {
       setStatus("Opening passkey…");
-      const { client, account } = await createArcPasskeyAccount("lynx-user", mode);
+      // Register with a UNIQUE username (Circle rejects duplicates); persist it so Login reuses it.
+      const KEY = "lynx-arc-username";
+      let username = typeof window !== "undefined" ? window.localStorage.getItem(KEY) ?? undefined : undefined;
+      if (mode === "register" || !username) {
+        username = `lynx-${Date.now().toString(36)}`;
+        if (typeof window !== "undefined") window.localStorage.setItem(KEY, username);
+      }
+      const { client, account } = await createArcPasskeyAccount(username, mode);
       setAddr(account.address);
       const bal = await readArcUsdcBalance(client, account.address);
       setArcUsdc(Number(formatUnits(bal, 6)));
