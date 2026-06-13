@@ -25,7 +25,7 @@ docs/           product/design/decisions + this build's architecture & demo scri
 
 ```bash
 npm install
-cp .env.example .env.local      # fill UNISWAP_API_KEY (hard-fails without it), EQUITIES_API_KEY, CIRCLE_* …
+cp .env.example .env.local      # fill UNISWAP_API_KEY (hard-fails without it), EQUITIES_API_KEY, NEXT_PUBLIC_CIRCLE_CLIENT_KEY …
 npm test                        # 23 unit tests (vitest)
 npm run dev                     # http://localhost:3000  → /theme/ai
 # contracts (needs Foundry):
@@ -41,13 +41,14 @@ UNISWAP_API_KEY=… POLYGON_RPC=… PRIVATE_KEY=0x… npx tsx scripts/runPrizeSw
 - ✅ `getPositionId(questionId, true/false)` **== Gamma clobTokenIds to full 256-bit precision** (cast) — the #1 demo-killer.
 - ✅ **Foundry fork test (5/5) against the real NegRiskAdapter on a Polygon fork**: recipient holds BOTH YES+NO outcome tokens AND `EnterBasket` retains ZERO wcol/USDC.e/tokens. Caught a real bug vs. the plan: `EnterBasket` must inherit `ERC1155Holder` or the adapter's `safeBatchTransferFrom` reverts.
 - ✅ Live LI.FI connections: Ethereum/Base → Polygon (native USDC) non-empty; **Arc → Polygon `{connections:[]}`** (dead, as designed).
-- ✅ API shapes pinned against current docs/SDKs (Uniswap Trading API, `@lifi/sdk@3.6.4`, `@circle-fin/modular-wallets-core@1.0.13`).
+- ✅ API shapes pinned against current docs/SDKs (Uniswap Trading API, `@lifi/sdk` v3.x, `@circle-fin/modular-wallets-core@1.0.13`).
 - ✅ `next build` green (4 routes); `tsc` clean; 23 vitest tests green.
 
 **Needs credentials / a funded wallet (code complete, run by a human — org policy forbids holding keys):**
 - ⏳ Register the **Uniswap Trading API key**; execute the standalone `/swap` → record the real Polygon tx hash for the $7k prize + submit the Developer Feedback Form.
 - ⏳ Stand up the **Arc passkey + a real USDC-gas Paymaster tx** (browser WebAuthn).
-- ⏳ **Deploy `EnterBasket`** and run a real **LI.FI `executeRoute`** entry from a funded Ethereum/Base wallet; record the tx hashes.
+- ⏳ **Deploy `EnterBasket`** (set `NEXT_PUBLIC_ENTER_BASKET`) and run a real **LI.FI `executeRoute`** entry from a funded Ethereum/Base wallet; record the tx hashes.
+- ⚠️ **LI.FI amount tuning — required before the live entry.** `buildEnterQuote` currently passes equal source/destination amounts; bridge + swap fees mean the destination arrives with slightly **less USDC.e** than the fixed `EnterBasket` call demands, which would revert. Before a live run, set the basket amount below the guaranteed-arrival floor or switch to LI.FI exact-output (`toAmount`) semantics (confirm against a live `get-quote-with-calls`). The 90s demo uses a **pre-funded "already-bridged" Polygon wallet**, so this never blocks the live beat.
 
 ## Recorded tx hashes (fill at the booth)
 
