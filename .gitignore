@@ -1,0 +1,23 @@
+# deps
+node_modules/
+app/node_modules/
+
+# secrets / env
+.env
+.env.local
+.env.*.local
+
+# next
+app/.next/
+app/out/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# misc
+*.log
+.DS_Store
+coverage/
