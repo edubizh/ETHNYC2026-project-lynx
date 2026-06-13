@@ -24,6 +24,8 @@ interface INegRiskAdapter {
     function getPositionId(bytes32 questionId, bool outcome) external view returns (uint256);
     // True once a market is resolved/determined — used to fail fast.
     function getDetermined(bytes32 marketId) external view returns (bool);
+    // The conditionId a questionId belongs to — used to reject mismatched (conditionId, questionId) pairs.
+    function getConditionId(bytes32 questionId) external view returns (bytes32);
 }
 
 /// @title EnterBasket
@@ -58,6 +60,9 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
     {
         require(recipient != address(0), "recipient");
         require(amount > 0, "amount");
+        // Guard: questionId MUST belong to conditionId. Otherwise splitPosition(conditionId) mints a real
+        // set the contract never reads back (positionIds derive from questionId) -> tokens would strand.
+        require(adapter.getConditionId(questionId) == conditionId, "qid/cid mismatch");
         // Fail fast on a resolved market (clean revert, no funds stranded).
         require(!adapter.getDetermined(_marketId(questionId)), "market resolved");
 
@@ -80,6 +85,8 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
         // Forward the full NEUTRAL set to the recipient — keep nothing.
         uint256 yesBal = ctf.balanceOf(address(this), yesId);
         uint256 noBal = ctf.balanceOf(address(this), noId);
+        // Defense-in-depth: the split must have minted the set we're about to forward (never strand).
+        require(yesBal > 0 && noBal > 0, "no outcome minted");
         ctf.safeTransferFrom(address(this), recipient, yesId, yesBal, "");
         ctf.safeTransferFrom(address(this), recipient, noId, noBal, "");
 
@@ -96,6 +103,7 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
         address router,
         address spender,
         address assetOut,
+        uint256 minAmountOut,
         bytes calldata swapData
     ) external nonReentrant {
         require(recipient != address(0), "recipient");
@@ -103,7 +111,7 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
         require(usdce.transferFrom(msg.sender, address(this), amount), "transferFrom");
 
         // Exact-amount approval to the spender (router or Permit2); no persistent allowance.
-        usdce.approve(spender, amount);
+        require(usdce.approve(spender, amount), "approve");
         (bool ok,) = router.call(swapData);
         if (!ok) {
             usdce.approve(spender, 0);
@@ -115,6 +123,8 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
 
         // Sweep the swap output (non-custodial) and any unspent USDC.e back to the recipient.
         uint256 outBal = IERC20(assetOut).balanceOf(address(this));
+        // Slippage floor: a no-op / under-delivering route reverts the whole tx (funds untouched).
+        require(outBal >= minAmountOut, "slippage");
         if (outBal > 0) require(IERC20(assetOut).transfer(recipient, outBal), "sweep");
         uint256 dust = usdce.balanceOf(address(this));
         if (dust > 0) require(usdce.transfer(recipient, dust), "dust");

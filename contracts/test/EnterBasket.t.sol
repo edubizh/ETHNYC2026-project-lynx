@@ -82,6 +82,19 @@ contract EnterBasketTest is Test {
         vm.stopPrank();
     }
 
+    /// A mismatched (conditionId, questionId) pair must revert fast — never strand the minted set.
+    function test_enterPredictionLeg_revertsOnMismatchedQuestionId() public {
+        // Anthropic's questionId paired with the OpenAI conditionId -> getConditionId != conditionId.
+        bytes32 wrongQuestionId = bytes32(0x3dcd0f5c7c6df89336a87be866327c862646e18b5deee05f31c250451b3a2901);
+        vm.startPrank(user);
+        IERC20(USDCE).approve(address(basket), 10e6);
+        vm.expectRevert(bytes("qid/cid mismatch"));
+        basket.enterPredictionLeg(conditionId, wrongQuestionId, 10e6, user);
+        vm.stopPrank();
+        // No funds pulled on a fast revert.
+        assertEq(IERC20(USDCE).balanceOf(address(basket)), 0, "no USDC.e pulled");
+    }
+
     /// Asset leg mechanics against a MockRouter: pull USDC.e, run the route, sweep output to recipient.
     function test_assetLeg_swapsAndSweepsToRecipient() public {
         MockERC20 assetOut = new MockERC20();
@@ -95,7 +108,7 @@ contract EnterBasketTest is Test {
 
         vm.startPrank(user);
         IERC20(USDCE).approve(address(basket), amountIn);
-        basket.enterAssetLeg(amountIn, user, address(router), address(router), address(assetOut), swapData);
+        basket.enterAssetLeg(amountIn, user, address(router), address(router), address(assetOut), amountOut, swapData);
         vm.stopPrank();
 
         assertEq(assetOut.balanceOf(user), amountOut, "recipient asset out");
@@ -113,7 +126,7 @@ contract EnterBasketTest is Test {
         vm.startPrank(user);
         IERC20(USDCE).approve(address(basket), amountIn);
         uint256 before = IERC20(USDCE).balanceOf(user);
-        basket.enterAssetLeg(amountIn, user, address(router), address(router), address(assetOut), hex"deadbeef");
+        basket.enterAssetLeg(amountIn, user, address(router), address(router), address(assetOut), 0, hex"deadbeef");
         vm.stopPrank();
 
         assertEq(IERC20(USDCE).balanceOf(user), before, "USDC.e refunded to recipient");
