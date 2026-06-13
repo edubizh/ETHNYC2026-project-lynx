@@ -4,9 +4,8 @@ import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("adapters", () => {
-  it("parses YES odds from a Gamma market (outcomePrices is a STRINGIFIED JSON array)", async () => {
-    // Real Gamma shape: outcomes + outcomePrices are BOTH JSON-encoded strings, not arrays.
+describe("Polymarket Gamma adapter", () => {
+  it("parses YES odds (outcomePrices is a STRINGIFIED JSON array)", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ outcomes: '["Yes","No"]', outcomePrices: '["0.51","0.49"]' }),
@@ -26,21 +25,42 @@ describe("adapters", () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503 }) as any;
     await expect(fetchBeliefProb("608368")).rejects.toThrow(/Gamma 503/);
   });
+});
 
-  it("parses a USD price from a Uniswap /quote response (q.quote is a STRING amount; needs a swapper)", async () => {
-    // Real shape: q.quote is a decimal-string token amount (USDC, 6dp); response carries a `swapper`.
+describe("Uniswap /quote price oracle", () => {
+  it("parses the USD price from the VERIFIED nested shape (quote.output.amount + quote.swapper)", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ quote: "58000000", swapper: "0x0000000000000000000000000000000000000001" }),
+      json: async () => ({
+        routing: "CLASSIC",
+        quote: { output: { amount: "58000000", token: "0xUSDC" }, swapper: "0x0000000000000000000000000000000000000001" },
+        permitData: null,
+      }),
     }) as any;
     expect(await fetchAssetPrice("0xToken")).toBeCloseTo(58, 6); // 58000000 / 1e6 -> 58 USDC
   });
 
-  it("rejects a Uniswap /quote missing the swapper field", async () => {
+  it("tolerates a flat { quote: string, swapper } response shape", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ quote: "58000000" }),
+      json: async () => ({ quote: "58000000", swapper: "0x0000000000000000000000000000000000000001" }),
+    }) as any;
+    expect(await fetchAssetPrice("0xToken")).toBeCloseTo(58, 6);
+  });
+
+  it("rejects a /quote missing the swapper field", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ quote: { output: { amount: "58000000" } } }),
     }) as any;
     await expect(fetchAssetPrice("0xToken")).rejects.toThrow(/missing `swapper`/);
+  });
+
+  it("rejects a /quote missing the output amount", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ quote: { swapper: "0x0000000000000000000000000000000000000001" } }),
+    }) as any;
+    await expect(fetchAssetPrice("0xToken")).rejects.toThrow(/missing output amount/);
   });
 });

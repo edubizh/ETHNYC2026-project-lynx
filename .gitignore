@@ -8,8 +8,11 @@ app/node_modules/
 .env.*.local
 
 # next
+.next/
+out/
 app/.next/
 app/out/
+*.tsbuildinfo
 
 # foundry
 contracts/out/
