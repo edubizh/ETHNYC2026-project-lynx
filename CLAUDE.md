@@ -27,5 +27,3 @@ Design **locked & approved** (2026-06-13). Architecture = **Approach A** (real P
 ## Stack (planned)
 
 Next.js + React + wagmi/viem · LI.FI SDK + Widget · Uniswap Trading API + Universal Router + sdk-core · Circle Wallets/Paymaster + CCTP/Gateway + USYC · Solidity + Foundry for the `EnterBasket` executor · Arc Testnet (chain `5042002`, RPC `https://rpc.testnet.arc.network`).
-
-.
