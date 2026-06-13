@@ -132,10 +132,12 @@ const cover = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" wid
   <ellipse cx="196" cy="180" rx="250" ry="195" fill="url(#glow)"/>
   <g transform="translate(44,22) scale(0.585)">${MARK()}
   </g>
-  <text x="344" y="198" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
-        font-size="98" font-weight="800" letter-spacing="3" fill="url(#word)">LYNX</text>
-  <text x="470" y="238" text-anchor="middle" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
-        font-size="15" font-weight="600" letter-spacing="4" fill="#878D98">TRADITIONAL&#160;PREDICTIONS</text>
+  <text x="344" y="198" textLength="264" lengthAdjust="spacing" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="98" font-weight="800" fill="url(#word)">LYNX</text>
+  <text x="344" y="233" textLength="264" lengthAdjust="spacing" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="17" font-weight="600"><tspan fill="#F4F6F9">TRA</tspan><tspan fill="#646A73">DIT</tspan><tspan fill="#F4F6F9">ION</tspan><tspan fill="#646A73">AL</tspan></text>
+  <text x="344" y="258" textLength="264" lengthAdjust="spacing" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="17" font-weight="600"><tspan fill="#646A73">PRE</tspan><tspan fill="#F4F6F9">DI</tspan><tspan fill="#646A73">CTIONS</tspan></text>
 </svg>
 `;
 writeFileSync(new URL("./cover-a.svg", import.meta.url), cover);
