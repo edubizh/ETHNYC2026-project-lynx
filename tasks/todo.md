@@ -17,21 +17,33 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - [ ] (USER) Live LI.FI executeRoute real tx from a funded ETH/Base wallet
 → I build all these code paths + document exactly what to run.
 
-## Build (docs/05, TDD)
-- [ ] Task 0: root tooling (vitest+viem+ts) + `lib/config.ts` + `.env.example`
-- [ ] Task 1: basket registry (real questionIds/gammaIds pinned) + test
-- [ ] Task 2: divergence engine (AI Sentiment Gap) + test
-- [ ] Task 3: Polymarket + Uniswap adapters + test
-- [ ] Task 4: dashboard service + test
-- [ ] Task 5: Next.js app scaffold + theme dashboard + DivergencePanel
-- [ ] Task 6: `EnterBasket.sol` + Foundry fork test (Tenderly RPC) — recipient holds YES+NO, contract holds zero
-- [ ] Task 6b: standalone Uniswap prize `/swap` code + script (USER runs live)
-- [ ] Task 7: LI.FI `getContractCallsQuote` → executeRoute + EnterButton
-- [ ] Task 8: Arc account layer (passkey + USDC balance + NAV) code
-- [ ] Task 9: README + architecture diagram + demo script
+## Build (docs/05, TDD) — ALL DONE + committed + pushed to origin
+- [x] Task 0: root tooling (vitest+viem+ts) + `lib/config.ts` + `.env.example`
+- [x] Task 1: basket registry (real questionIds/gammaIds/clobTokenIds pinned) + test
+- [x] Task 2: divergence engine (AI Sentiment Gap) + test
+- [x] Task 3: Polymarket + Uniswap adapters + test
+- [x] Task 4: dashboard service + test (+ equities adapter + resilient buildDashboard)
+- [x] Task 5: Next.js app (root App Router) + theme dashboard + DivergencePanel/AnalystBand/BasketTable
+- [x] Task 6: `EnterBasket.sol` + Foundry fork test — recipient holds YES+NO, contract holds zero (6/6 green)
+- [x] Task 6b: standalone Uniswap prize `/swap` code + script (USER runs live)
+- [x] Task 7: LI.FI `getContractCallsQuote` → convertQuoteToRoute → executeRoute + EnterButton
+- [x] Task 8: Arc account layer (Circle passkey + USDC balance + NAV) code
+- [x] Task 9: README + architecture diagram + demo script
 
-## Verify before done
-- [ ] All vitest unit tests green
-- [ ] Foundry fork test green (recipient holds both outcome tokens; contract retains nothing)
-- [ ] No `REPLACE_*` / placeholder logic remains
-- [ ] Honest README on what is live-verified vs. needs-keys
+## Post-build: 2-engine adversarial review (Claude + Codex) → fixes applied
+- [x] contract: reject mismatched conditionId/questionId (fund-stranding) + asset-leg minAmountOut floor
+- [x] adapters: fetch timeouts + strict YES detection
+- [x] integration: LI.FI per-call config + EnterButton chain detection + Permit2 primaryType from API
+- [x] env/docs: NEXT_PUBLIC_CIRCLE_* var names (was a dead-Arc-demo bug) + LI.FI amount caveat elevated
+
+## Verify before done — DONE
+- [x] All vitest unit tests green (23/23)
+- [x] Foundry fork test green (6/6; recipient holds both outcome tokens; contract retains nothing)
+- [x] No `REPLACE_*` / placeholder logic remains (real on-chain-verified values)
+- [x] `tsc` clean + `next build` green (4 routes)
+- [x] Honest README on what is live-verified vs. needs-keys
+
+## Still needs a human + secrets (org policy forbids me to hold keys)
+- [ ] (USER) Uniswap API key → run `scripts/runPrizeSwap.ts` → record $7k tx hash + Developer Feedback Form
+- [ ] (USER) Arc passkey + real USDC-gas Paymaster tx (browser WebAuthn)
+- [ ] (USER) Deploy EnterBasket (set NEXT_PUBLIC_ENTER_BASKET) + live LI.FI executeRoute; tune the amount/fee floor first
