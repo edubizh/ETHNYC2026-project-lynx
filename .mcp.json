@@ -1,0 +1,35 @@
+{
+  "_comment": "Active project MCP servers for Project-Lynx (verified 2026-06-13). Secrets are NOT stored here — they expand from your shell env via ${VAR}. Community stdio servers (context7/polymarket/foundry) auto-run via npx at startup; polymarket needs the @jsr registry mapping in .npmrc; foundry needs Foundry installed (foundryup).",
+  "_risk_notes": {
+    "circle": "Official Circle remote HTTP endpoint. No local code execution. Codegen/SDK-reference only — does not sign or move funds.",
+    "lifi": "Official LI.FI remote HTTP endpoint. No local code execution. Read-only (quotes/status/chains) — does not assemble/sign EnterBasket.",
+    "context7": "Community npm (Upstash, official publisher). Runs `npx @upstash/context7-mcp` at startup. Up-to-date SDK docs lookup.",
+    "polymarket": "Community npm (@iqai). Runs at startup. READ-ONLY: no POLYMARKET_PRIVATE_KEY set, so it cannot trade — odds/market data only.",
+    "foundry": "Community npm (PraneshASP, 'experimental'). Runs at startup. Needs local Foundry on PATH; no PRIVATE_KEY set (build/read only)."
+  },
+  "mcpServers": {
+    "circle": {
+      "type": "http",
+      "url": "https://api.circle.com/v1/codegen/mcp"
+    },
+    "lifi": {
+      "type": "http",
+      "url": "https://mcp.li.quest/mcp"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "polymarket": {
+      "command": "npx",
+      "args": ["-y", "@iqai/mcp-polymarket"],
+      "env": {
+        "POLYGON_RPC_URL": "${POLYGON_RPC:-https://polygon-rpc.com}"
+      }
+    },
+    "foundry": {
+      "command": "npx",
+      "args": ["-y", "@pranesh.asp/foundry-mcp-server"]
+    }
+  }
+}
