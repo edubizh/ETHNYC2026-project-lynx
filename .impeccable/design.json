@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-13",
+  "title": "Design System: Traditional Predictions",
+  "extensions": {
+    "colorMeta": {
+      "amber": {
+        "role": "primary",
+        "displayName": "Amber (Real-Asset Voice)",
+        "canonical": "oklch(0.78 0.13 75)",
+        "tonalRamp": ["oklch(0.30 0.06 75)", "oklch(0.40 0.09 75)", "oklch(0.50 0.11 75)", "oklch(0.60 0.13 75)", "oklch(0.70 0.13 75)", "oklch(0.78 0.13 75)", "oklch(0.87 0.09 75)", "oklch(0.95 0.04 75)"]
+      },
+      "azure": {
+        "role": "secondary",
+        "displayName": "Azure (Belief Voice)",
+        "canonical": "oklch(0.68 0.15 260)",
+        "tonalRamp": ["oklch(0.30 0.07 260)", "oklch(0.40 0.10 260)", "oklch(0.50 0.13 260)", "oklch(0.60 0.15 260)", "oklch(0.68 0.15 260)", "oklch(0.75 0.13 260)", "oklch(0.85 0.08 260)", "oklch(0.94 0.04 260)"]
+      },
+      "signal-green": {
+        "role": "tertiary",
+        "displayName": "Signal Green (Live / Confirmed)",
+        "canonical": "oklch(0.74 0.14 158)",
+        "tonalRamp": ["oklch(0.30 0.06 158)", "oklch(0.40 0.09 158)", "oklch(0.50 0.11 158)", "oklch(0.60 0.13 158)", "oklch(0.74 0.14 158)", "oklch(0.82 0.11 158)", "oklch(0.90 0.07 158)", "oklch(0.96 0.03 158)"]
+      },
+      "signal-red": {
+        "role": "tertiary",
+        "displayName": "Signal Red (Error / Revert)",
+        "canonical": "oklch(0.64 0.18 25)",
+        "tonalRamp": ["oklch(0.30 0.09 25)", "oklch(0.40 0.13 25)", "oklch(0.50 0.16 25)", "oklch(0.64 0.18 25)", "oklch(0.72 0.16 25)", "oklch(0.82 0.11 25)", "oklch(0.90 0.06 25)", "oklch(0.96 0.03 25)"]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Cool Graphite (Surface)",
+        "canonical": "oklch(0.22 0.010 255)",
+        "tonalRamp": ["oklch(0.15 0.008 255)", "oklch(0.22 0.010 255)", "oklch(0.26 0.012 255)", "oklch(0.33 0.012 255)", "oklch(0.45 0.014 255)", "oklch(0.57 0.015 255)", "oklch(0.74 0.013 255)", "oklch(0.97 0.004 255)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles and the single hero statement per surface. Neo-grotesque, tracking floor -0.04em." },
+      "headline": { "displayName": "Headline", "purpose": "Section and panel titles." },
+      "title": { "displayName": "Title", "purpose": "Card titles and sub-section headers." },
+      "body": { "displayName": "Body", "purpose": "Prose and descriptions; measure capped 65-75ch." },
+      "label": { "displayName": "Label", "purpose": "Functional micro-labels: stat keys, table headers, metadata. Never a decorative eyebrow." },
+      "data": { "displayName": "Data (Mono)", "purpose": "Every number: odds, prices, percentiles, gap points, conditionIds, tx hashes. IBM Plex Mono, tabular figures." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 8px 28px rgba(0,0,0,0.45)", "purpose": "The only resting-state-free shadow: dropdowns, popovers, the Enter sheet, modals, tooltips, toasts. Resting cards never use it." },
+      { "name": "focus-ring", "value": "0 0 0 2px #0A0C10, 0 0 0 4px #E0A33C", "purpose": "Keyboard focus-visible on interactive elements: amber ring offset by the page color." }
+    ],
+    "motion": [
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.165, 0.84, 0.44, 1)", "purpose": "Default easing for state transitions. No bounce, no elastic." },
+      { "name": "duration-state", "value": "160ms", "purpose": "Hover / focus / selection state changes." },
+      { "name": "duration-reveal", "value": "220ms", "purpose": "Content reveals (panel open, route step). Upper bound for product motion." },
+      { "name": "live-pulse", "value": "2.4s ease-in-out infinite", "purpose": "Subtle opacity pulse on the live-data dot. Disabled under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "960px" },
+      { "name": "lg", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main affordance on a surface that is not the execute moment. Crisp ink fill.",
+      "html": "<button class=\"ds-btn-primary\">View bucket</button>",
+      "css": ".ds-btn-primary{background:#F4F6F9;color:#0A0C10;font:600 0.875rem/1 'IBM Plex Sans',Helvetica,Arial,sans-serif;border:none;border-radius:6px;padding:11px 18px;cursor:pointer;transition:background .16s cubic-bezier(.165,.84,.44,1),transform .16s cubic-bezier(.165,.84,.44,1)}.ds-btn-primary:hover{background:#A6AFBE}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 2px #0A0C10,0 0 0 4px #E0A33C}.ds-btn-primary:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Enter Button",
+      "kind": "button",
+      "refersTo": "button-enter",
+      "description": "The one Committed moment of brand color, reserved for 'Enter basket' (execute).",
+      "html": "<button class=\"ds-btn-enter\">Enter basket · one signature</button>",
+      "css": ".ds-btn-enter{background:#E0A33C;color:#0A0C10;font:600 0.9375rem/1 'IBM Plex Sans',Helvetica,Arial,sans-serif;border:none;border-radius:6px;padding:13px 22px;cursor:pointer;transition:background .16s cubic-bezier(.165,.84,.44,1),transform .16s cubic-bezier(.165,.84,.44,1)}.ds-btn-enter:hover{background:#C9882A}.ds-btn-enter:active{transform:translateY(1px)}.ds-btn-enter:focus-visible{outline:none;box-shadow:0 0 0 2px #0A0C10,0 0 0 4px #F4F6F9}.ds-btn-enter:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary and tertiary actions; ghost on a hairline.",
+      "html": "<button class=\"ds-btn-secondary\">Sell to go directional</button>",
+      "css": ".ds-btn-secondary{background:transparent;color:#F4F6F9;font:500 0.875rem/1 'IBM Plex Sans',Helvetica,Arial,sans-serif;border:1px solid #2A2F3A;border-radius:6px;padding:10px 17px;cursor:pointer;transition:background .16s cubic-bezier(.165,.84,.44,1),border-color .16s}.ds-btn-secondary:hover{background:#1B1F28;border-color:#3a4150}.ds-btn-secondary:focus-visible{outline:none;box-shadow:0 0 0 2px #0A0C10,0 0 0 4px #E0A33C}.ds-btn-secondary:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Bucket Card",
+      "kind": "card",
+      "refersTo": "bucket-card",
+      "description": "Browse-grid card for one theme bucket. Flat at rest, raises on hover. Shows the two-voice readout and counts.",
+      "html": "<a class=\"ds-bucket-card\" href=\"#\"><div class=\"ds-bucket-head\"><span class=\"ds-bucket-title\">AI</span><span class=\"ds-bucket-status\">Flagship</span></div><p class=\"ds-bucket-thesis\">Belief markets price the AI model race and OpenAI's path to IPO; NVDA is the analyst-banded asset proxy.</p><div class=\"ds-bucket-readout\"><span class=\"ds-belief\">● 51%</span><span class=\"ds-asset\">◆ 59th</span><span class=\"ds-gap\">8 pts</span></div><div class=\"ds-bucket-meta\">2 prediction legs · 1 related security</div></a>",
+      "css": ".ds-bucket-card{display:block;background:#14171E;border:1px solid #2A2F3A;border-radius:10px;padding:20px;text-decoration:none;transition:background .16s cubic-bezier(.165,.84,.44,1),border-color .16s}.ds-bucket-card:hover{background:#1B1F28;border-color:#3a4150}.ds-bucket-card:focus-visible{outline:none;box-shadow:0 0 0 2px #0A0C10,0 0 0 4px #E0A33C}.ds-bucket-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.ds-bucket-title{font:600 1.125rem/1.3 'IBM Plex Sans',Helvetica,Arial,sans-serif;color:#F4F6F9}.ds-bucket-status{font:500 0.75rem/1 'IBM Plex Sans',sans-serif;letter-spacing:.06em;color:#E0A33C}.ds-bucket-thesis{font:400 0.9375rem/1.55 'IBM Plex Sans',Helvetica,Arial,sans-serif;color:#A6AFBE;margin:10px 0 14px;max-width:60ch}.ds-bucket-readout{display:flex;gap:16px;font:500 0.8125rem/1.4 'IBM Plex Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-belief{color:#7AA2F2}.ds-asset{color:#E0A33C}.ds-gap{color:#F4F6F9;margin-left:auto}.ds-bucket-meta{margin-top:12px;font:500 0.75rem/1 'IBM Plex Sans',sans-serif;letter-spacing:.04em;color:#737C8A}"
+    },
+    {
+      "name": "Availability Badge",
+      "kind": "chip",
+      "refersTo": "badge-display-only",
+      "description": "Honest tradeability tag on a security. The display-only/gated variant is mandatory on any security not LIVE-UNISWAP.",
+      "html": "<span class=\"ds-badge ds-badge-gated\">◇ display-only · US-gated</span> <span class=\"ds-badge ds-badge-uni\">◆ live · uniswap</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;gap:5px;font:500 0.75rem/1 'IBM Plex Sans',sans-serif;letter-spacing:.03em;background:#1B1F28;border-radius:999px;padding:3px 9px}.ds-badge-gated{color:#A6AFBE}.ds-badge-uni{color:#E0A33C}"
+    },
+    {
+      "name": "Source Pill",
+      "kind": "chip",
+      "refersTo": "badge-live",
+      "description": "Freshness tag on any value. live (green dot) vs fallback (hollow).",
+      "html": "<span class=\"ds-pill ds-pill-live\"><span class=\"ds-dot\"></span>live</span> <span class=\"ds-pill ds-pill-fallback\">○ fallback</span>",
+      "css": ".ds-pill{display:inline-flex;align-items:center;gap:5px;font:500 0.6875rem/1 'IBM Plex Sans',sans-serif;letter-spacing:.04em;background:#1B1F28;border-radius:999px;padding:2px 8px}.ds-pill-live{color:#3FBE85}.ds-pill-fallback{color:#A6AFBE}.ds-dot{width:6px;height:6px;border-radius:999px;background:#3FBE85;animation:ds-pulse 2.4s ease-in-out infinite}@keyframes ds-pulse{0%,100%{opacity:1}50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.ds-dot{animation:none}}"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Theme search on the browse surface. Inset well; amber focus, no glow.",
+      "html": "<input class=\"ds-input-search\" placeholder=\"Search a theme — AI, defense, the Fed…\" />",
+      "css": ".ds-input-search{width:100%;background:#0A0C10;color:#F4F6F9;font:400 0.9375rem/1.4 'IBM Plex Sans',Helvetica,Arial,sans-serif;border:1px solid #2A2F3A;border-radius:6px;padding:10px 12px}.ds-input-search::placeholder{color:#737C8A}.ds-input-search:focus{outline:none;border-color:#E0A33C;box-shadow:0 0 0 2px #0A0C10,0 0 0 4px #E0A33C}"
+    },
+    {
+      "name": "Sentiment Gap Meter",
+      "kind": "custom",
+      "refersTo": "sentiment-gap",
+      "description": "Signature hero. Two markers on one 0-100 track: azure belief dot and amber asset diamond, with the gap segment and value between. Direction by position + label, never hue alone.",
+      "html": "<div class=\"ds-gapmeter\"><div class=\"ds-gapmeter-head\"><span class=\"ds-gapmeter-value\">8 pts</span><span class=\"ds-gapmeter-read\">the asset runs hotter than belief</span></div><div class=\"ds-gapmeter-track\"><div class=\"ds-gapmeter-span\" style=\"left:51%;width:8%\"></div><div class=\"ds-gapmeter-mark ds-mark-asset\" style=\"left:59%\" title=\"NVDA 59th percentile\">◆</div><div class=\"ds-gapmeter-mark ds-mark-belief\" style=\"left:51%\" title=\"belief 51%\">●</div></div><div class=\"ds-gapmeter-legend\"><span class=\"ds-belief\">● belief 51%</span><span class=\"ds-asset\">◆ NVDA 59th pct of analyst band</span></div></div>",
+      "css": ".ds-gapmeter{background:#14171E;border:1px solid #2A2F3A;border-radius:10px;padding:20px}.ds-gapmeter-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}.ds-gapmeter-value{font:600 1.75rem/1 'IBM Plex Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:#F4F6F9}.ds-gapmeter-read{font:400 0.875rem/1.4 'IBM Plex Sans',Helvetica,Arial,sans-serif;color:#A6AFBE}.ds-gapmeter-track{position:relative;height:8px;background:#1B1F28;border-radius:999px;margin:18px 0}.ds-gapmeter-span{position:absolute;top:0;height:8px;background:linear-gradient(90deg,#7AA2F2,#E0A33C);border-radius:999px;opacity:.55}.ds-gapmeter-mark{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:14px;line-height:1}.ds-mark-belief{color:#7AA2F2}.ds-mark-asset{color:#E0A33C}.ds-gapmeter-legend{display:flex;gap:18px;font:500 0.8125rem/1.4 'IBM Plex Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-belief{color:#7AA2F2}.ds-asset{color:#E0A33C}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Research Terminal",
+    "overview": "Traditional Predictions looks like the screen of a great research desk — graphite, precise, every number sourced — but legible enough that someone who has only ever bought an index fund can read it like a one-page fact sheet. It borrows the gravitas of a Bloomberg terminal and refines it: more whitespace where a newcomer needs to breathe, one confident accent instead of a wall of color, type set with care. The whole product is one relationship: belief markets crossed with the real equities of the same narrative. The palette encodes that literally — amber is the traditional, real-asset side; azure is the belief side; the gap between them is the product.",
+    "keyCharacteristics": [
+      "Dark graphite surface, cool-neutral, never pure black.",
+      "Tabular monospace for every number; clean neo-grotesque for every word.",
+      "Two-color argument (amber = real asset, azure = belief), graphite for all else.",
+      "Flat by default — depth from tonal steps and hairlines, not shadow.",
+      "Evidence on the surface: source/freshness tags, on-chain hashes, the analyst band drawn in place.",
+      "Legible in five seconds; dense and drill-able one layer down."
+    ],
+    "rules": [
+      { "name": "The Two-Voice Rule", "body": "The surface speaks in exactly two saturated voices: amber (real asset) and azure (belief). A third saturated decoration color is deleted. Green and red are state, not voices.", "section": "colors" },
+      { "name": "The Hue-Plus Rule", "body": "Belief and asset are never distinguished by color alone — each is also carried by glyph (● belief / ◆ asset), label, and position, so meaning survives colorblindness and grayscale.", "section": "colors" },
+      { "name": "The Numbers-Are-Mono Rule", "body": "Every quantity the user might compare, copy, or verify is set in IBM Plex Mono with tabular figures. Numbers never render in the prose sans.", "section": "typography" },
+      { "name": "The No-Eyebrow Rule", "body": "Uppercase tracked text is allowed only as a functional micro-label. It is forbidden as a decorative kicker above section headings.", "section": "typography" },
+      { "name": "The Flat Terminal Rule", "body": "Surfaces are flat at rest; depth comes from tonal steps and hairlines. Shadow is a property of floating, and only overlays float.", "section": "elevation" },
+      { "name": "The No Ghost-Card Rule", "body": "Never pair a 1px border with a soft wide drop shadow on the same resting element. A hairline defines a plane; a shadow lifts an overlay.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the surface dark graphite (#0A0C10 page, #14171E panels), cool-neutral, never pure black.",
+      "Do set every number in IBM Plex Mono with tabular figures so columns align and values are copy/verify-able.",
+      "Do restrict saturated color to the two voices — amber (real asset) and azure (belief) — plus green/red for state.",
+      "Do carry belief vs. asset with glyph + label + position, not hue alone.",
+      "Do show the source and freshness of every value (live / fallback) and a real on-chain tx/hash where one exists.",
+      "Do render an honest 'display-only · gated' badge on any tokenized security that isn't tradeable on Uniswap.",
+      "Do keep surfaces flat at rest; build depth from tonal steps + hairlines.",
+      "Do use radii of 4-10px on cards/inputs; pills only for tags."
+    ],
+    "donts": [
+      "Don't go crypto-degen: no neon-on-black, no glow/bloom, no casino energy, no hype color.",
+      "Don't look like generic AI SaaS: no cream/sand backgrounds, no gradient text, no uppercase eyebrow kicker above every section, no grid of identical icon cards.",
+      "Don't look like a sterile legacy bank: no flat gray, no corporate-dead layouts with no point of view.",
+      "Don't imply a tokenized security is buyable on Uniswap — they are display-only / US-gated; show the badge, never a one-click 'Buy NVDA.'",
+      "Don't ever label the analyst-band percentile an 'implied probability.'",
+      "Don't pair a 1px border with a soft drop shadow on a resting element; no resting card shadows.",
+      "Don't over-round (no 24px+ radii on cards/inputs), and don't use side-stripe border-left accents.",
+      "Don't add gamified-Robinhood confetti, oversized green/red dopamine, or 'investing is a game' flourishes.",
+      "Don't animate decoratively; motion conveys state only (150-250ms, ease-out), with a prefers-reduced-motion alternative."
+    ]
+  }
+}
