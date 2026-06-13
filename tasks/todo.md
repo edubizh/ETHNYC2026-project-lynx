@@ -43,7 +43,14 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - [x] `tsc` clean + `next build` green (4 routes)
 - [x] Honest README on what is live-verified vs. needs-keys
 
-## Still needs a human + secrets (org policy forbids me to hold keys)
-- [ ] (USER) Uniswap API key → run `scripts/runPrizeSwap.ts` → record $7k tx hash + Developer Feedback Form
-- [ ] (USER) Arc passkey + real USDC-gas Paymaster tx (browser WebAuthn)
-- [ ] (USER) Deploy EnterBasket (set NEXT_PUBLIC_ENTER_BASKET) + live LI.FI executeRoute; tune the amount/fee floor first
+## LIVE (executed on-chain / in-app)
+- [x] EnterBasket deployed to Polygon mainnet: `0x5c36C4F32C437420b8c8E1018E64C1496F69E1d0` (tx `0xb71430…cde4b7`); wiring verified on-chain
+- [x] Uniswap $7k swap (USDC→wstETH): tx `0x23a05c…27cbde` (status 1, Universal Router, wstETH delivered)
+- [x] Arc passkey smart account creates in-app on Arc Testnet + unified NAV renders
+- [x] Dashboard pulls ALL-LIVE data (Gamma odds + Finnhub NVDA + Uniswap /quote wstETH) — AI Sentiment Gap live
+
+## Remaining (submission polish only)
+- [ ] (USER) Submit the Uniswap Developer Feedback Form with swap hash `0x23a05c…27cbde` (required for $7k)
+- [ ] (USER, optional) Fund Arc smart account from faucet.circle.com + one USDC-gas Paymaster userOp
+- [ ] (USER) LI.FI live entry — tune the amount/fee floor first (demo uses pre-funded Polygon wallet fallback)
+- [ ] (USER) Record 90s demo video (docs/demo-script.md), naming each sponsor tool

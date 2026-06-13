@@ -36,19 +36,24 @@ UNISWAP_API_KEY=… POLYGON_RPC=… PRIVATE_KEY=0x… npx tsx scripts/runPrizeSw
 
 ## Verification status (honest)
 
-**Verified live / tested this build:**
+**LIVE on-chain / in-app (this build, all three sponsors):**
+- ✅ **Uniswap $7k** — real USDC→wstETH swap via the Trading API on Polygon (status 1, Universal Router), tx below. `/quote` is also the **live** dashboard price oracle (wstETH).
+- ✅ **EnterBasket deployed** to Polygon mainnet (address + tx below), on-chain-verified wiring (`adapter()` = NegRiskAdapter, `usdce()` = USDC.e).
+- ✅ **Arc** — Circle Modular Wallet **passkey** smart account creates in-app on Arc Testnet, with **unified NAV** (Arc USDC + Polygon basket value) rendering.
+- ✅ **Dashboard pulls all-live data:** Polymarket Gamma odds + Finnhub NVDA price + Uniswap `/quote` → the AI Sentiment Gap (every value tagged `live`).
+
+**Verified / tested:**
 - ✅ `NegRiskAdapter.col() == USDC.e`; both basket markets unresolved (`getDetermined == false`) — on-chain (blockscout).
 - ✅ `getPositionId(questionId, true/false)` **== Gamma clobTokenIds to full 256-bit precision** (cast) — the #1 demo-killer.
-- ✅ **Foundry fork test (5/5) against the real NegRiskAdapter on a Polygon fork**: recipient holds BOTH YES+NO outcome tokens AND `EnterBasket` retains ZERO wcol/USDC.e/tokens. Caught a real bug vs. the plan: `EnterBasket` must inherit `ERC1155Holder` or the adapter's `safeBatchTransferFrom` reverts.
+- ✅ **Foundry fork test (6/6) against the real NegRiskAdapter on a Polygon fork**: recipient holds BOTH YES+NO outcome tokens AND `EnterBasket` retains ZERO wcol/USDC.e/tokens; mismatched `(conditionId, questionId)` reverts fast. Caught a real bug vs. the plan: `EnterBasket` must inherit `ERC1155Holder` or the adapter's `safeBatchTransferFrom` reverts.
 - ✅ Live LI.FI connections: Ethereum/Base → Polygon (native USDC) non-empty; **Arc → Polygon `{connections:[]}`** (dead, as designed).
 - ✅ API shapes pinned against current docs/SDKs (Uniswap Trading API, `@lifi/sdk` v3.x, `@circle-fin/modular-wallets-core@1.0.13`).
 - ✅ `next build` green (4 routes); `tsc` clean; 23 vitest tests green.
 
-**Needs credentials / a funded wallet (code complete, run by a human — org policy forbids holding keys):**
-- ⏳ Register the **Uniswap Trading API key**; execute the standalone `/swap` → record the real Polygon tx hash for the $7k prize + submit the Developer Feedback Form.
-- ⏳ Stand up the **Arc passkey + a real USDC-gas Paymaster tx** (browser WebAuthn).
-- ⏳ **Deploy `EnterBasket`** (set `NEXT_PUBLIC_ENTER_BASKET`) and run a real **LI.FI `executeRoute`** entry from a funded Ethereum/Base wallet; record the tx hashes.
-- ⚠️ **LI.FI amount tuning — required before the live entry.** `buildEnterQuote` currently passes equal source/destination amounts; bridge + swap fees mean the destination arrives with slightly **less USDC.e** than the fixed `EnterBasket` call demands, which would revert. Before a live run, set the basket amount below the guaranteed-arrival floor or switch to LI.FI exact-output (`toAmount`) semantics (confirm against a live `get-quote-with-calls`). The 90s demo uses a **pre-funded "already-bridged" Polygon wallet**, so this never blocks the live beat.
+**Remaining (submission polish):**
+- ⏳ **Submit the Uniswap Developer Feedback Form** with the swap tx hash (required for the $7k prize).
+- ⏳ Optional: fund the Arc smart account from `faucet.circle.com` to show a non-zero USDC balance; do one USDC-gas (Paymaster) userOp.
+- ⚠️ **LI.FI live entry — amount tuning before running.** `buildEnterQuote` passes equal source/destination amounts; bridge + swap fees mean the destination arrives with slightly **less USDC.e** than the fixed `EnterBasket` call demands, which would revert. Set the basket amount below the guaranteed-arrival floor or switch to LI.FI exact-output (`toAmount`) (confirm against a live `get-quote-with-calls`). The 90s demo uses a **pre-funded "already-bridged" Polygon wallet**, so this never blocks the live beat.
 
 ## Recorded tx hashes (real, on-chain)
 
