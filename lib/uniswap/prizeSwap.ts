@@ -1,19 +1,31 @@
 import { config } from "@/lib/config";
-import { createWalletClient, http, type Account, type Address, type Hex } from "viem";
+import { createWalletClient, createPublicClient, http, type Account, type Address, type Hex } from "viem";
 import { polygon } from "viem/chains";
 
-type SwapTx = { to: Address; data: Hex; value?: string };
+type Tx = { to: Address; data: Hex; value?: string };
+
+const headers = () => ({ "Content-Type": "application/json", "x-api-key": config.uniswap.key() });
+
+/** POST /check_approval — returns an approval tx if USDC isn't yet approved to Permit2 / the router. */
+async function fetchApprovalTx(swapper: string, amountUsdc: string): Promise<Tx | null> {
+  const res = await fetch(`${config.uniswap.base()}/check_approval`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ walletAddress: swapper, token: config.addrs.usdcNative(), amount: amountUsdc, chainId: 137 }),
+  });
+  if (!res.ok) throw new Error(`Uniswap /check_approval ${res.status}`);
+  const { approval } = await res.json();
+  return (approval as Tx) ?? null;
+}
 
 /** Build the standalone Uniswap PRIZE swap (USDC → wstETH) via the Trading API /quote → /swap.
  *  This is the $7k artifact — a SEPARATE standalone swap, NOT the basket's asset leg (Sushi-routed).
  *  VERIFIED shapes: /quote returns { routing, quote, permitData }; /swap returns { swap: { to, data, value } }.
- *  If permitData is present it is EIP-712 signed and returned to /swap with the signature. */
-export async function buildPrizeSwap(account: Account, amountUsdc = "1000000"): Promise<SwapTx> {
-  const headers = { "Content-Type": "application/json", "x-api-key": config.uniswap.key() };
-
+ *  If permitData is present it is EIP-712 signed (primaryType from the API) and returned to /swap. */
+export async function buildPrizeSwap(account: Account, amountUsdc = "1000000"): Promise<Tx> {
   const quoteRes = await fetch(`${config.uniswap.base()}/quote`, {
     method: "POST",
-    headers,
+    headers: headers(),
     body: JSON.stringify({
       type: "EXACT_INPUT",
       tokenIn: config.addrs.usdcNative(),
@@ -43,18 +55,32 @@ export async function buildPrizeSwap(account: Account, amountUsdc = "1000000"): 
 
   const swapRes = await fetch(`${config.uniswap.base()}/swap`, {
     method: "POST",
-    headers: { ...headers, "x-universal-router-version": "2.0" },
+    headers: { ...headers(), "x-universal-router-version": "2.0" },
     body: JSON.stringify(body),
   });
   if (!swapRes.ok) throw new Error(`Uniswap /swap ${swapRes.status}`);
   const { swap } = await swapRes.json();
-  return swap as SwapTx;
+  return swap as Tx;
 }
 
 /** Execute the standalone Uniswap prize swap on Polygon mainnet; returns the tx hash (the $7k artifact).
- *  Prerequisite: USDC approved to Permit2 / Universal Router (use the /check_approval endpoint first). */
+ *  Full flow: /check_approval (send + await approval if needed) -> /quote -> /swap -> broadcast. */
 export async function runPrizeSwap(account: Account, amountUsdc = "1000000"): Promise<Hex> {
-  const swap = await buildPrizeSwap(account, amountUsdc);
   const wallet = createWalletClient({ account, chain: polygon, transport: http(config.polygonRpc()) });
+  const pub = createPublicClient({ chain: polygon, transport: http(config.polygonRpc()) });
+
+  // 1) Ensure USDC is approved to Permit2 / the Universal Router (else the /swap calldata reverts on-chain).
+  const approval = await fetchApprovalTx(account.address, amountUsdc);
+  if (approval) {
+    const approvalHash = await wallet.sendTransaction({
+      to: approval.to,
+      data: approval.data,
+      value: BigInt(approval.value ?? 0),
+    });
+    await pub.waitForTransactionReceipt({ hash: approvalHash });
+  }
+
+  // 2) Build the swap (/quote -> sign permit if any -> /swap) and 3) broadcast it.
+  const swap = await buildPrizeSwap(account, amountUsdc);
   return wallet.sendTransaction({ to: swap.to, data: swap.data, value: BigInt(swap.value ?? 0) });
 }
