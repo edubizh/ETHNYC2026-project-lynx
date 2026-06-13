@@ -8,7 +8,12 @@ const TIMEOUT_MS = 6000;
  *  VERIFIED shape (2026-06-13): the response is `{ routing, quote, permitData }` where `quote` is an
  *  OBJECT — the output amount is `quote.output.amount` (string, USDC 6dp) and the swapper is nested at
  *  `quote.swapper`. We stay tolerant of a flat `{ quote: "<amount>", swapper }` shape as a fallback. */
-export async function fetchAssetPrice(token: string, swapper: string = ORACLE_SWAPPER): Promise<number> {
+export async function fetchAssetPrice(
+  token: string,
+  opts: { swapper?: string; decimals?: number } = {},
+): Promise<number> {
+  const swapper = opts.swapper ?? ORACLE_SWAPPER;
+  const amount = (10n ** BigInt(opts.decimals ?? 18)).toString(); // one whole unit of the input token (WBTC=8dp!)
   const res = await fetch(`${config.uniswap.base()}/quote`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": config.uniswap.key() },
@@ -16,7 +21,7 @@ export async function fetchAssetPrice(token: string, swapper: string = ORACLE_SW
       type: "EXACT_INPUT",
       tokenIn: token,
       tokenOut: config.addrs.usdcNative(),
-      amount: "1000000000000000000", // 1 unit (18dp asset)
+      amount,
       tokenInChainId: 137,
       tokenOutChainId: 137,
       swapper,

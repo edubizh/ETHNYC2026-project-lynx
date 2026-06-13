@@ -38,4 +38,32 @@ describe("buildDashboard", () => {
     expect(d.hero.equityPrice).toBe(165);
     expect(d.legs.find((l) => l.kind === "asset")?.priceSource).toBe("fallback");
   });
+
+  it("exposes the bucket's securities with availability tags + per-source prices", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155);
+
+    const d = await buildDashboard("ai");
+    const nvda = d.securities.find((s) => s.ticker === "NVDA");
+    const wsteth = d.securities.find((s) => s.ticker === "wstETH");
+    expect(nvda?.availability).toBe("DISPLAY-ONLY");
+    expect(nvda?.priceUsd).toBe(155); // priced via the equities feed
+    expect(wsteth?.availability).toBe("LIVE-UNISWAP");
+    expect(wsteth?.priceUsd).toBe(4300); // priced via Uniswap /quote
+  });
+
+  it("prices a crypto bucket's headline via Uniswap /quote, not the equities feed", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);
+    vi.spyOn(eq, "fetchEquityPrice").mockRejectedValue(new Error("no equities feed for WBTC"));
+
+    const d = await buildDashboard("crypto");
+    expect(d.hero.assetSymbol).toBe("WBTC");
+    expect(d.hero.equitySource).toBe("live"); // came from Uniswap despite the equities feed failing
+    expect(d.hero.equityPrice).toBe(64000);
+    const wbtc = d.securities.find((s) => s.ticker === "WBTC");
+    expect(wbtc?.availability).toBe("LIVE-UNISWAP");
+    expect(wbtc?.priceSource).toBe("live");
+  });
 });

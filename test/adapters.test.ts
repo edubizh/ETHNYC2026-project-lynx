@@ -63,4 +63,19 @@ describe("Uniswap /quote price oracle", () => {
     }) as any;
     await expect(fetchAssetPrice("0xToken")).rejects.toThrow(/missing output amount/);
   });
+
+  it("sizes the /quote input to ONE unit of the token by its decimals (defaults to 18)", async () => {
+    const bodies: Array<{ amount: string }> = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: { body: string }) => {
+      bodies.push(JSON.parse(init.body));
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ quote: "64000000", swapper: "0x0000000000000000000000000000000000000001" }),
+      });
+    }) as any;
+    await fetchAssetPrice("0xWBTC", { decimals: 8 });
+    await fetchAssetPrice("0xWETH");
+    expect(bodies[0].amount).toBe("100000000"); // 1e8 = one WBTC (8dp), NOT 1e18 (would quote ~10B WBTC)
+    expect(bodies[1].amount).toBe("1000000000000000000"); // default 18dp = one unit
+  });
 });

@@ -13,7 +13,14 @@ export type PredictionLeg = {
   seedBeliefProb: number;
   weight: number;
 };
-export type AssetLeg = { kind: "asset"; label: string; token: `0x${string}`; weight: number };
+export type AssetLeg = {
+  kind: "asset";
+  label: string;
+  token: `0x${string}`;
+  weight: number;
+  /** Token decimals for Uniswap /quote sizing (default 18; WBTC = 8). */
+  decimals?: number;
+};
 export type Leg = PredictionLeg | AssetLeg;
 
 /** Whether a security is buyable on our EVM/Uniswap rails, or shown as the (off-rail) analyst anchor.
@@ -29,6 +36,8 @@ export type Security = {
   name: string;
   /** On-chain ERC-20 (Polygon) for LIVE-UNISWAP securities — used to price via Uniswap /quote. */
   token?: `0x${string}`;
+  /** Token decimals for Uniswap /quote sizing (default 18; WBTC = 8). */
+  decimals?: number;
   /** Display spot price (equities feed for stocks; Uniswap /quote for on-chain assets). */
   priceUsd?: number;
   /** Published analyst bear/bull band (bear=low, bull=high) — drives the headline security's percentile. */

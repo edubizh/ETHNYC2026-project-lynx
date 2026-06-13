@@ -1,5 +1,5 @@
-import { getTheme } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg } from "@/lib/baskets/types";
+import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/registry";
+import type { PredictionLeg, AssetLeg, Security, Availability } from "@/lib/baskets/types";
 import { fetchBeliefProb } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import { fetchEquityPrice } from "@/lib/adapters/equities";
@@ -50,6 +50,18 @@ async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<[T, S
   }
 }
 
+/** Price one security: LIVE-UNISWAP (with a token) via Uniswap /quote, else via the equities feed.
+ *  Falls back to the seed when the live feed is down; returns no price when neither is available. */
+async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source }> {
+  const viaUniswap = sec.availability === "LIVE-UNISWAP" && !!sec.token;
+  try {
+    const priceUsd = viaUniswap ? await fetchAssetPrice(sec.token!, { decimals: sec.decimals }) : await fetchEquityPrice(sec.ticker);
+    return { priceUsd, priceSource: "live" };
+  } catch {
+    return seed !== undefined ? { priceUsd: seed, priceSource: "fallback" } : {};
+  }
+}
+
 export type LegView = {
   kind: "prediction" | "asset";
   label: string;
@@ -58,6 +70,18 @@ export type LegView = {
   beliefSource?: Source;
   priceUsd?: number;
   priceSource?: Source;
+};
+
+export type SecurityView = {
+  ticker: string;
+  name: string;
+  availability: Availability;
+  priceUsd?: number;
+  priceSource?: Source;
+  /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
+  bandPercentile?: number;
+  chain?: string;
+  note?: string;
 };
 
 export type DashboardView = {
@@ -75,6 +99,8 @@ export type DashboardView = {
     direction: Divergence["direction"];
   };
   legs: LegView[];
+  /** The thematically-related securities (display/anchor + buyable LIVE-UNISWAP assets), with honest badges. */
+  securities: SecurityView[];
 };
 
 /** Assemble the full theme dashboard. Belief odds come from Polymarket Gamma (live), the hero
@@ -93,18 +119,40 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   }
 
   const [assetUsd, priceSource] = await withFallback(
-    () => fetchAssetPrice(assetLeg.token),
+    () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
     t.display.fallback.assetLegPriceUsd,
   );
   const assetView: LegView = { kind: "asset", label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
 
+  // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
+  const headline = getHeadlineSecurity(slug);
+  const securities: SecurityView[] = [];
+  for (const sec of getSecurities(slug)) {
+    const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
+    const { priceUsd, priceSource: src } = await priceSecurity(sec, seed);
+    const bandPercentile =
+      sec.analystBand && priceUsd !== undefined
+        ? assetBandPercentile(priceUsd, sec.analystBand.low, sec.analystBand.high)
+        : undefined;
+    securities.push({
+      ticker: sec.ticker,
+      name: sec.name,
+      availability: sec.availability,
+      priceUsd,
+      priceSource: src,
+      bandPercentile,
+      chain: sec.chain,
+      note: sec.note,
+    });
+  }
+
+  // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile within its analyst band.
   const primary = predViews[0]!;
-  const band = t.display.analystBand;
-  const [equityPrice, equitySource] = await withFallback(
-    () => fetchEquityPrice(t.display.assetSymbol),
-    t.display.fallback.equityPrice,
-  );
-  const pct = assetBandPercentile(equityPrice, band.low, band.high);
+  const hv = securities.find((s) => s.ticker === headline.ticker)!;
+  const band = headline.analystBand ?? t.display.analystBand;
+  const equityPrice = hv.priceUsd ?? t.display.fallback.equityPrice;
+  const equitySource = hv.priceSource ?? "fallback";
+  const pct = hv.bandPercentile ?? assetBandPercentile(equityPrice, band.low, band.high);
   const d = divergence(primary.beliefProb!, pct);
 
   return {
@@ -113,7 +161,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     hero: {
       beliefProb: primary.beliefProb!,
       beliefSource: primary.beliefSource!,
-      assetSymbol: t.display.assetSymbol,
+      assetSymbol: headline.ticker,
       equityPrice,
       equitySource,
       band,
@@ -122,5 +170,6 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
       direction: d.direction,
     },
     legs: [...predViews, assetView],
+    securities,
   };
 }

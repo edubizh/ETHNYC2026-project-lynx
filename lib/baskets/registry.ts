@@ -96,14 +96,14 @@ const THEMES: Record<string, Theme> = {
         seedBeliefProb: 0.165,
         weight: 0.4,
       },
-      { kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", weight: 0.6 },
+      { kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", weight: 0.6, decimals: 8 },
     ],
     display: {
       assetSymbol: "WBTC",
       analystBand: { low: 45000, high: 95000 },
       fallback: { beliefProb: 0.165, equityPrice: 64317, assetLegPriceUsd: 64317 },
       securities: [
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", analystBand: { low: 45000, high: 95000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 45000, high: 95000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable ETH exposure on Uniswap (Polygon)." },
         { ticker: "COIN", name: "Coinbase Global", availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Crypto-beta equity; tradeable for eligible users via xStocks/CEX — no EVM-Uniswap venue, shown as anchor." },
       ],
