@@ -13,8 +13,8 @@ export const T = {
   faintest: "#5C636D",
   asset: "#E8EBEF", // ◆ silver
   belief: "#8A95A6", // ● steel
-  buy: "#E8EBEF", // bright = BUY / bid
-  sell: "#8A95A6", // steel = SELL / ask
+  buy: "#FFFFFF", // white = BUY / YES (per Claude Design "Terminal Feeds")
+  sell: "#8A95A6", // steel = SELL / NO
   mono: "'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace",
   body: "'IBM Plex Sans', system-ui, sans-serif",
   display: "'Inter Tight', system-ui, sans-serif",

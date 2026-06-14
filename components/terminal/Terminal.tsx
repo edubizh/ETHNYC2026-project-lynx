@@ -33,6 +33,12 @@ const toggleBtn: CSSProperties = {
   cursor: "pointer",
 };
 
+// Tape flash-in for new rows + the live status-dot pulse (referenced by feeds/parts.tsx).
+const KEYFRAMES = `
+@keyframes lynxTapeIn{0%{opacity:0;transform:translateY(-6px);background:rgba(232,235,239,0.10);}60%{background:rgba(232,235,239,0.04);}100%{opacity:1;transform:none;background:transparent;}}
+@keyframes lynxLive{0%,100%{opacity:1;}50%{opacity:0.35;}}
+`;
+
 export function Terminal({ feedContext }: { feedContext: FeedContext }) {
   const [config, dispatch] = useReducer(terminalReducer, DEFAULT_CONFIG);
   const [wide, setWide] = useState(false);
@@ -70,6 +76,7 @@ export function Terminal({ feedContext }: { feedContext: FeedContext }) {
 
   return (
     <TerminalDataProvider ctx={feedContext}>
+      <style>{KEYFRAMES}</style>
       <aside style={railStyle("left")}>
         <SideRail side="left" config={config.left} dispatch={dispatch} />
       </aside>
