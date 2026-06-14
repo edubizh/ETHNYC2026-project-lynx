@@ -1,7 +1,7 @@
 import { encodeFunctionData, type Address, type Hex } from "viem";
 import { ADDR } from "@/lib/addresses";
 import { getTheme } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg } from "@/lib/baskets/types";
+import type { AssetLeg } from "@/lib/baskets/types";
 import { buildExactInputSingleData } from "@/lib/uniswap/router";
 
 export const ENTER_PREDICTION_LEG_ABI = [
@@ -79,21 +79,21 @@ export function buildBasketContractCalls(
     let toContractCallData: Hex;
     let toContractGasLimit: string;
     if (leg.kind === "prediction") {
-      const p = leg as PredictionLeg;
+      // `leg` is narrowed to PredictionLeg here by the discriminated union (no cast needed).
       toContractCallData = encodeFunctionData({
         abi: ENTER_PREDICTION_LEG_ABI,
         functionName: "enterPredictionLeg",
-        args: [p.conditionId, p.questionId, amount, recipient],
+        args: [leg.conditionId, leg.questionId, amount, recipient],
       });
       toContractGasLimit = "500000";
     } else {
-      const a = leg as AssetLeg;
-      const minOut = opts?.minOut?.(a, amount) ?? 0n;
-      const swapData = buildExactInputSingleData({ tokenOut: a.token, fee: a.swapFee, amountIn: amount, minOut, recipient: enterBasket });
+      // `leg` is narrowed to AssetLeg here.
+      const minOut = opts?.minOut?.(leg, amount) ?? 0n;
+      const swapData = buildExactInputSingleData({ tokenOut: leg.token, fee: leg.swapFee, amountIn: amount, minOut, recipient: enterBasket });
       toContractCallData = encodeFunctionData({
         abi: ENTER_ASSET_LEG_ABI,
         functionName: "enterAssetLeg",
-        args: [amount, recipient, ADDR.swapRouter02, ADDR.swapRouter02, a.token, minOut, swapData],
+        args: [amount, recipient, ADDR.swapRouter02, ADDR.swapRouter02, leg.token, minOut, swapData],
       });
       toContractGasLimit = "700000";
     }

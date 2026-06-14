@@ -99,7 +99,10 @@ describe("multi-asset on-chain sleeve", () => {
     for (const t of listThemes()) expect(themeWeightsSumToOne(t.slug)).toBe(true);
   });
 
-  it("anti-drift: every asset-leg token is a LIVE-UNISWAP security in the same bucket", () => {
+  // Anti-drift, ONE direction only: every bought asset leg must be a displayed LIVE-UNISWAP security.
+  // The reverse does NOT hold by design — e.g. wstETH is a LIVE-UNISWAP display security (priced via
+  // /quote) but NOT a sleeve leg, because its direct USDC.e pool is empty (Task 0).
+  it("asset legs are a subset of the bucket's LIVE-UNISWAP securities", () => {
     for (const t of listThemes()) {
       const secTokens = new Set(
         getSecurities(t.slug).filter((s) => s.availability === "LIVE-UNISWAP" && s.token).map((s) => s.token!.toLowerCase()),

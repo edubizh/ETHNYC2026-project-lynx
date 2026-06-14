@@ -94,8 +94,8 @@ contract EnterBasket is ReentrancyGuard, ERC1155Holder {
     }
 
     /// @notice Asset leg: pull USDC.e, exact-approve `spender`, execute the off-chain-built `swapData`
-    ///         against `router` (Sushi / Universal Router route), then sweep the `assetOut` output and
-    ///         any USDC.e dust to `recipient`. This is the BASKET asset leg — NOT the Uniswap $7k swap.
+    ///         against `router` (Uniswap V3 SwapRouter02 route — see lib/uniswap/router.ts), then sweep
+    ///         the `assetOut` output and any USDC.e dust to `recipient`. The BASKET asset leg — NOT the $7k swap.
     /// @dev Revert-safe: on a swap failure the approval is reset and USDC.e is refunded to `recipient`.
     function enterAssetLeg(
         uint256 amount,
