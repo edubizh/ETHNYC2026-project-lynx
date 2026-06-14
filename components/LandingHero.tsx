@@ -35,14 +35,15 @@ export function LandingHero() {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  const showVideo = !reduced && !videoFailed;
+  // Render the clip even under reduced-motion (shown as a still); motion is gated below.
+  const showVideo = !videoFailed;
 
   // In-code boomerang: play forward, then ease back in reverse, forever. Lets a plain
   // forward clip ping-pong ("run it back") with no ffmpeg/baked-reverse step. Native
   // negative playbackRate isn't reliable across browsers, so the reverse leg steps
   // currentTime by real elapsed time (frame-rate independent, paced by PLAYBACK_SPEED).
   useEffect(() => {
-    if (!showVideo) return;
+    if (videoFailed) return;
     const v = videoRef.current;
     if (!v) return;
 
@@ -51,6 +52,16 @@ export function LandingHero() {
     v.muted = true;
     v.defaultMuted = true;
     v.playsInline = true;
+
+    // Reduced-motion: hold the first frame as a still, no playback.
+    if (reduced) {
+      try {
+        v.pause();
+        v.currentTime = 0;
+      } catch {}
+      return;
+    }
+
     v.playbackRate = PLAYBACK_SPEED;
     let raf = 0;
     let last = 0;
@@ -82,16 +93,21 @@ export function LandingHero() {
       if (!reversing) v.play().catch(() => {});
     };
 
+    // Some browsers still block muted autoplay until the first interaction — retry then.
+    const resume = () => v.play().catch(() => {});
+    window.addEventListener("pointerdown", resume, { once: true });
+
     v.addEventListener("ended", onEnded);
     if (v.readyState >= 2) start();
     else v.addEventListener("loadeddata", start, { once: true });
 
     return () => {
+      window.removeEventListener("pointerdown", resume);
       v.removeEventListener("ended", onEnded);
       v.removeEventListener("loadeddata", start);
       cancelAnimationFrame(raf);
     };
-  }, [showVideo]);
+  }, [reduced, videoFailed]);
 
   return (
     <section
@@ -173,7 +189,7 @@ export function LandingHero() {
           inset: 0,
           zIndex: 2,
           background:
-            "radial-gradient(ellipse 46% 42% at 50% 52%, rgba(10,11,15,0.72) 0%, rgba(10,11,15,0.34) 46%, transparent 76%), linear-gradient(180deg, rgba(10,11,15,0.55) 0%, transparent 22%, transparent 70%, rgba(10,11,15,0.72) 100%)",
+            "radial-gradient(ellipse 52% 46% at 50% 54%, rgba(10,11,15,0.5) 0%, rgba(10,11,15,0.16) 52%, transparent 78%), linear-gradient(180deg, rgba(10,11,15,0.42) 0%, transparent 16%, transparent 80%, rgba(10,11,15,0.55) 100%)",
         }}
       />
 
@@ -219,6 +235,7 @@ export function LandingHero() {
                 lineHeight: 1.02,
                 fontSize: "clamp(40px, 7vw, 76px)",
                 color: "#fff",
+                textShadow: "0 2px 30px rgba(0,0,0,0.55)",
               }}
             >
               Index funds for
@@ -226,7 +243,7 @@ export function LandingHero() {
               prediction markets
             </h1>
 
-            <p style={{ margin: "22px auto 0", maxWidth: 540, fontSize: 16, lineHeight: 1.55, color: "#aab1bc" }}>
+            <p style={{ margin: "22px auto 0", maxWidth: 540, fontSize: 16, lineHeight: 1.55, color: "#c2c8d2", textShadow: "0 1px 18px rgba(0,0,0,0.55)" }}>
               Belief markets, crossed with the real assets of the same narrative — bought in one signature, into your own
               wallet.
             </p>
