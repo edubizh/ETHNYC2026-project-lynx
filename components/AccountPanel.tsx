@@ -7,10 +7,11 @@ const MONO = "'IBM Plex Mono', monospace";
 const CTA = "linear-gradient(180deg,#F4F6F8,#C4C9D1)";
 
 export function AccountPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { connected, address, usdc, status, connect } = useArc();
+  const { connected, address, usdc, status, connect, sendGaslessUserOp, opStatus, opTxHash } = useArc();
   if (!open) return null;
   const fmt = (n?: number) => (n == null ? "0.00" : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   const short = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "";
+  const busy = opStatus.endsWith("…"); // progress messages end with an ellipsis
 
   return (
     <>
@@ -80,6 +81,26 @@ export function AccountPanel({ open, onClose }: { open: boolean; onClose: () => 
             <span style={{ color: "#E8EBEF", fontSize: 11 }}>◆</span>
             <span style={{ fontSize: 12.5, color: "#AAB1BC" }}>Gas paid in <span style={{ fontFamily: MONO, color: "#FFFFFF" }}>USDC</span> — no native token needed.</span>
           </div>
+
+          {connected && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 9, padding: "15px 16px", background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 9 }}>
+              <span style={{ fontSize: 11, color: "#7A828D" }}>Arc · USDC-gas userOp (paymaster)</span>
+              <button
+                onClick={() => sendGaslessUserOp()}
+                disabled={busy}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 42, background: busy ? "#1B1E24" : CTA, border: busy ? "1px solid #2A2D34" : 0, borderRadius: 8, fontFamily: DISPLAY, fontWeight: 700, fontSize: 13.5, color: busy ? "#AAB1BC" : "#0A0B0E", cursor: busy ? "default" : "pointer" }}
+              >
+                <span style={{ fontSize: 11 }}>◆</span>{busy ? "Sending…" : "Send USDC-gas test op"}
+              </button>
+              {opTxHash && (
+                <a href={`https://testnet.arcscan.app/tx/${opTxHash}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none", padding: "9px 12px", background: "#0E1014", border: "1px solid #20242A", borderRadius: 8 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 11.5, color: "#3FBE85" }}>✓ {opTxHash.slice(0, 8)}…{opTxHash.slice(-4)}</span>
+                  <span style={{ fontSize: 11, color: "#8A95A6" }}>ArcScan ↗</span>
+                </a>
+              )}
+              {opStatus && <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A828D" }}>{opStatus}</span>}
+            </div>
+          )}
         </div>
         {status && <p style={{ margin: "14px 2px 0", fontFamily: MONO, fontSize: 11, color: "#7A828D" }}>{status}</p>}
       </aside>

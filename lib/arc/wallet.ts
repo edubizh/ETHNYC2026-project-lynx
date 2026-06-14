@@ -52,3 +52,19 @@ export async function readArcUsdcBalance(client: PublicClient, owner: `0x${strin
   const usdc = getContract({ client, address: ContractAddress.ArcTestnet_USDC as `0x${string}`, abi: erc20Abi });
   return usdc.read.balanceOf([owner]);
 }
+
+/** The Circle Modular Wallet bundle returned by createArcPasskeyAccount (passkey smart account + bundler). */
+export type ArcWallet = Awaited<ReturnType<typeof createArcPasskeyAccount>>;
+
+/** Send a minimal gasless userOp (zero-value self-call) on Arc Testnet with gas paid via Circle's
+ *  paymaster (`paymaster: true` → USDC-gas, no native token). Returns the on-chain TX hash (not the userOp
+ *  hash) for the explorer (testnet.arcscan.app). This is the load-bearing Arc qualification artifact: Arc
+ *  performs a real ERC-4337 operation, not just NAV display. The bundlerClient is already account-bound. */
+export async function sendArcGaslessUserOp(wallet: ArcWallet): Promise<`0x${string}`> {
+  const hash = await wallet.bundlerClient.sendUserOperation({
+    calls: [{ to: wallet.account.address, value: 0n, data: "0x" }],
+    paymaster: true,
+  });
+  const { receipt } = await wallet.bundlerClient.waitForUserOperationReceipt({ hash });
+  return receipt.transactionHash;
+}

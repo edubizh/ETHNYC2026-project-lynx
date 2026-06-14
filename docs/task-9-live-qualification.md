@@ -63,29 +63,16 @@ Done: passkey Modular Wallet on Arc Testnet + unified NAV (incl. sleeve tokens).
 
 **Why this and not CCTP:** Circle Paymaster is **live on Arc Testnet** (verified — v0.8 `0x3BA9A96eE3eFf3A69E2B18886AcF52027EFF8966`, v0.7 `0x31BE08D380A21fc740883c0BC434FcFc88740b58`; Modular Wallets are ERC-4337 so `paymaster:true` userOps work). **CCTP Arc→Polygon is impossible** — Arc is testnet, Polygon execution is mainnet, and CCTP can't cross that boundary (it only reaches Polygon Amoy / Eth Sepolia).
 
-> ⚠️ **Code prerequisite (NOT a pure click — ~30 lines, Claude can do it).** Today `lib/arc/context.tsx` creates
-> the `bundlerClient` in `createArcPasskeyAccount` but **discards it**; `useArc()` exposes only
-> `connect/address/usdc/status`. There is no UI path to send a userOp yet. Needed:
-> 1. In `lib/arc/context.tsx`: keep the `bundlerClient` + `account` in state and add a
->    `sendGaslessUserOp()` action.
-> 2. A "Send USDC-gas test op" button in the Account panel that calls it.
->
-> Wiring sketch (verify against Circle's "create-a-wallet-and-send-gasless-txn" quickstart):
-> ```ts
-> // returns the Arc tx hash for the README
-> const hash = await bundlerClient.sendUserOperation({
->   account,
->   paymaster: true,                                   // gas in USDC via Circle Paymaster
->   calls: [{ to: account.address, value: 0n, data: "0x" }], // harmless self-call
-> });
-> const { receipt } = await bundlerClient.waitForUserOperationReceipt({ hash });
-> // receipt.transactionHash → https://testnet.arcscan.app/tx/<hash>
-> ```
+> ✅ **Now wired (click-and-record, no code left to write).** `lib/arc/wallet.ts` exposes the tested
+> `sendArcGaslessUserOp(wallet)` (zero-value self-call, `paymaster: true`); `ArcProvider` keeps the
+> bundler-bound wallet and exposes `sendGaslessUserOp()` / `opStatus` / `opTxHash`; the **Account panel**
+> has a **"Send USDC-gas test op"** button + an ArcScan link for the resulting tx. Verified against Circle's
+> "create-a-wallet-and-send-gasless-txn" Web SDK quickstart; 82/82 vitest, tsc clean, build green.
 
-**Steps once wired:**
-1. `/theme/ai` → **Create passkey wallet** in the Account bar.
-2. Fund the Arc smart account from `https://faucet.circle.com` (Arc Testnet USDC); confirm USDC balance + unified NAV render.
-3. Click **Send USDC-gas test op**; confirm the userOp on `https://testnet.arcscan.app`. **Record the tx hash.**
+**Steps:**
+1. Open the **Account** slide-over (top-bar) → **Create passkey wallet** (or **Sign in with passkey**).
+2. Fund the Arc smart account from `https://faucet.circle.com` (Arc Testnet USDC); confirm USDC balance + unified NAV render. *(Gas is sponsored via the paymaster, so a first userOp can succeed even before funding — funding makes the USDC-on-Arc NAV real.)*
+3. Click **Send USDC-gas test op**; the panel shows the **ArcScan** link (`https://testnet.arcscan.app/tx/<hash>`). **Record the tx hash.**
 
 **Acceptance:** wallet creates via passkey; NAV renders Arc USDC + Polygon basket; one USDC-gas userOp confirmed on Arc Testnet.
 
