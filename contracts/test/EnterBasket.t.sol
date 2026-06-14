@@ -23,6 +23,9 @@ contract EnterBasketTest is Test {
     bytes32 questionId =
         vm.envOr("AI_QUESTION_ID", bytes32(0xd2c21cbb9d2cb407ab3dcf619d93f6d65b7967154cd6ee930f7758baa2b4bf06));
 
+    address SWAP_ROUTER_02 = vm.envOr("SWAP_ROUTER_02", address(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45));
+    address WETH = vm.envOr("WETH_POLYGON", address(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619));
+
     address user = address(0xBEEF); // the recipient EOA
 
     function setUp() public {
@@ -131,6 +134,27 @@ contract EnterBasketTest is Test {
 
         assertEq(IERC20(USDCE).balanceOf(user), before, "USDC.e refunded to recipient");
         assertEq(IERC20(USDCE).balanceOf(address(basket)), 0, "no USDC.e left");
+    }
+
+    /// REAL Uniswap V3 SwapRouter02 swap inside enterAssetLeg on a Polygon fork: USDC.e -> WETH,
+    /// swept to the recipient, contract retains nothing, approval reset. Proves Approach A end-to-end.
+    function test_assetLeg_realUniswapSwapToRecipient() public {
+        uint256 amountIn = 5e6; // 5 USDC.e
+        // IV3SwapRouter.exactInputSingle((tokenIn,tokenOut,fee,recipient,amountIn,amountOutMinimum,sqrtPriceLimitX96))
+        bytes memory swapData = abi.encodeWithSignature(
+            "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))",
+            USDCE, WETH, uint24(500), address(basket), amountIn, uint256(1), uint160(0)
+        );
+
+        vm.startPrank(user);
+        IERC20(USDCE).approve(address(basket), amountIn);
+        basket.enterAssetLeg(amountIn, user, SWAP_ROUTER_02, SWAP_ROUTER_02, WETH, 1, swapData);
+        vm.stopPrank();
+
+        assertGt(IERC20(WETH).balanceOf(user), 0, "recipient got WETH");
+        assertEq(IERC20(USDCE).balanceOf(address(basket)), 0, "no USDC.e left");
+        assertEq(IERC20(WETH).balanceOf(address(basket)), 0, "no WETH left");
+        assertEq(IAllowance(USDCE).allowance(address(basket), SWAP_ROUTER_02), 0, "approval reset");
     }
 }
 
