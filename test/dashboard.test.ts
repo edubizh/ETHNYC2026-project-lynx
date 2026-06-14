@@ -76,11 +76,25 @@ describe("buildDashboard", () => {
 
     const d = await buildDashboard("ai");
     const nvda = d.securities.find((s) => s.ticker === "NVDA");
+    const weth = d.securities.find((s) => s.ticker === "WETH");
     const wsteth = d.securities.find((s) => s.ticker === "wstETH");
     expect(nvda?.availability).toBe("DISPLAY-ONLY");
     expect(nvda?.priceUsd).toBe(155); // priced via the equities feed
-    expect(wsteth?.availability).toBe("LIVE-UNISWAP");
-    expect(wsteth?.priceUsd).toBe(4300); // priced via Uniswap /quote
+    expect(weth?.availability).toBe("LIVE-UNISWAP");
+    expect(weth?.priceUsd).toBe(4300); // priced via Uniswap /quote
+    expect(wsteth?.availability).toBe("DISPLAY-ONLY"); // demoted: no direct USDC.e pool for the sleeve
+    expect(wsteth?.liquidity).toBe("low");
+  });
+
+  it("does not query the equities feed for on-chain 'coming soon' tokens", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.5);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    const eqSpy = vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 1, changePct: 0 });
+    await buildDashboard("ai");
+    const called = eqSpy.mock.calls.map((c) => c[0]);
+    expect(called).not.toContain("FET"); // off-rail token -> skipped
+    expect(called).not.toContain("TAO");
+    expect(called).toContain("NVDA"); // real equities still queried
   });
 
   it("includes every sleeve asset leg in the view (AI = WETH + LINK)", async () => {
