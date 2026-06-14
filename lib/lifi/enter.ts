@@ -20,6 +20,7 @@ export function initLifi(opts: {
 }): void {
   createConfig({
     integrator: "project-lynx",
+    ...(process.env.NEXT_PUBLIC_LIFI_API_KEY ? { apiKey: process.env.NEXT_PUBLIC_LIFI_API_KEY } : {}),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     providers: [EVM({ getWalletClient: opts.getWalletClient as any, switchChain: opts.switchChain as any })],
   });
