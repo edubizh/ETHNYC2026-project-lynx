@@ -1,10 +1,6 @@
-import { Browse } from "@/components/Browse";
-import { buildMindshareWindows } from "@/lib/mindshare-live";
+import { LandingHero } from "@/components/LandingHero";
 
-// Live Polymarket volume each load; degrades to verified seeds inside buildMindshareWindows.
-export const dynamic = "force-dynamic";
-
-export default async function Home() {
-  const windows = await buildMindshareWindows();
-  return <Browse windows={windows} />;
+// The launch screen — first surface a visitor hits, before entering the app at /browse.
+export default function Home() {
+  return <LandingHero />;
 }
