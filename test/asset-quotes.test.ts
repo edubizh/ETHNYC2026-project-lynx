@@ -20,6 +20,14 @@ describe("resolveAssetMinOut", () => {
     vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("no key"));
     expect(await resolveAssetMinOut(weth, 3_000_000n, 0.01)).toBe(0n);
   });
+
+  it("floors with pure-bigint integer division on an 18dp non-round case (never over-states the floor)", async () => {
+    // 1 USDC.e at $7/token, 1% slippage: (1/7)*0.99*1e18 = 141428571428571428.57… -> exact integer floor below.
+    // A float path (Math.floor of ~1.41e17, where the ulp is ~32) could NOT land on this exact value.
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(7);
+    const minOut = await resolveAssetMinOut(weth, 1_000_000n, 0.01);
+    expect(minOut).toBe(141_428_571_428_571_428n);
+  });
 });
 
 const wbtc: AssetLeg = { kind: "asset", label: "x", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.4, decimals: 8 };
