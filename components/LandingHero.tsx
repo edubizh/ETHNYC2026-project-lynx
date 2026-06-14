@@ -13,14 +13,16 @@ const AMBER = "#E0A33C";
 const AZURE = "#5B8DEF";
 const CTA = "linear-gradient(180deg,#F4F6F8,#C4C9D1)";
 
-// Drop your forward-only clip + (optional) poster here (see public/landing/README.md).
-// Until they exist the CSS "Gap" ribbons below stand in, so the page never looks broken.
+// The clip is a pre-baked boomerang (forward + reversed, slowed + interpolated to 48fps —
+// see public/landing/README.md), so the browser just loops it natively: always forward,
+// no seeking, seamless loop point (it ends on its own first frame). Until it exists the
+// CSS "Gap" ribbons below stand in, so the page never looks broken.
 const VIDEO_SRC = "/landing/gap-loop.mp4";
 const POSTER_SRC = "/landing/gap-poster.jpg";
 
-// Background-video pacing. <1 plays slower / more cinematic; the same factor paces the
-// reverse leg so the boomerang is symmetric. Tune to taste.
-const PLAYBACK_SPEED = 0.6;
+// Extra pacing on top of the baked slowdown. 1 = as baked; <1 = even slower (still smooth
+// on forward playback). Tune to taste.
+const PLAYBACK_SPEED = 1;
 
 export function LandingHero() {
   const [reduced, setReduced] = useState(false);
@@ -38,17 +40,15 @@ export function LandingHero() {
   // Render the clip even under reduced-motion (shown as a still); motion is gated below.
   const showVideo = !videoFailed;
 
-  // In-code boomerang: play forward, then ease back in reverse, forever. Lets a plain
-  // forward clip ping-pong ("run it back") with no ffmpeg/baked-reverse step. Native
-  // negative playbackRate isn't reliable across browsers, so the reverse leg steps
-  // currentTime by real elapsed time (frame-rate independent, paced by PLAYBACK_SPEED).
+  // The file is a pre-baked boomerang looped natively (see VIDEO_SRC note). This effect
+  // only ensures it actually starts: force muted (React's `muted` attr isn't reliably
+  // reflected to the DOM property, so play() can be treated as a blocked unmuted autoplay)
+  // and kick playback, with a first-interaction retry as a fallback.
   useEffect(() => {
     if (videoFailed) return;
     const v = videoRef.current;
     if (!v) return;
 
-    // React doesn't reliably reflect the `muted` *attribute* to the DOM property, so a
-    // programmatic play() can be treated as an unmuted autoplay and blocked. Force it.
     v.muted = true;
     v.defaultMuted = true;
     v.playsInline = true;
@@ -63,49 +63,16 @@ export function LandingHero() {
     }
 
     v.playbackRate = PLAYBACK_SPEED;
-    let raf = 0;
-    let last = 0;
-    let reversing = false;
-
-    const stepBack = (ts: number) => {
-      if (last === 0) last = ts;
-      const dt = (ts - last) / 1000;
-      last = ts;
-      const next = v.currentTime - dt * PLAYBACK_SPEED;
-      if (next <= 0) {
-        v.currentTime = 0;
-        reversing = false;
-        v.play().catch(() => {});
-        return;
-      }
-      v.currentTime = next;
-      raf = requestAnimationFrame(stepBack);
-    };
-
-    const onEnded = () => {
-      // Forward leg finished — reverse back to the start, then forward again.
-      reversing = true;
-      last = 0;
-      raf = requestAnimationFrame(stepBack);
-    };
-
-    const start = () => {
-      if (!reversing) v.play().catch(() => {});
-    };
+    const play = () => v.play().catch(() => {});
 
     // Some browsers still block muted autoplay until the first interaction — retry then.
-    const resume = () => v.play().catch(() => {});
-    window.addEventListener("pointerdown", resume, { once: true });
-
-    v.addEventListener("ended", onEnded);
-    if (v.readyState >= 2) start();
-    else v.addEventListener("loadeddata", start, { once: true });
+    window.addEventListener("pointerdown", play, { once: true });
+    if (v.readyState >= 2) play();
+    else v.addEventListener("loadeddata", play, { once: true });
 
     return () => {
-      window.removeEventListener("pointerdown", resume);
-      v.removeEventListener("ended", onEnded);
-      v.removeEventListener("loadeddata", start);
-      cancelAnimationFrame(raf);
+      window.removeEventListener("pointerdown", play);
+      v.removeEventListener("loadeddata", play);
     };
   }, [reduced, videoFailed]);
 
@@ -171,6 +138,7 @@ export function LandingHero() {
         <video
           ref={videoRef}
           muted
+          loop
           playsInline
           preload="auto"
           poster={POSTER_SRC}
