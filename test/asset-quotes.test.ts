@@ -21,3 +21,14 @@ describe("resolveAssetMinOut", () => {
     expect(await resolveAssetMinOut(weth, 3_000_000n, 0.01)).toBe(0n);
   });
 });
+
+const wbtc: AssetLeg = { kind: "asset", label: "x", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.4, decimals: 8 };
+
+describe("resolveAssetMinOut — WBTC 8dp", () => {
+  it("scales the floor by the token's decimals (8dp), not 18", async () => {
+    // 1 WBTC = 64000 USDC -> 64 USDC.e buys 0.001 WBTC; 1% floor = 0.00099 WBTC = 99000 sats (8dp).
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);
+    const minOut = await resolveAssetMinOut(wbtc, 64_000_000n, 0.01);
+    expect(minOut).toBe(99_000n); // 0.00099 * 1e8
+  });
+});

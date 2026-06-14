@@ -2,9 +2,11 @@ import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import type { AssetLeg } from "@/lib/baskets/types";
 
 /** Convert a USDC.e input amount (6dp) into a slippage-floored minimum token output (token base units),
- *  using the Uniswap /quote USD price for 1 whole token. Returns 0n if the quote feed is unavailable —
- *  the swap still executes and EnterBasket.enterAssetLeg's on-chain minAmountOut (also passed) plus the
- *  pool itself bound the downside; 0n just means "no extra off-chain floor this run". */
+ *  using the Uniswap /quote USD price for 1 whole token (sized by leg.decimals; WBTC=8dp). The floor
+ *  ASSUMES USDC.e ≈ $1 (true within pennies on Polygon) and Math.floor rounds DOWN — i.e. a slightly
+ *  more conservative floor — so it never over-protects on real funds. The deployed EnterBasket also
+ *  enforces this minAmountOut on-chain (defense in depth). Returns 0n if the quote feed is unavailable;
+ *  buildSafeBasketContractCalls (basketEntry.ts) REFUSES to ship a 0-floor swap on real funds. */
 export async function resolveAssetMinOut(leg: AssetLeg, amountUsdce: bigint, slippage: number): Promise<bigint> {
   try {
     const priceUsd = await fetchAssetPrice(leg.token, { decimals: leg.decimals }); // USD per 1 token
