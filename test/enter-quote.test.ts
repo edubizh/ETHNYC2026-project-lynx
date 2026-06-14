@@ -26,7 +26,8 @@ describe("buildEnterQuote", () => {
     const req = quoteMock.mock.calls[0][0];
     expect(req.fromChain).toBe(137);
     expect(req.toChain).toBe(137);
-    expect(req.toToken).toBe(ADDR.usdcNative);
+    // Same-chain delivers USDC.e — the token every EnterBasket contractCall consumes.
+    expect(req.toToken).toBe(ADDR.usdce);
   });
 
   it("still supports the cross-chain Base (8453) source", async () => {
@@ -37,6 +38,9 @@ describe("buildEnterQuote", () => {
       fromAmount: "10000000",
       contractCalls: [],
     });
-    expect(quoteMock.mock.calls[0][0].fromChain).toBe(8453);
+    const req = quoteMock.mock.calls[0][0];
+    expect(req.fromChain).toBe(8453);
+    // Cross-chain (unverified stretch) is left on native USDC — unchanged.
+    expect(req.toToken).toBe(ADDR.usdcNative);
   });
 });

@@ -47,12 +47,16 @@ export type EnterQuoteParams = {
  *  CAVEAT: source-vs-destination amount reconciliation (bridge/swap fees) should be confirmed against a
  *  live get-quote-with-calls; set the deposit below the guaranteed-arrival floor or use exact-output. */
 export async function buildEnterQuote(p: EnterQuoteParams): Promise<LiFiStep> {
+  // Same-chain (137) spine: deliver USDC.e — the token every EnterBasket contractCall consumes — so the
+  // LI.FI executor holds USDC.e to approve/forward each call (verified same-chain USDC→USDC.e route).
+  // Cross-chain (1|8453) stays on native USDC: the unverified stretch path, left unchanged here.
+  const sameChain = p.fromChainId === 137;
   const req: ContractCallsQuoteRequest = {
     fromChain: p.fromChainId,
     fromToken: p.fromToken,
     fromAddress: p.fromAddress,
     toChain: 137,
-    toToken: ADDR.usdcNative,
+    toToken: sameChain ? ADDR.usdce : ADDR.usdcNative,
     fromAmount: p.fromAmount,
     contractCalls: p.contractCalls,
   };
