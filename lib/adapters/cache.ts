@@ -15,6 +15,8 @@
 // Bypassed entirely under NODE_ENV==="test" so unit tests keep exercising each adapter's real fetch path
 // against their per-case mocks (the cache itself is covered directly by test/adapter-cache.test.ts).
 
+// Keys are never evicted; this is safe ONLY because the key set is small + bounded (a fixed set of
+// tokens/markets/symbols from the registry). Do not key this by unbounded/user input without adding LRU.
 type Entry<T> = { ok: true; value: T; expires: number } | { ok: false; error: unknown; expires: number };
 
 const store = new Map<string, Entry<unknown>>();
@@ -43,7 +45,13 @@ export async function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>
       return value;
     } catch (err) {
       const prev = store.get(key) as Entry<T> | undefined;
-      if (prev && prev.ok) return prev.value; // ride out a transient failure on last-good (no negative cache)
+      if (prev && prev.ok) {
+        // Serve last-good AND re-arm it for errorTtlMs, so other callers during an outage get the stale
+        // value immediately instead of each re-paying the upstream timeout (retry throttle); one caller
+        // re-probes the upstream after the window.
+        store.set(key, { ok: true, value: prev.value, expires: Date.now() + errorTtlMs });
+        return prev.value;
+      }
       store.set(key, { ok: false, error: err, expires: Date.now() + errorTtlMs });
       throw err;
     } finally {

@@ -61,6 +61,25 @@ describe("cached() — TTL adapter cache", () => {
     expect(fn).toHaveBeenCalledTimes(1); // second call served from the negative cache (no upstream hit)
   });
 
+  it("throttles retries during an outage: re-arms last-good so callers don't each re-pay the timeout", async () => {
+    const fn = vi.fn();
+    fn.mockResolvedValueOnce(10); // first call succeeds
+    expect(await cached("k", 0, fn, 5000)).toBe(10); // ttl 0 -> next read is a miss
+    fn.mockRejectedValue(new Error("outage"));
+    expect(await cached("k", 0, fn, 5000)).toBe(10); // miss -> fetch fails -> stale 10 + re-arm for 5s
+    expect(await cached("k", 0, fn, 5000)).toBe(10); // within re-arm window -> fresh hit, no re-fetch
+    expect(fn).toHaveBeenCalledTimes(2); // initial success + one failed re-probe only
+  });
+
+  it("delivers a rejection to all concurrent awaiters from a single shared in-flight call", async () => {
+    const fn = vi.fn().mockRejectedValue(new Error("boom"));
+    const a = cached("k", 1000, fn);
+    const b = cached("k", 1000, fn);
+    await expect(a).rejects.toThrow(/boom/);
+    await expect(b).rejects.toThrow(/boom/);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
   it("bypasses caching under NODE_ENV=test (every call hits the upstream)", async () => {
     vi.stubEnv("NODE_ENV", "test");
     const fn = vi.fn(async () => 1);
