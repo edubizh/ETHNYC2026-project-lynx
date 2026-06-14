@@ -239,6 +239,102 @@ const THEMES: Record<string, Theme> = {
       ],
     },
   },
+
+  // SPORTS — 2026 FIFA World Cup (US-co-hosted, live tournament). Executable NegRisk host-nation legs
+  // (US + Mexico furthest-advancing) + a buyable risk-on sleeve. IDs VERIFIED on-chain via NegRiskAdapter
+  // (getConditionId/getPositionId, 2026-06-14). Market ends 2026-07-20 — live through a summer demo.
+  sports: {
+    slug: "sports",
+    title: "Sports",
+    legs: [
+      {
+        kind: "prediction",
+        label: "USA advances furthest among World Cup hosts",
+        gammaMarketId: "2431124",
+        conditionId: "0x5a947653669c8f71ac7b8951f53e3e538dc39025f91482bc606231cf017a3f25",
+        questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e102",
+        outcomeTokenIds: {
+          yes: "4391078153559435086542619876453393392199283918586303869903053007663182843626",
+          no: "111555218263464253724497326424651025239314748563188397976415977729253038502017",
+        },
+        seedBeliefProb: 0.5,
+        weight: 0.25,
+      },
+      {
+        kind: "prediction",
+        label: "Mexico advances furthest among World Cup hosts",
+        gammaMarketId: "2431123",
+        conditionId: "0x0cbee01c8bb40d5a4fc93e08818554e229a424eff354aa189cec4172dcc6ad4c",
+        questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e101",
+        outcomeTokenIds: {
+          yes: "101844044997051617416234592739470878083158048174554481118636775336857776610729",
+          no: "114629841464098573391788038098856049205552895670597119763067381707691487771324",
+        },
+        seedBeliefProb: 0.4,
+        weight: 0.25,
+      },
+      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
+      { kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
+    ],
+    display: {
+      assetSymbol: "DKNG",
+      analystBand: { low: 30, high: 60 },
+      fallback: { beliefProb: 0.5, equityPrice: 44, assetLegPriceUsd: 4300 },
+      securities: [
+        { ticker: "DKNG", name: "DraftKings", analystBand: { low: 30, high: 60 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Sports-betting beta anchor — no EVM-Uniswap venue; shown for the belief-vs-attention cross." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+      ],
+    },
+  },
+
+  // ENTERTAINMENT — 2026 box office (highest-grossing film). Executable NegRisk legs (Spider-Man:
+  // Brand New Day + Toy Story 5) + a buyable risk-on sleeve. IDs VERIFIED on-chain via NegRiskAdapter
+  // (getConditionId/getPositionId, 2026-06-14). Market ends 2026-12-31 — resolution-safe through judging.
+  entertainment: {
+    slug: "entertainment",
+    title: "Entertainment",
+    legs: [
+      {
+        kind: "prediction",
+        label: "Spider-Man: Brand New Day is 2026's highest-grossing film",
+        gammaMarketId: "678414",
+        conditionId: "0xc4b07998e8f9bf6b95f079d6dc0529f3c6f59698d4e168817ad5f99304de6c57",
+        questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7207",
+        outcomeTokenIds: {
+          yes: "28161183422242370392388296744035422249088647252796713903067039294971789722479",
+          no: "80757130658075377588211268321341672637109151783616954046136590997276659075008",
+        },
+        seedBeliefProb: 0.545,
+        weight: 0.25,
+      },
+      {
+        kind: "prediction",
+        label: "Toy Story 5 is 2026's highest-grossing film",
+        gammaMarketId: "678412",
+        conditionId: "0xcd57f3ad3bbbdaa96aacabd35f50c2d6e30f777e4a33876a4ab2dcd9f0b8c170",
+        questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7205",
+        outcomeTokenIds: {
+          yes: "19377648420863951364493422584672339128541444345359183847394616194343658816499",
+          no: "102302020717202222629161440676477763071644396668223362756157787237764563386738",
+        },
+        seedBeliefProb: 0.21,
+        weight: 0.25,
+      },
+      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
+      { kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
+    ],
+    display: {
+      assetSymbol: "DIS",
+      analystBand: { low: 85, high: 135 },
+      fallback: { beliefProb: 0.545, equityPrice: 108, assetLegPriceUsd: 4300 },
+      securities: [
+        { ticker: "DIS", name: "The Walt Disney Company", analystBand: { low: 85, high: 135 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Box-office/studio beta anchor (makes the marquee 2026 tentpoles) — no EVM-Uniswap venue." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+      ],
+    },
+  },
 };
 
 export function getTheme(slug: string): Theme {

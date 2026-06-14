@@ -34,9 +34,9 @@ describe("basket registry", () => {
 });
 
 describe("all demo buckets", () => {
-  const EXPECTED = ["ai", "crypto", "macro", "geopolitics", "us-politics"];
+  const EXPECTED = ["ai", "crypto", "macro", "geopolitics", "us-politics", "sports", "entertainment"];
 
-  it("registry contains the five demo-ready buckets", () => {
+  it("registry contains the seven demo-ready buckets", () => {
     const slugs = listThemes().map((t) => t.slug);
     for (const s of EXPECTED) expect(slugs).toContain(s);
   });

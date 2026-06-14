@@ -9,7 +9,7 @@ afterEach(() => vi.restoreAllMocks());
 const AI_LEGS = ["608368", "631121"]; // OpenAI-not-IPO + Anthropic — the AI bucket's prediction legs
 
 describe("buildMindshareWindows", () => {
-  it("sizes every window's tiles from live per-window Gamma volume across all 5 buckets", async () => {
+  it("sizes every window's tiles from live per-window Gamma volume across all 7 buckets", async () => {
     // AI legs get 100× the volume of every other bucket's legs -> AI is the flagship in every window.
     vi.spyOn(pm, "fetchMarketVolumes").mockImplementation(async (id) =>
       AI_LEGS.includes(id)
@@ -22,7 +22,7 @@ describe("buildMindshareWindows", () => {
     const w = await buildMindshareWindows();
 
     for (const win of WINDOWS) {
-      expect(w[win].ranked.length).toBe(5);
+      expect(w[win].ranked.length).toBe(7);
       expect(w[win].ranked[0].slug).toBe("ai"); // biggest volume in every window
       expect(w[win].others.mindshare).toBeGreaterThan(0);
       expect(w[win].source).toBe("live");
@@ -54,7 +54,7 @@ describe("buildMindshareWindows", () => {
 
     const w = await buildMindshareWindows();
     for (const win of WINDOWS) {
-      expect(w[win].ranked.length).toBe(5);
+      expect(w[win].ranked.length).toBe(7);
       expect(w[win].ranked[0].slug).toBe("ai");
       expect(w[win].source).toBe("fallback");
     }
