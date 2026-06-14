@@ -24,6 +24,9 @@ const C = {
 const clampPct = (n: number) => Math.min(100, Math.max(0, n));
 const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: n >= 1000 ? 0 : 2 });
 
+/** Belief range as on-track percentages: lo ≤ c ≤ hi, each 0–100. */
+type BeliefBand = { lo: number; c: number; hi: number };
+
 /** A monochrome diamond marker (filled = buyable on-chain, hollow = off-rail "coming soon"). */
 function Diamond({ filled, size = 12 }: { filled: boolean; size?: number }) {
   return (
@@ -79,7 +82,7 @@ function Toggle({ view, setView }: { view: "bands" | "scatter"; setView: (v: "ba
 /** Bands view: one row per security — its bear→bull band as a 0–100% percentile track, a ◆ at the
  *  security's position, and the crowd belief drawn as a vertical line across every row (the gap reads
  *  against every name at once). */
-function BandsView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]; beliefX: number; headlineTicker?: string }) {
+function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; belief: BeliefBand; headlineTicker?: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* axis header */}
@@ -88,7 +91,7 @@ function BandsView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]; 
         <div style={{ flex: 1, position: "relative", height: 14 }}>
           <span style={{ position: "absolute", left: 0, top: 0, fontFamily: MONO, fontSize: 9.5, color: C.faintest }}>bear</span>
           <span style={{ position: "absolute", right: 0, top: 0, fontFamily: MONO, fontSize: 9.5, color: C.faintest }}>bull</span>
-          <span style={{ position: "absolute", left: `${beliefX}%`, top: 0, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(beliefX)}%</span>
+          <span style={{ position: "absolute", left: `${belief.c}%`, top: 0, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(belief.c)}%</span>
         </div>
         <div style={{ width: 132 }} />
       </div>
@@ -125,8 +128,9 @@ function BandsView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]; 
             {/* band track */}
             <div style={{ flex: 1, position: "relative", height: 10 }}>
               <div style={{ position: "absolute", left: 0, right: 0, top: 1, height: 8, background: C.track, border: `1px solid ${C.border}`, borderRadius: 999 }} />
-              {/* belief vertical line */}
-              <div style={{ position: "absolute", left: `${beliefX}%`, top: -4, bottom: -4, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.55 }} />
+              {/* belief RANGE band + center */}
+              <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: -4, bottom: -4, background: "rgba(138,149,166,0.22)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}` }} />
+              <div style={{ position: "absolute", left: `${belief.c}%`, top: -4, bottom: -4, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.7 }} />
               {/* asset marker (filled = buyable on-chain, hollow = off-rail "coming soon") */}
               <div style={{ position: "absolute", left: `${markerX}%`, top: -1, transform: "translateX(-50%)", display: "flex" }}>
                 <Diamond filled={!a.comingSoon} size={11} />
@@ -149,7 +153,7 @@ function BandsView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]; 
 
 /** Scatter view: x = band percentile (bear→bull), y = day momentum (%). Each security is a ◆; the
  *  crowd belief is a vertical line. Distance left/right of belief = the sentiment gap for that name. */
-function ScatterView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]; beliefX: number; headlineTicker?: string }) {
+function ScatterView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; belief: BeliefBand; headlineTicker?: string }) {
   const H = 300;
   const padX = 30; // room for y labels
   const padY = 22; // room for x labels
@@ -175,9 +179,10 @@ function ScatterView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]
       <div style={{ position: "absolute", left: padX, right: 0, top: 0, bottom: padY }}>
         {/* zero momentum line */}
         <div style={{ position: "absolute", left: 0, right: 0, top: zeroTop, height: 1, background: C.soft }} />
-        {/* belief vertical line */}
-        <div style={{ position: "absolute", left: `${beliefX}%`, top: 0, bottom: 0, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.55 }} />
-        <span style={{ position: "absolute", left: `${beliefX}%`, top: 2, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(beliefX)}%</span>
+        {/* belief RANGE band + center */}
+        <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: 0, bottom: 0, background: "rgba(138,149,166,0.16)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}` }} />
+        <div style={{ position: "absolute", left: `${belief.c}%`, top: 0, bottom: 0, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.7 }} />
+        <span style={{ position: "absolute", left: `${belief.c}%`, top: 2, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(belief.c)}%</span>
 
         {assets.map((a) => {
           const isHead = a.ticker === headlineTicker;
@@ -204,20 +209,20 @@ function ScatterView({ assets, beliefX, headlineTicker }: { assets: GraphAsset[]
  *  against their published analyst bands, with the crowd-belief overlay. Two toggleable views. */
 export function AnalystBandGraph({
   assets,
-  beliefProb,
+  belief,
   beliefLabel,
   headlineTicker,
   title,
 }: {
   assets: GraphAsset[];
-  beliefProb: number;
+  belief: { low: number; center: number; high: number };
   beliefLabel?: string;
   headlineTicker?: string;
   title: string;
 }) {
   const [view, setView] = useState<"bands" | "scatter">("bands");
   if (assets.length === 0) return null;
-  const beliefX = clampPct(beliefProb * 100);
+  const bb: BeliefBand = { lo: clampPct(belief.low * 100), c: clampPct(belief.center * 100), hi: clampPct(belief.high * 100) };
 
   return (
     <section style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "22px 24px", marginBottom: 16 }}>
@@ -230,17 +235,17 @@ export function AnalystBandGraph({
       <p style={{ margin: "0 0 18px", maxWidth: 640, fontSize: 12.5, lineHeight: 1.5, color: C.faint }}>
         Relevant off-chain securities plotted against their published analyst bear→bull bands.
         {beliefLabel ? (
-          <> The <span style={{ color: C.steel }}>belief line</span> marks &ldquo;{beliefLabel}&rdquo; at <span style={{ color: C.steel, fontFamily: MONO }}>{Math.round(beliefX)}%</span> — distance to each ◆ is its sentiment gap.</>
+          <> The <span style={{ color: C.steel }}>belief band</span> is the crowd&apos;s odds across {beliefLabel}, centered at <span style={{ color: C.steel, fontFamily: MONO }}>{Math.round(bb.c)}%</span> — distance from it to each ◆ is the sentiment gap.</>
         ) : (
-          <> The <span style={{ color: C.steel }}>belief line</span> is the crowd&apos;s odds; distance to each ◆ is its sentiment gap.</>
+          <> The <span style={{ color: C.steel }}>belief band</span> is the crowd&apos;s odds; distance to each ◆ is the sentiment gap.</>
         )}
         {" "}Tokenized stocks are off our EVM rails — display-only, buying coming soon.
       </p>
 
       {view === "bands" ? (
-        <BandsView assets={assets} beliefX={beliefX} headlineTicker={headlineTicker} />
+        <BandsView assets={assets} belief={bb} headlineTicker={headlineTicker} />
       ) : (
-        <ScatterView assets={assets} beliefX={beliefX} headlineTicker={headlineTicker} />
+        <ScatterView assets={assets} belief={bb} headlineTicker={headlineTicker} />
       )}
     </section>
   );

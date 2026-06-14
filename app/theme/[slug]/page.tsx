@@ -7,6 +7,7 @@ import { AnalystBandGraph } from "@/components/AnalystBandGraph";
 import { ArcAccountBar } from "@/components/ArcAccountBar";
 import { BuyBox, type BuyLeg } from "@/components/BuyBox";
 import { TopBar } from "@/components/TopBar";
+import { InfoTip } from "@/components/InfoTip";
 
 export const dynamic = "force-dynamic";
 
@@ -48,12 +49,19 @@ export default async function ThemePage({ params }: { params: { slug: string } }
   const meta = getBucketMeta(params.slug);
   const h = view.hero;
   const belief = Math.round(h.beliefProb * 100);
+  const beliefLoR = Math.round(h.belief.low * 100);
+  const beliefHiR = Math.round(h.belief.high * 100);
   const pct = Math.round(h.assetBandPercentile * 100);
   const gap = Math.round(h.gapPct);
-  const beliefX = clampPct(h.beliefProb * 100);
   const assetX = clampPct(h.assetBandPercentile * 100);
-  const gapLeft = Math.min(beliefX, assetX);
-  const gapW = Math.abs(assetX - beliefX);
+  // belief is a RANGE → render a shaded band [lo,hi] with the center marked; the gap fill spans from the
+  // asset marker to the NEARER edge of the band (nothing when the asset sits inside the crowd's range).
+  const beliefC = clampPct(h.belief.center * 100);
+  const beliefLo = clampPct(h.belief.low * 100);
+  const beliefHi = clampPct(h.belief.high * 100);
+  const gapEdge = assetX > beliefHi ? beliefHi : assetX < beliefLo ? beliefLo : assetX;
+  const gapLeft = Math.min(assetX, gapEdge);
+  const gapW = Math.abs(assetX - gapEdge);
   const dirText =
     h.direction === "asset-higher"
       ? "The asset runs hotter than belief."
@@ -125,20 +133,23 @@ export default async function ThemePage({ params }: { params: { slug: string } }
             </span>
           </div>
 
-          <p style={{ margin: "-22px 0 26px", maxWidth: 620, fontSize: 13, lineHeight: 1.55, color: "#7A828D" }}>
-            Belief markets price <span style={{ color: "#A6B2C2" }}>&ldquo;{h.beliefLabel}&rdquo;</span> at <span style={{ color: "#A6B2C2", fontFamily: MONO }}>{belief}%</span>; {h.assetSymbol} sits at the <span style={{ color: "#E8EBEF", fontFamily: MONO }}>{pct}th</span> percentile of its published analyst band (${fmt(h.band.low)}–${fmt(h.band.high)}). The gap is a divergence signal between crowd belief and analyst valuation — not a probability or trade recommendation.
+          <p style={{ margin: "-22px 0 26px", maxWidth: 640, fontSize: 13, lineHeight: 1.55, color: "#7A828D" }}>
+            The crowd&apos;s odds — a weighted blend across <span style={{ color: "#A6B2C2" }}>{h.beliefLabel}</span> (Polymarket + Kalshi) — sit at <span style={{ color: "#A6B2C2", fontFamily: MONO }}>{belief}%</span> <span style={{ fontFamily: MONO }}>({beliefLoR}–{beliefHiR}%)</span>; {h.assetSymbol} sits at the <span style={{ color: "#E8EBEF", fontFamily: MONO }}>{pct}th</span> percentile of its analyst band (${fmt(h.band.low)}–${fmt(h.band.high)}). The gap is a divergence signal — not a probability or trade recommendation.
           </p>
 
           <div style={{ position: "relative", height: 56, margin: "0 6px" }}>
             {/* track */}
             <div style={{ position: "absolute", left: 0, right: 0, top: 18, height: 8, background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 999 }}>
-              <div style={{ position: "absolute", left: `${gapLeft}%`, width: `${gapW}%`, top: -1, bottom: -1, background: "linear-gradient(90deg,rgba(138,149,166,0.5),rgba(232,235,239,0.5))", borderRadius: 2 }} />
+              {/* belief RANGE band */}
+              <div style={{ position: "absolute", left: `${beliefLo}%`, width: `${Math.max(beliefHi - beliefLo, 0.5)}%`, top: -1, bottom: -1, background: "rgba(138,149,166,0.45)", border: "1px solid rgba(138,149,166,0.6)", borderRadius: 3 }} />
+              {/* gap fill (asset → nearer belief edge) */}
+              <div style={{ position: "absolute", left: `${gapLeft}%`, width: `${gapW}%`, top: -1, bottom: -1, background: "linear-gradient(90deg,rgba(138,149,166,0.35),rgba(232,235,239,0.35))", borderRadius: 2 }} />
             </div>
             {/* ticks */}
             <div style={{ position: "absolute", left: 0, top: 30, fontFamily: MONO, fontSize: 10, color: "#5C636D" }}>0%</div>
             <div style={{ position: "absolute", right: 0, top: 30, fontFamily: MONO, fontSize: 10, color: "#5C636D" }}>100%</div>
-            {/* belief marker (●) */}
-            <div style={{ position: "absolute", left: `${beliefX}%`, top: 14, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: "#8A95A6", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #8A95A6" }} />
+            {/* belief center marker (●) */}
+            <div style={{ position: "absolute", left: `${beliefC}%`, top: 15, transform: "translateX(-50%)", width: 13, height: 13, borderRadius: "50%", background: "#8A95A6", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #8A95A6" }} />
             {/* asset marker (◆) */}
             <div style={{ position: "absolute", left: `${assetX}%`, top: 15, transform: "translateX(-50%) rotate(45deg)", width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #E8EBEF", borderRadius: 2 }} />
           </div>
@@ -148,8 +159,17 @@ export default async function ThemePage({ params }: { params: { slug: string } }
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#8A95A6", flexShrink: 0 }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span style={{ fontSize: 12, color: "#AAB1BC" }}>Belief · the crowd&apos;s odds</span>
-                <span style={{ fontFamily: MONO, fontSize: 20, color: "#A6B2C2", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>{belief}%</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#AAB1BC" }}>
+                  Belief · the crowd&apos;s odds
+                  <InfoTip ariaLabel="How the crowd's odds are calculated">
+                    <span style={{ color: "#E8EBEF" }}>Crowd odds</span> blend every related market on Polymarket + Kalshi, each weighted by <span style={{ color: "#E8EBEF" }}>liquidity × relevance</span> and flipped to one bullish axis. The shaded band is the uncertainty — how much the markets disagree and how thin they are.{" "}
+                    <a href="/docs/sentiment-gap" style={{ color: "#A6B2C2", textDecoration: "underline" }}>Full method →</a>
+                  </InfoTip>
+                </span>
+                <span style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 20, color: "#A6B2C2", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>{belief}%</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A828D", fontFeatureSettings: "'tnum' 1" }}>range {beliefLoR}–{beliefHiR}%</span>
+                </span>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -164,7 +184,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         </section>
 
         {/* Multi-asset analyst-band graph (bands + scatter toggle) — the TradFi intelligence centerpiece */}
-        <AnalystBandGraph assets={graphAssets} beliefProb={h.beliefProb} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
+        <AnalystBandGraph assets={graphAssets} belief={h.belief} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
 
         {/* fallback banner */}
         {anyFallback && (

@@ -12,6 +12,12 @@ export type PredictionLeg = {
   /** Verified live YES odds (Gamma outcomePrices) — seed used for the offline/no-key demo. */
   seedBeliefProb: number;
   weight: number;
+  /** Belief-index inputs (the buyable legs also feed the crowd-belief score). polarity: YES = bullish for
+   *  the theme (+1) or bearish (-1); relevance: how central to theme sentiment (0..1); seedVolume: offline
+   *  liquidity fallback. Defaults applied by the belief builder when unset. */
+  polarity?: 1 | -1;
+  relevance?: number;
+  seedVolume?: number;
 };
 export type AssetLeg = {
   kind: "asset";
@@ -56,6 +62,23 @@ export type Security = {
   note?: string;
 };
 
+/** A read-only prediction market that feeds the theme's crowd-belief index but is NOT bought (so it needs
+ *  no on-chain neg-risk verification). Spans venues; oriented by polarity, weighted by relevance × live
+ *  liquidity in the belief engine. */
+export type BeliefMarket = {
+  venue: "polymarket" | "kalshi";
+  /** Polymarket numeric Gamma id, or Kalshi market ticker. */
+  id: string;
+  label: string;
+  /** +1: YES is bullish-for-theme; -1: YES is bearish (use 1 − prob). */
+  polarity: 1 | -1;
+  /** Thematic relevance in (0,1]. */
+  relevance: number;
+  /** Offline fallback YES probability + liquidity. */
+  seedProb: number;
+  seedVolume?: number;
+};
+
 export type ThemeDisplay = {
   /** Display-only equity whose published analyst band drives the hero "AI Sentiment Gap".
    *  Must match one entry in `securities` (the headline security). */
@@ -66,6 +89,9 @@ export type ThemeDisplay = {
   fallback: { beliefProb: number; equityPrice: number; assetLegPriceUsd: number };
   /** Thematically-related securities shown inside the bucket (display/anchor layer). */
   securities: Security[];
+  /** Extra non-buyable belief markets (Polymarket + Kalshi) that, together with the buyable prediction
+   *  legs, feed the crowd-belief index. Optional — themes without extras still aggregate their legs. */
+  beliefMarkets?: BeliefMarket[];
 };
 
 export type Theme = { slug: string; title: string; legs: Leg[]; display: ThemeDisplay };
