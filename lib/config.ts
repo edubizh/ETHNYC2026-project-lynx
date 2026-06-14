@@ -1,3 +1,4 @@
+import "server-only";
 import { ADDR } from "@/lib/addresses";
 
 function req(name: string): string {
