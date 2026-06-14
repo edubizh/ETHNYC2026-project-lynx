@@ -1,8 +1,35 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { fetchBeliefProb } from "@/lib/adapters/polymarket";
+import { fetchBeliefProb, fetchMarketVolumes } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 
 afterEach(() => vi.restoreAllMocks());
+
+describe("Polymarket Gamma volume adapter", () => {
+  it("maps the four window volume fields (24h/7d/30d/3m) from one Gamma fetch", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ volume24hr: 549.19, volume1wk: 23141.1, volume1mo: 54259.58, volumeNum: 359174.78 }),
+    }) as any;
+    const v = await fetchMarketVolumes("608368");
+    expect(v["24h"]).toBeCloseTo(549.19, 2);
+    expect(v["7d"]).toBeCloseTo(23141.1, 1);
+    expect(v["30d"]).toBeCloseTo(54259.58, 2);
+    expect(v["3m"]).toBeCloseTo(359174.78, 2); // 3M -> volumeNum (Gamma has no 90-day bucket)
+  });
+
+  it("treats missing/non-numeric volume fields as zero", async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ volume24hr: 100 }) }) as any;
+    const v = await fetchMarketVolumes("608368");
+    expect(v["24h"]).toBe(100);
+    expect(v["7d"]).toBe(0);
+    expect(v["3m"]).toBe(0);
+  });
+
+  it("throws on a non-OK Gamma response", async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 502 }) as any;
+    await expect(fetchMarketVolumes("608368")).rejects.toThrow(/Gamma 502/);
+  });
+});
 
 describe("Polymarket Gamma adapter", () => {
   it("parses YES odds (outcomePrices is a STRINGIFIED JSON array)", async () => {
