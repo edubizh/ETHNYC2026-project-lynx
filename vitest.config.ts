@@ -21,6 +21,9 @@ export default defineConfig({
     // lib/config.ts HARD-FAILS at import if UNISWAP_API_KEY is missing, and reads addresses
     // via getAddress(). Provide the (public, non-secret) values the unit tests touch.
     env: {
+      // Adapters bypass their TTL cache (lib/adapters/cache.ts) under NODE_ENV==="test" so each unit
+      // test hits its own per-case fetch mock; pin it here so the bypass is deterministic.
+      NODE_ENV: "test",
       UNISWAP_API_KEY: "test-key",
       UNISWAP_TRADING_API_BASE: "https://trade-api.test/v1",
       EQUITIES_API_KEY: "test-equities",
