@@ -55,6 +55,8 @@ done
 
 Expected: SwapRouter02 has bytecode; each sleeve token has at least one non-zero pool. **Record the chosen fee tier per token** (deepest pool) — these go into the registry (Task 3) and the fork test (Task 8). If the SwapRouter02 address has no code, find the Polygon SwapRouter02 from Uniswap docs (context7) and use that instead.
 
+> **RESULTS (pinned 2026-06-13):** SwapRouter02 `0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45` is deployed (48 KB). Deepest direct **USDC.e** pools by liquidity: **WETH → fee 500**, **WBTC → fee 500**, **LINK → fee 3000**. **wstETH has ZERO liquidity** in both its direct USDC.e pools (500 and 10000) → it is **dropped from the sleeves** and WETH is used as the risk-on proxy instead (single-hop, deep pool). wstETH remains a `LIVE-UNISWAP` *display* security (Uniswap-tradeable multi-hop, priced via `/quote`). The sleeve universe is therefore **{WETH, WBTC, LINK}**, all single-hop. This is reflected in Tasks 1, 3, 4, 5, 8 below.
+
 - [ ] **Step 2: Verify the Arc qualification path (Circle MCP)**
 
 Use the `circle` MCP: `search_circle_documentation` for "Arc testnet paymaster USDC gas modular wallet" and "CCTP Arc Polygon supported chains", then `get_circle_product_summary` on the matched product. **Record** which is live on Arc Testnet today — a Modular-Wallet **Paymaster (USDC-gas) userOp** or a **CCTP transfer Arc→Polygon** — that's the Arc load-bearing artifact in the final checklist.
@@ -249,9 +251,9 @@ describe("multi-asset on-chain sleeve", () => {
     }
   });
 
-  it("AI sleeve is wstETH + LINK (risk-on / data-infra), NVDA stays display-only", () => {
+  it("AI sleeve is WETH + LINK (risk-on / data-infra), NVDA stays display-only", () => {
     const tickers = getTheme("ai").legs.filter((l) => l.kind === "asset").map((l) => (l as { ticker: string }).ticker);
-    expect(tickers).toEqual(["wstETH", "LINK"]);
+    expect(tickers).toEqual(["WETH", "LINK"]);
   });
 });
 ```
@@ -280,39 +282,44 @@ export type AssetLeg = {
 
 - [ ] **Step 3b: Convert each bucket's single asset leg into a sleeve** in `lib/baskets/registry.ts`. Use the fee tiers from Task 0 (shown here as the expected deepest tiers — adjust if Task 0 differs). Replace each bucket's asset leg(s) and add the matching `LIVE-UNISWAP` securities.
 
+Sleeve universe = **{WETH (fee 500), WBTC (fee 500, 8dp), LINK (fee 3000)}** (Task 0: deepest direct USDC.e pools; wstETH dropped — empty USDC.e pools). Replace each bucket's asset leg(s) and add the matching `LIVE-UNISWAP` securities for any sleeve token not already present.
+
 ```typescript
-// AI: replace the single wstETH asset leg with wstETH + LINK (assets sum 0.5; preds 0.35+0.15).
-//   legs[2] becomes:
-{ kind: "asset", label: "Risk-on staking proxy (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", ticker: "wstETH", swapFee: 500, weight: 0.3 },
+// AI: WETH + LINK (assets sum 0.5; preds 0.35+0.15). legs[2] (old single wstETH leg) becomes TWO legs:
+{ kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
 { kind: "asset", label: "Data/oracle infra proxy (LINK on Polygon)", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", ticker: "LINK", swapFee: 3000, weight: 0.2 },
-// AI securities[]: add LINK as LIVE-UNISWAP (NVDA + wstETH already present):
+// AI securities[]: add WETH + LINK as LIVE-UNISWAP (NVDA + wstETH already present; wstETH stays as a LIVE-UNISWAP display security):
+{ ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
 { ticker: "LINK", name: "Chainlink", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable data/oracle-infra risk proxy on Uniswap (Polygon)." },
 
 // CRYPTO: WBTC + WETH (assets sum 0.6; pred 0.4). Add ticker/swapFee; WBTC keeps decimals: 8.
-{ kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 3000, weight: 0.4, decimals: 8 },
+{ kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.4, decimals: 8 },
 { kind: "asset", label: "ETH exposure (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2 },
 // crypto securities[] already list WBTC + WETH as LIVE-UNISWAP — no change.
 
-// MACRO: wstETH + WETH (assets sum 0.5; pred 0.5).
-{ kind: "asset", label: "Rate-sensitive risk (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", ticker: "wstETH", swapFee: 500, weight: 0.3 },
-{ kind: "asset", label: "Rate-sensitive risk (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2 },
-// MACRO securities[]: add WETH LIVE-UNISWAP (wstETH already present):
+// MACRO: WETH + WBTC (assets sum 0.5; pred 0.5).
+{ kind: "asset", label: "Rate-sensitive risk (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
+{ kind: "asset", label: "Store-of-value hedge (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8 },
+// MACRO securities[]: add WETH + WBTC LIVE-UNISWAP (wstETH already present, stays):
 { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable rate-sensitive risk asset on Uniswap (Polygon)." },
+{ ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable store-of-value hedge on Uniswap (Polygon)." },
 
-// GEOPOLITICS: WBTC + wstETH (assets sum 0.5; preds 0.25+0.25).
-{ kind: "asset", label: "Digital safe-haven (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 3000, weight: 0.3, decimals: 8 },
-{ kind: "asset", label: "Risk asset (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", ticker: "wstETH", swapFee: 500, weight: 0.2 },
-// GEOPOLITICS securities[]: add WBTC LIVE-UNISWAP (wstETH already present):
+// GEOPOLITICS: WBTC + WETH (assets sum 0.5; preds 0.25+0.25).
+{ kind: "asset", label: "Digital safe-haven (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.3, decimals: 8 },
+{ kind: "asset", label: "Risk asset (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2 },
+// GEOPOLITICS securities[]: add WBTC + WETH LIVE-UNISWAP (wstETH already present, stays):
 { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable digital safe-haven on Uniswap (Polygon)." },
+{ ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
 
-// US-POLITICS: WETH + wstETH (assets sum 0.5; preds 0.25+0.25).
+// US-POLITICS: WETH + WBTC (assets sum 0.5; preds 0.25+0.25).
 { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
-{ kind: "asset", label: "Risk asset (wstETH on Polygon)", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", ticker: "wstETH", swapFee: 500, weight: 0.2 },
-// US-POLITICS securities[]: add WETH LIVE-UNISWAP (wstETH already present):
+{ kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8 },
+// US-POLITICS securities[]: add WETH + WBTC LIVE-UNISWAP (wstETH already present, stays):
 { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+{ ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
 ```
 
-> Note: keep the existing wstETH/WBTC/WETH securities that already carry `availability: "LIVE-UNISWAP"`; just ensure each sleeve token has a matching security (add only the missing ones above). The headline `display.assetSymbol` (NVDA/WBTC/TLT/ITA/DJT) is unchanged — the hero still uses the equity anchor.
+> Notes: keep existing `LIVE-UNISWAP` securities (incl. wstETH — it stays a display security, just not a sleeve leg). The anti-drift guard is **direction-1 only** (every asset-leg token must be a `LIVE-UNISWAP` security in the bucket); a `LIVE-UNISWAP` security need NOT be a sleeve leg (wstETH). The headline `display.assetSymbol` (NVDA/WBTC/TLT/ITA/DJT) is unchanged — the hero still uses the equity anchor. Avoid duplicate securities entries (e.g. don't add WBTC twice if already present).
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -373,14 +380,14 @@ describe("buildBasketContractCalls — index allocation across prediction legs +
 
   it("encodes enterAssetLeg(amount, recipient, SwapRouter02, SwapRouter02, token, minOut, swapData) for sleeve legs", () => {
     const calls = buildBasketContractCalls("ai", 10_000_000n, RECIPIENT, ENTER, { minOut: () => 5n });
-    const assetCall = calls[2]; // first asset leg (wstETH)
+    const assetCall = calls[2]; // first asset leg (WETH)
     const { functionName, args } = decodeFunctionData({ abi: ENTER_ASSET_LEG_ABI, data: assetCall.toContractCallData });
     expect(functionName).toBe("enterAssetLeg");
     expect(args[0]).toBe(3_000_000n);          // amount
     expect(args[1]).toBe(RECIPIENT);           // recipient
     expect(args[2]).toBe(ADDR.swapRouter02);   // router
     expect(args[3]).toBe(ADDR.swapRouter02);   // spender
-    expect(args[4]).toBe(ADDR.wsteth);         // assetOut
+    expect(args[4]).toBe(ADDR.weth);           // assetOut
     expect(args[5]).toBe(5n);                  // minAmountOut
     expect(args[6]).not.toBe("0x");            // swapData present
   });
@@ -541,20 +548,20 @@ import type { AssetLeg } from "@/lib/baskets/types";
 
 afterEach(() => vi.restoreAllMocks());
 
-const wsteth: AssetLeg = { kind: "asset", label: "x", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", ticker: "wstETH", swapFee: 500, weight: 0.3 };
+const weth: AssetLeg = { kind: "asset", label: "x", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 };
 
 describe("resolveAssetMinOut", () => {
   it("converts a USDC.e amount to a slippage-floored token-out using the Uniswap /quote price", async () => {
-    // 1 wstETH = 4000 USDC -> 3 USDC.e buys 0.00075 wstETH; 1% slippage floor = 0.0007425 wstETH.
+    // 1 WETH = 4000 USDC -> 3 USDC.e buys 0.00075 WETH; 1% slippage floor = 0.0007425 WETH.
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4000);
-    const minOut = await resolveAssetMinOut(wsteth, 3_000_000n, 0.01);
+    const minOut = await resolveAssetMinOut(weth, 3_000_000n, 0.01);
     // 3/4000 = 0.00075 ETH = 7.5e14 wei; *0.99 = 7.425e14
     expect(minOut).toBe(742_500_000_000_000n);
   });
 
   it("returns 0n if the quote feed is down (entry still proceeds; contract slippage check is the backstop downstream)", async () => {
     vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("no key"));
-    expect(await resolveAssetMinOut(wsteth, 3_000_000n, 0.01)).toBe(0n);
+    expect(await resolveAssetMinOut(weth, 3_000_000n, 0.01)).toBe(0n);
   });
 });
 ```
@@ -687,14 +694,14 @@ git commit -m "feat(lifi): same-chain Polygon (137) entry-quote mode for the dem
 - [ ] **Step 1: Update/extend the failing test** in `test/dashboard.test.ts` — change the AI "lists every leg" expectation and add a sleeve assertion:
 
 ```typescript
-  it("includes every sleeve asset leg in the view (AI = wstETH + LINK)", async () => {
+  it("includes every sleeve asset leg in the view (AI = WETH + LINK)", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
     vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155);
 
     const d = await buildDashboard("ai");
     const assets = d.legs.filter((l) => l.kind === "asset");
-    expect(assets.length).toBe(2);               // wstETH + LINK
+    expect(assets.length).toBe(2);               // WETH + LINK
     expect(assets.every((a) => a.priceUsd === 4300)).toBe(true);
     expect(d.legs.filter((l) => l.kind === "prediction").length).toBe(2);
     expect(d.hero.assetSymbol).toBe("NVDA");      // hero anchor unchanged
