@@ -244,8 +244,12 @@ export default async function ThemePage({ params }: { params: { slug: string } }
                     <span style={{ color: "#E8EBEF", fontSize: 9 }}>◆</span>
                     {leg.label}
                   </span>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11, color: "#E8EBEF" }}>
-                    <span>◆</span>live · uniswap <span style={{ color: "#7A828D" }}>(Polygon)</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11, color: leg.priceSource === "fallback" ? "#7A828D" : "#E8EBEF" }}>
+                    {leg.priceSource === "fallback" ? (
+                      <><span style={{ color: "#7A828D" }}>○</span>fallback · cached</>
+                    ) : (
+                      <><span>◆</span>live · uniswap <span style={{ color: "#7A828D" }}>(Polygon)</span></>
+                    )}
                   </span>
                 </div>
                 <div style={{ width: 148, display: "flex", flexDirection: "column", gap: 8 }}>
