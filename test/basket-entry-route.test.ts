@@ -15,8 +15,18 @@ const RECIP = "0x00000000000000000000000000000000000000Be"; // EIP-55 checksumme
 const req = (body: unknown) => new Request("http://localhost/api/basket-entry", { method: "POST", body: JSON.stringify(body) });
 
 describe("POST /api/basket-entry", () => {
-  it("400 on a missing/invalid field", async () => {
+  it("400 on a non-positive amount", async () => {
     const res = await POST(req({ slug: "ai", amount: 0, recipient: RECIP, enterBasket: ENTER }));
+    expect(res.status).toBe(400);
+  });
+
+  it("400 on a malformed JSON body", async () => {
+    const res = await POST(new Request("http://localhost/api/basket-entry", { method: "POST", body: "{ not json" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("400 on a missing required field (no slug)", async () => {
+    const res = await POST(req({ amount: 5, recipient: RECIP, enterBasket: ENTER }));
     expect(res.status).toBe(400);
   });
 
