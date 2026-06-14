@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectGraphAssets } from "@/lib/dashboard/graph";
+import { selectGraphAssets, selectOnChainAssets } from "@/lib/dashboard/graph";
 import type { SecurityView } from "@/lib/dashboard/service";
 
 const sec = (over: Partial<SecurityView>): SecurityView => ({
@@ -42,5 +42,28 @@ describe("selectGraphAssets", () => {
     ]);
     expect(a.comingSoon).toBe(false);
     expect(a.changePct).toBe(2.5);
+  });
+});
+
+describe("selectOnChainAssets", () => {
+  it("returns only liquidity-tagged securities, buyable first then by tier", () => {
+    const out = selectOnChainAssets([
+      sec({ ticker: "FET", chain: "ethereum", liquidity: "high" }), // coming soon, high
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", priceUsd: 4300 }), // buyable
+      sec({ ticker: "NVDA", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }), // equity -> excluded
+      sec({ ticker: "MAGA", chain: "ethereum", liquidity: "low" }), // coming soon, low
+    ]);
+    expect(out.map((a) => a.ticker)).toEqual(["WETH", "FET", "MAGA"]);
+    expect(out[0]).toMatchObject({ ticker: "WETH", buyable: true, chain: "polygon", liquidity: "high", priceUsd: 4300 });
+    expect(out[1]).toMatchObject({ ticker: "FET", buyable: false, liquidity: "high" });
+  });
+
+  it("partitions cleanly against selectGraphAssets (no overlap)", () => {
+    const secs = [
+      sec({ ticker: "NVDA", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }),
+      sec({ ticker: "FET", chain: "ethereum", liquidity: "high" }),
+    ];
+    expect(selectOnChainAssets(secs).map((a) => a.ticker)).toEqual(["FET"]);
+    expect(selectGraphAssets(secs).map((a) => a.ticker)).toEqual(["NVDA"]);
   });
 });
