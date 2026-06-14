@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { useAccount, useConnect, useWalletClient, useSwitchChain } from "wagmi";
 import { initLifi, buildEnterQuote, convertQuoteToRoute, executeRoute } from "@/lib/lifi/enter";
+import { planEntry } from "@/lib/lifi/entryPlan";
 import type { BuyLeg } from "@/components/BuyBox";
+
+/** Cross-chain (Ethereum/Base) entry is a feature-flagged stretch; default build is the Polygon spine. */
+const CROSSCHAIN = process.env.NEXT_PUBLIC_ENABLE_CROSSCHAIN_ENTRY === "true";
 
 const DISPLAY = "'Inter Tight', system-ui, sans-serif";
 const BODY = "'IBM Plex Sans', system-ui, sans-serif";
 const MONO = "'IBM Plex Mono', monospace";
 const CTA = "linear-gradient(180deg,#F4F6F8,#C4C9D1)";
 
-const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const USDC_ETH = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const ENTER_BASKET = process.env.NEXT_PUBLIC_ENTER_BASKET ?? "0x0000000000000000000000000000000000000000";
 // Real, recorded standalone Uniswap $7k swap — shown as separate evidence (NOT part of the basket).
 const UNISWAP_EVIDENCE = "0x23a05c509b64c36ef38671d19a965f8464ca1c2876848637924972a72327cbde";
@@ -86,7 +88,7 @@ export function EnterSheet({
   const { switchChain } = useSwitchChain();
 
   const [step, setStep] = useState(1);
-  const [chips, setChips] = useState<ChipState[]>(["idle", "idle", "idle"]);
+  const [chips, setChips] = useState<ChipState[]>([]);
   const [signing, setSigning] = useState(false);
   const [result, setResult] = useState<Result>(null);
   const [txHash, setTxHash] = useState<string>("");
@@ -95,7 +97,9 @@ export function EnterSheet({
   if (!open) return null;
 
   const chainId = walletClient?.chain?.id;
-  const onAllowedChain = chainId === 1 || chainId === 8453;
+  const plan = planEntry(chainId, { crossChain: CROSSCHAIN });
+  const onSupportedChain = "mode" in plan;
+  const steps = onSupportedChain ? plan.steps : ["Swap · USDC→USDC.e", "EnterBasket · split across legs"];
   const recipient = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "your wallet";
   const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const predCount = legs.filter((l) => l.kind === "prediction").length;
@@ -104,7 +108,7 @@ export function EnterSheet({
 
   function reset() {
     setStep(1);
-    setChips(["idle", "idle", "idle"]);
+    setChips(steps.map(() => "idle"));
     setSigning(false);
     setResult(null);
     setTxHash("");
@@ -118,8 +122,9 @@ export function EnterSheet({
   async function sign() {
     try {
       setSigning(true);
-      setChips(["pending", "idle", "idle"]);
-      if (!address || !walletClient || !onAllowedChain) throw new Error("Connect on Ethereum or Base first.");
+      setChips(steps.map((_, i) => (i === 0 ? "pending" : "idle")));
+      if (!address || !walletClient) throw new Error("Connect a wallet first.");
+      if (!("mode" in plan)) throw new Error("Switch to Polygon to enter.");
       if (ENTER_BASKET === "0x0000000000000000000000000000000000000000") throw new Error("EnterBasket address not set.");
       const totalUsdce = BigInt(Math.round(amount * 1e6));
       const res = await fetch("/api/basket-entry", {
@@ -132,23 +137,23 @@ export function EnterSheet({
       const contractCalls = body.contractCalls;
       initLifi({ getWalletClient: async () => walletClient, switchChain: async () => walletClient });
       const quote = await buildEnterQuote({
-        fromChainId: chainId as 1 | 8453,
-        fromToken: chainId === 1 ? USDC_ETH : USDC_BASE,
+        fromChainId: plan.fromChainId,
+        fromToken: plan.fromToken,
         fromAddress: address,
         fromAmount: totalUsdce.toString(),
         contractCalls,
       });
-      setChips(["done", "pending", "idle"]);
+      setChips(steps.map((_, i) => (i === 0 ? "done" : i === 1 ? "pending" : "idle")));
       const route = convertQuoteToRoute(quote);
       await executeRoute(route, {
         updateRouteHook: (r) => {
           const done = r.steps.filter((s) => s.execution?.status === "DONE").length;
-          setChips([done >= 1 ? "done" : "pending", done >= 2 ? "done" : "pending", done >= 3 ? "done" : "idle"]);
+          setChips(steps.map((_, i) => (i < done ? "done" : i === done ? "pending" : "idle")));
           const hash = r.steps.flatMap((s) => s.execution?.process ?? []).map((p) => p.txHash).filter(Boolean).pop();
           if (hash) setTxHash(hash);
         },
       });
-      setChips(["done", "done", "done"]);
+      setChips(steps.map(() => "done"));
       setResult("success");
       setStep(4);
     } catch (e) {
@@ -207,8 +212,8 @@ export function EnterSheet({
           <div style={{ padding: 22, animation: "lynxFade .2s ease" }}>
             <h3 style={{ margin: "0 0 7px", fontFamily: DISPLAY, fontWeight: 700, fontSize: 16, color: "#FFFFFF" }}>Connect a wallet</h3>
             <p style={{ margin: "0 0 18px", fontSize: 13.5, lineHeight: 1.55, color: "#AAB1BC" }}>
-              Connect on <span style={{ color: "#FFFFFF" }}>Ethereum</span> or <span style={{ color: "#FFFFFF" }}>Base</span>. Entry never
-              originates on Arc or Polygon — we route it for you.
+              Connect on <span style={{ color: "#FFFFFF" }}>Polygon</span> with USDC. We swap it to USDC.e and
+              split it across the basket — markets and assets — in one signature.
             </p>
             {!isConnected ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -226,22 +231,22 @@ export function EnterSheet({
                   </button>
                 ))}
               </div>
-            ) : !onAllowedChain ? (
+            ) : !onSupportedChain ? (
               <div style={{ animation: "lynxFade .2s ease" }}>
                 <div style={{ display: "flex", gap: 11, padding: "14px 15px", background: "rgba(229,84,75,0.08)", border: "1px solid rgba(229,84,75,0.35)", borderRadius: 9, marginBottom: 12 }}>
                   <span style={{ color: "#E5544B", flexShrink: 0 }}>!</span>
                   <div>
                     <span style={{ display: "block", fontSize: 13.5, color: "#FFFFFF", marginBottom: 2 }}>You&apos;re on the wrong network.</span>
-                    <span style={{ fontSize: 12.5, color: "#AAB1BC" }}>Entry must originate on Ethereum or Base. Switch network to continue.</span>
+                    <span style={{ fontSize: 12.5, color: "#AAB1BC" }}>Entry runs on Polygon. Switch network to continue.</span>
                   </div>
                 </div>
-                <button onClick={() => switchChain({ chainId: 8453 })} style={btnCta({ width: "100%", height: 46 })}>
-                  Switch to Base
+                <button onClick={() => switchChain({ chainId: 137 })} style={btnCta({ width: "100%", height: 46 })}>
+                  Switch to Polygon
                 </button>
               </div>
             ) : (
               <button onClick={() => setStep(2)} style={btnCta({ width: "100%", height: 48 })}>
-                Continue → ({chainId === 1 ? "Ethereum" : "Base"})
+                Continue → ({chainId === 137 ? "Polygon" : chainId === 1 ? "Ethereum" : "Base"})
               </button>
             )}
           </div>
@@ -284,10 +289,11 @@ export function EnterSheet({
           <div style={{ padding: 22, animation: "lynxFade .2s ease" }}>
             <h3 style={{ margin: "0 0 7px", fontFamily: DISPLAY, fontWeight: 700, fontSize: 16, color: "#FFFFFF" }}>One signature</h3>
             <p style={{ margin: "0 0 16px", fontSize: 13.5, lineHeight: 1.55, color: "#AAB1BC" }}>
-              LI.FI Composer assembles the whole route from your signature and splits the deposit across the bucket&apos;s markets.
+              LI.FI Composer assembles the whole route from your signature and splits the deposit across the
+              bucket&apos;s markets and assets.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {["Swap", "Bridge · to Polygon", "EnterBasket · split across markets"].map((c, i) => (
+              {steps.map((c, i) => (
                 <div key={c} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 9, fontFamily: MONO, fontSize: 12.5, color: chips[i] === "idle" ? "#5C636D" : "#FFFFFF" }}>
                   <span style={{ color: chips[i] === "done" ? "#3FBE85" : "#E8EBEF", animation: chips[i] === "pending" ? "lynxPulse 1s infinite" : undefined }}>
                     {chips[i] === "done" ? "✓" : "●"}
