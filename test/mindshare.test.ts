@@ -46,9 +46,9 @@ describe("aggregateMindshare (tile sizes ∝ real activity, Others fills the rem
 });
 
 describe("seedMindshareView (verified-seed fallback)", () => {
-  it("returns the 5 buckets ranked with AI flagship + a positive Others slice", () => {
+  it("returns the 7 buckets ranked with AI flagship + a positive Others slice", () => {
     const v = seedMindshareView();
-    expect(v.ranked.length).toBe(5);
+    expect(v.ranked.length).toBe(7);
     expect(v.ranked[0].slug).toBe("ai");
     expect(v.others.mindshare).toBeGreaterThan(0);
   });

@@ -27,14 +27,16 @@ const SEED: Record<string, Mindshare> = {
   crypto: { mindshare: 14.6, idx: 64.8, change: 1.4 },
   "us-politics": { mindshare: 9.8, idx: 55.0, change: 0.8 },
   geopolitics: { mindshare: 8.7, idx: 47.6, change: -4.1 },
+  entertainment: { mindshare: 7.3, idx: 55.0, change: 1.6 },
   macro: { mindshare: 6.4, idx: 41.2, change: -2.3 },
+  sports: { mindshare: 5.1, idx: 49.0, change: 2.4 },
 };
 
 /** Share reserved for coming-soon sectors we don't list yet. We have no volume feed for markets we
  *  don't carry, so "Others" is a fixed documented slice; the live buckets split the remainder
  *  (100 − OTHERS_RESERVE)% proportional to their REAL measured volume. */
-export const OTHERS_RESERVE = 24;
-export const OTHERS_SECTORS = 3;
+export const OTHERS_RESERVE = 15;
+export const OTHERS_SECTORS = 2;
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -109,6 +111,14 @@ const META: Record<string, BucketMeta> = {
   "us-politics": {
     status: "Demo-ready",
     thesis: "The 2028 Democratic nomination race vs. policy-sensitive equities.",
+  },
+  sports: {
+    status: "Demo-ready",
+    thesis: "2026 World Cup host-nation runs (US-co-hosted) vs. a sports-betting equity anchor.",
+  },
+  entertainment: {
+    status: "Demo-ready",
+    thesis: "2026 box-office odds (the year's highest-grossing film) vs. a studio equity anchor.",
   },
 };
 export function getBucketMeta(slug: string): BucketMeta {
