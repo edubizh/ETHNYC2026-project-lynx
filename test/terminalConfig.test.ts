@@ -11,8 +11,8 @@ import {
 
 describe("terminalConfig reducer", () => {
   it("setFeed swaps the feed in one slot only", () => {
-    const next = terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "left", pos: "top", feed: "crypto-tape" });
-    expect(next.left.top).toBe("crypto-tape");
+    const next = terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "left", pos: "top", feed: "uniswap" });
+    expect(next.left.top).toBe("uniswap");
     expect(next.left.bottom).toBe(DEFAULT_CONFIG.left.bottom); // untouched
     expect(next.right).toEqual(DEFAULT_CONFIG.right); // other side untouched
   });
@@ -36,17 +36,17 @@ describe("terminalConfig reducer", () => {
 
   it("does not mutate the input state", () => {
     const before = JSON.stringify(DEFAULT_CONFIG);
-    terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "right", pos: "bottom", feed: "belief-odds" });
+    terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "right", pos: "bottom", feed: "kalshi" });
     expect(JSON.stringify(DEFAULT_CONFIG)).toBe(before);
   });
 });
 
 describe("visibleFeeds", () => {
   it("returns 1 feed when single, 2 when split", () => {
-    expect(visibleFeeds({ mode: "single", top: "crypto-tape", bottom: "belief-odds" })).toEqual(["crypto-tape"]);
-    expect(visibleFeeds({ mode: "split", top: "crypto-tape", bottom: "belief-odds" })).toEqual([
-      "crypto-tape",
-      "belief-odds",
+    expect(visibleFeeds({ mode: "single", top: "uniswap", bottom: "kalshi" })).toEqual(["uniswap"]);
+    expect(visibleFeeds({ mode: "split", top: "uniswap", bottom: "kalshi" })).toEqual([
+      "uniswap",
+      "kalshi",
     ]);
   });
 });

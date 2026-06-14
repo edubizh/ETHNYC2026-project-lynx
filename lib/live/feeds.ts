@@ -1,21 +1,21 @@
 import type { ComponentType } from "react";
 import type { FeedId } from "@/lib/live/terminalConfig";
-import { CryptoTape } from "@/components/terminal/feeds/CryptoTape";
+import { UniswapTape } from "@/components/terminal/feeds/UniswapTape";
+import { KalshiTape } from "@/components/terminal/feeds/KalshiTape";
 import { BeliefTape } from "@/components/terminal/feeds/BeliefTape";
-import { BeliefOdds } from "@/components/terminal/feeds/BeliefOdds";
-import { OnchainSwaps } from "@/components/terminal/feeds/OnchainSwaps";
+import { CryptoTape } from "@/components/terminal/feeds/CryptoTape";
 
-export type FeedNeeds = "market" | "crypto" | "assets";
+export type FeedNeeds = "dex" | "market" | "crypto";
 export type FeedDescriptor = { id: FeedId; label: string; blurb: string; needs: FeedNeeds; Component: ComponentType };
 
-// Only feeds with consistent / semi-consistent real-time flow (measured 2026-06-13): Hyperliquid
-// trades ~347/min, belief order-flow ~27/min, on-chain ~23/min, belief odds ~14/min. Static feeds
-// (order book ~3/min, Uniswap price polls, keyless equity tape) were removed so the rails feel alive.
+// Exactly one consistently-flowing feed per venue (measured 2026-06-14): Uniswap v4 Base swaps
+// ~300+/min, Kalshi macro/crypto/politics trades (firehose, filtered), Hyperliquid ~347/min,
+// Polymarket belief order-flow ~27/min. Static/quote feeds were removed so the rails never look dead.
 export const FEED_CATALOG: Record<FeedId, FeedDescriptor> = {
-  "crypto-tape": { id: "crypto-tape", label: "Crypto Tape", blurb: "Live BTC/ETH/SOL trades (Hyperliquid)", needs: "crypto", Component: CryptoTape },
-  "belief-tape": { id: "belief-tape", label: "Belief Flow", blurb: "Live YES/NO buy & sell prints", needs: "market", Component: BeliefTape },
-  "belief-odds": { id: "belief-odds", label: "Belief Odds", blurb: "Live YES probability + sparkline", needs: "market", Component: BeliefOdds },
-  "onchain-swaps": { id: "onchain-swaps", label: "On-chain", blurb: "Polygon basket-token transfers", needs: "assets", Component: OnchainSwaps },
+  uniswap: { id: "uniswap", label: "Uniswap", blurb: "Live Uniswap v4 swaps (Base)", needs: "dex", Component: UniswapTape },
+  kalshi: { id: "kalshi", label: "Kalshi", blurb: "Live Kalshi trades (macro/crypto/politics)", needs: "market", Component: KalshiTape },
+  polymarket: { id: "polymarket", label: "Polymarket", blurb: "Live belief-market order flow", needs: "market", Component: BeliefTape },
+  hyperliquid: { id: "hyperliquid", label: "Hyperliquid", blurb: "Live BTC/ETH/SOL trades", needs: "crypto", Component: CryptoTape },
 };
 
 export const FEED_LIST: FeedDescriptor[] = Object.values(FEED_CATALOG);

@@ -1,8 +1,8 @@
 // Pure layout state + persistence for the customizable terminal side rails.
 // No React / no DOM imports here so it stays trivially unit-testable; localStorage access is guarded.
 
-// Only consistently-flowing feeds (see lib/live/feeds.ts for measured rates).
-export const FEED_IDS = ["crypto-tape", "belief-tape", "belief-odds", "onchain-swaps"] as const;
+// Exactly one consistently-flowing feed per venue (see lib/live/feeds.ts for measured rates).
+export const FEED_IDS = ["uniswap", "kalshi", "polymarket", "hyperliquid"] as const;
 export type FeedId = (typeof FEED_IDS)[number];
 
 export type SidePos = "top" | "bottom";
@@ -15,8 +15,8 @@ export type TerminalConfig = { left: SideConfig; right: SideConfig; hidden: bool
 
 // Default to all four flowing feeds (both sides split) so the terminal is alive on first load.
 export const DEFAULT_CONFIG: TerminalConfig = {
-  left: { mode: "split", top: "belief-tape", bottom: "belief-odds" },
-  right: { mode: "split", top: "crypto-tape", bottom: "onchain-swaps" },
+  left: { mode: "split", top: "polymarket", bottom: "kalshi" },
+  right: { mode: "split", top: "hyperliquid", bottom: "uniswap" },
   hidden: false,
 };
 
@@ -45,9 +45,9 @@ export function terminalReducer(state: TerminalConfig, action: TerminalConfig | 
   }
 }
 
-// v2: feed catalog changed (firehose added, static feeds removed) — bump key so everyone gets the
-// new all-flowing default instead of a repaired old layout.
-export const STORAGE_KEY = "lynx.terminal.v2";
+// v3: feeds restructured to one-per-venue (Uniswap/Kalshi/Polymarket/Hyperliquid) — bump key so
+// everyone gets the new default instead of a repaired old layout.
+export const STORAGE_KEY = "lynx.terminal.v3";
 
 const isFeedId = (v: unknown): v is FeedId => typeof v === "string" && (FEED_IDS as readonly string[]).includes(v);
 
