@@ -53,6 +53,19 @@ describe("buildDashboard", () => {
     expect(wsteth?.priceUsd).toBe(4300); // priced via Uniswap /quote
   });
 
+  it("includes every sleeve asset leg in the view (AI = WETH + LINK)", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155);
+
+    const d = await buildDashboard("ai");
+    const assets = d.legs.filter((l) => l.kind === "asset");
+    expect(assets.length).toBe(2);               // WETH + LINK
+    expect(assets.every((a) => a.priceUsd === 4300)).toBe(true);
+    expect(d.legs.filter((l) => l.kind === "prediction").length).toBe(2);
+    expect(d.hero.assetSymbol).toBe("NVDA");      // hero anchor unchanged
+  });
+
   it("prices a crypto bucket's headline via Uniswap /quote, not the equities feed", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);

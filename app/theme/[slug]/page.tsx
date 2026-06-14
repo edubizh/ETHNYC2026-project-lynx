@@ -61,9 +61,10 @@ export default async function ThemePage({ params }: { params: { slug: string } }
   const dirChip = h.direction === "asset-higher" ? "↑ asset" : h.direction === "belief-higher" ? "↑ belief" : "aligned";
 
   const predLegs = view.legs.filter((l) => l.kind === "prediction");
-  const assetLeg = view.legs.find((l) => l.kind === "asset");
+  const assetLegs = view.legs.filter((l) => l.kind === "asset");
+  const assetLeg = assetLegs[0];
   const buyLegs: BuyLeg[] = view.legs.map((l) => ({ label: l.label, kind: l.kind, weight: l.weight }));
-  const polygonNav = assetLeg?.priceUsd ?? 0;
+  const polygonNav = assetLegs.reduce((a, l) => a + (l.priceUsd ?? 0), 0);
 
   // Headline security (drives the band) → the ANCHOR row, with an honest availability badge.
   const anchor = view.securities.find((s) => s.ticker === h.assetSymbol) ?? view.securities[0];

@@ -110,7 +110,7 @@ export type DashboardView = {
 export async function buildDashboard(slug: string): Promise<DashboardView> {
   const t = getTheme(slug);
   const predLegs = t.legs.filter(isPrediction);
-  const assetLeg = t.legs.find(isAsset)!;
+  const assetLegs = t.legs.filter(isAsset);
 
   const predViews: LegView[] = [];
   for (const leg of predLegs) {
@@ -118,11 +118,15 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     predViews.push({ kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource });
   }
 
-  const [assetUsd, priceSource] = await withFallback(
-    () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
-    t.display.fallback.assetLegPriceUsd,
+  const assetViews: LegView[] = await Promise.all(
+    assetLegs.map(async (assetLeg) => {
+      const [assetUsd, priceSource] = await withFallback(
+        () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
+        t.display.fallback.assetLegPriceUsd,
+      );
+      return { kind: "asset" as const, label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
+    }),
   );
-  const assetView: LegView = { kind: "asset", label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
 
   // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
   const headline = getHeadlineSecurity(slug);
@@ -169,7 +173,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
       gapPct: d.gapPct,
       direction: d.direction,
     },
-    legs: [...predViews, assetView],
+    legs: [...predViews, ...assetViews],
     securities,
   };
 }
