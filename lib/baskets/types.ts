@@ -47,6 +47,11 @@ export type Availability = "LIVE-UNISWAP" | "DISPLAY-ONLY";
  *  (NVDAx etc.) never carry this; they are partitioned by `analystBand` instead. */
 export type Liquidity = "high" | "medium" | "low";
 
+/** Class of an on-chain asset — drives membership in the On-chain Assets list AND its ordering
+ *  (tokenized real-world securities first, memecoins/small-caps last). Off-rail equities with no
+ *  on-chain form omit this and appear only in the analyst-band chart. */
+export type AssetClass = "tokenized-equity" | "rwa" | "defi" | "major" | "memecoin";
+
 /** A real-world asset/security thematically tied to a bucket. LIVE-UNISWAP entries are buyable on-chain via
  *  Uniswap/LI.FI; DISPLAY-ONLY entries are the legible analyst anchor that drives the Sentiment Gap (not bought in-app). */
 export type Security = {
@@ -64,6 +69,9 @@ export type Security = {
   /** On-chain market-depth badge for tokenized assets (high/medium/low). Set on every on-chain token
    *  (buyable + coming-soon); never set on off-rail equities. Drives the On-chain Assets section. */
   liquidity?: Liquidity;
+  /** On-chain asset class — set on every on-chain asset (incl. tokenized stocks, which ALSO keep their
+   *  analystBand for the chart). Off-rail equities (no on-chain form) omit it. Drives On-chain list order. */
+  assetClass?: AssetClass;
   /** Where the asset trades, e.g. "polygon" (Uniswap) or "solana/CEX" (off-rail, display-only). */
   chain?: string;
   /** Honest one-liner on tradeability, surfaced in the badge tooltip. */

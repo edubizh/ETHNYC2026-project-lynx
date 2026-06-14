@@ -35,6 +35,14 @@ const chainLabel = (c: string) => CHAIN_LABEL[c] ?? c;
 const LIQ_LABEL: Record<OnChainAsset["liquidity"], string> = { high: "high liquidity", medium: "med liquidity", low: "low liquidity" };
 const LIQ_COLOR: Record<OnChainAsset["liquidity"], string> = { high: C.asset, medium: C.dim, low: C.faint };
 
+const CLASS_LABEL: Record<OnChainAsset["assetClass"], string> = {
+  "tokenized-equity": "Tokenized stocks",
+  rwa: "Real-world assets",
+  defi: "DeFi & infrastructure",
+  major: "Major crypto",
+  memecoin: "Memecoins & small-cap",
+};
+
 const fmt = (n: number) =>
   n > 0 && n < 0.01
     ? n.toLocaleString("en-US", { maximumSignificantDigits: 2 })
@@ -60,41 +68,42 @@ export function OnChainAssets({ assets, title }: { assets: OnChainAsset[]; title
         {title} on-chain assets
       </h2>
       <p style={{ margin: "6px 0 18px", maxWidth: 640, fontSize: 12.5, lineHeight: 1.5, color: C.faint }}>
-        Relevant tokenized assets on-chain. <span style={{ color: C.up }}>● buyable</span> = addable to the basket now on Polygon-Uniswap;
+        Relevant tokenized assets on-chain, securities first. <span style={{ color: C.up }}>● buyable</span> = addable to the basket now on Polygon-Uniswap;
         {" "}<span style={{ color: C.dim }}>○ coming soon</span> = real on-chain assets on other ecosystems we plan to integrate but can&apos;t add yet — each tagged with where it trades and its market depth.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {assets.map((a) => (
-          <div key={`${a.chain}:${a.ticker}`} style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 52, padding: "9px 8px", borderRadius: 8, background: a.buyable ? "rgba(63,190,133,0.05)" : "transparent" }}>
-            {/* ticker + name */}
-            <div style={{ width: 140, display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
-              <span style={{ fontFamily: MONO, fontSize: 13, color: a.buyable ? C.white : C.dim }}>{a.ticker}</span>
-              <span style={{ fontSize: 10.5, color: C.faintest, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
-            </div>
-
-            {/* status + chain + liquidity */}
-            <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: a.buyable ? C.up : C.faint, width: 92 }}>
-                {a.buyable ? "● buyable" : "○ coming soon"}
-              </span>
-              <Badge>{chainLabel(a.chain)}</Badge>
-              <Badge color={LIQ_COLOR[a.liquidity]}>{LIQ_LABEL[a.liquidity]}</Badge>
-            </div>
-
-            {/* note: where it trades / why not buyable here */}
-            <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, lineHeight: 1.4, color: C.faint }}>{a.note}</span>
-
-            {/* price (live where available) */}
-            <div style={{ width: 88, textAlign: "right", flexShrink: 0 }}>
-              {a.priceUsd != null ? (
-                <span style={{ fontFamily: MONO, fontSize: 13, color: C.asset, fontFeatureSettings: "'tnum' 1" }}>${fmt(a.priceUsd)}</span>
-              ) : (
-                <span style={{ fontFamily: MONO, fontSize: 11, color: C.faintest }}>—</span>
+        {assets.map((a, i) => {
+          const showHeader = i === 0 || assets[i - 1].assetClass !== a.assetClass;
+          return (
+            <div key={`${a.chain}:${a.ticker}`}>
+              {showHeader && (
+                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.faintest, padding: i === 0 ? "0 8px 6px" : "14px 8px 6px" }}>
+                  {CLASS_LABEL[a.assetClass]}
+                </div>
               )}
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 52, padding: "9px 8px", borderRadius: 8, background: a.buyable ? "rgba(63,190,133,0.05)" : "transparent" }}>
+                <div style={{ width: 140, display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 13, color: a.buyable ? C.white : C.dim }}>{a.ticker}</span>
+                  <span style={{ fontSize: 10.5, color: C.faintest, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: a.buyable ? C.up : C.faint, width: 92 }}>{a.buyable ? "● buyable" : "○ coming soon"}</span>
+                  <Badge>{chainLabel(a.chain)}</Badge>
+                  <Badge color={LIQ_COLOR[a.liquidity]}>{LIQ_LABEL[a.liquidity]}</Badge>
+                </div>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, lineHeight: 1.4, color: C.faint }}>{a.note}</span>
+                <div style={{ width: 88, textAlign: "right", flexShrink: 0 }}>
+                  {a.priceUsd != null ? (
+                    <span style={{ fontFamily: MONO, fontSize: 13, color: C.asset, fontFeatureSettings: "'tnum' 1" }}>${fmt(a.priceUsd)}</span>
+                  ) : (
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: C.faintest }}>—</span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

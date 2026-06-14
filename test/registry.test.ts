@@ -175,13 +175,26 @@ describe("on-chain liquidity tags & partition", () => {
     }
   });
 
-  it("no NON-headline security carries both an analyst band and a liquidity tag (clean partition)", () => {
-    for (const t of listThemes()) {
-      for (const s of getSecurities(t.slug)) {
-        if (s.analystBand != null && s.liquidity != null) {
-          expect(s.ticker, `${t.slug}/${s.ticker} dual-tagged`).toBe(t.display.assetSymbol);
-        }
-      }
+  const CLASSES = ["tokenized-equity", "rwa", "defi", "major", "memecoin"];
+
+  it("every security with an assetClass has a valid class, a liquidity tier, and a chain", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.assetClass == null) continue;
+      expect(CLASSES, `${t.slug}/${s.ticker}`).toContain(s.assetClass);
+      expect(["high", "medium", "low"], `${t.slug}/${s.ticker}`).toContain(s.liquidity);
+      expect(s.chain, `${t.slug}/${s.ticker}`).toBeTruthy();
+    }
+  });
+
+  it("off-rail equities (chain 'off-rail') stay chart-only (no assetClass)", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.chain === "off-rail") expect(s.assetClass, `${t.slug}/${s.ticker}`).toBeUndefined();
+    }
+  });
+
+  it("tokenized stocks (solana/CEX equities with a band) are classed tokenized-equity", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.chain === "solana/CEX" && s.analystBand != null) expect(s.assetClass, `${t.slug}/${s.ticker}`).toBe("tokenized-equity");
     }
   });
 

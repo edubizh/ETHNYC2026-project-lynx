@@ -46,36 +46,32 @@ describe("selectGraphAssets", () => {
 });
 
 describe("selectOnChainAssets", () => {
-  it("returns only liquidity-tagged securities, buyable first then by tier", () => {
+  it("includes only assetClass'd securities, ordered securities-first by class", () => {
     const out = selectOnChainAssets([
-      sec({ ticker: "FET", chain: "ethereum", liquidity: "high" }), // coming soon, high
-      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", priceUsd: 4300 }), // buyable
-      sec({ ticker: "NVDA", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }), // equity -> excluded
-      sec({ ticker: "MAGA", chain: "ethereum", liquidity: "low" }), // coming soon, low
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", priceUsd: 4300 }),
+      sec({ ticker: "NVDA", chain: "solana/CEX", liquidity: "low", assetClass: "tokenized-equity", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }),
+      sec({ ticker: "UNI", chain: "polygon", liquidity: "high", assetClass: "defi" }),
+      sec({ ticker: "PAXG", chain: "ethereum", liquidity: "medium", assetClass: "rwa" }),
+      sec({ ticker: "TRUMP", chain: "solana", liquidity: "high", assetClass: "memecoin" }),
+      sec({ ticker: "TLT", chain: "off-rail", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }), // off-rail equity -> excluded
     ]);
-    expect(out.map((a) => a.ticker)).toEqual(["WETH", "FET", "MAGA"]);
-    expect(out[0]).toMatchObject({ ticker: "WETH", buyable: true, chain: "polygon", liquidity: "high", priceUsd: 4300 });
-    expect(out[1]).toMatchObject({ ticker: "FET", buyable: false, liquidity: "high" });
+    expect(out.map((a) => a.ticker)).toEqual(["NVDA", "PAXG", "UNI", "WETH", "TRUMP"]);
+    expect(out[0]).toMatchObject({ ticker: "NVDA", assetClass: "tokenized-equity", buyable: false });
   });
 
-  it("orders buyable tokens by liquidity tier (deep first)", () => {
+  it("orders buyable then tier within a class", () => {
     const out = selectOnChainAssets([
-      sec({ ticker: "LINK", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "medium" }),
-      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high" }),
+      sec({ ticker: "LINK", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "medium", assetClass: "major" }),
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major" }),
+      sec({ ticker: "wstETH", chain: "polygon", liquidity: "low", assetClass: "major" }),
     ]);
-    expect(out.map((a) => a.buyable)).toEqual([true, true]);
-    expect(out.map((a) => a.ticker)).toEqual(["WETH", "LINK"]);
+    expect(out.map((a) => a.ticker)).toEqual(["WETH", "LINK", "wstETH"]); // buyable high, buyable medium, then coming-soon low
   });
 
-  it("partitions cleanly against selectGraphAssets (no overlap)", () => {
-    const secs = [
-      sec({ ticker: "NVDA", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }),
-      sec({ ticker: "FET", chain: "ethereum", liquidity: "high" }),
-    ];
-    // Note: the selectors partition purely by liquidity (here) vs analystBand (graph). A security with
-    // BOTH would appear in both; the registry invariant in Task 3 forbids that (except the crypto headline),
-    // so in practice the partition is clean.
-    expect(selectOnChainAssets(secs).map((a) => a.ticker)).toEqual(["FET"]);
-    expect(selectGraphAssets(secs).map((a) => a.ticker)).toEqual(["NVDA"]);
+  it("excludes off-rail equities and a tokenized stock appears in BOTH chart and list", () => {
+    const nvda = sec({ ticker: "NVDA", chain: "solana/CEX", liquidity: "low", assetClass: "tokenized-equity", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 });
+    const tlt = sec({ ticker: "TLT", chain: "off-rail", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 });
+    expect(selectOnChainAssets([nvda, tlt]).map((a) => a.ticker)).toEqual(["NVDA"]); // TLT excluded (no assetClass)
+    expect(selectGraphAssets([nvda, tlt]).map((a) => a.ticker)).toEqual(["NVDA", "TLT"]); // both banded -> chart
   });
 });

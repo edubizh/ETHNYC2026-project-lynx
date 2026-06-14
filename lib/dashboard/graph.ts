@@ -43,6 +43,8 @@ export type OnChainAsset = {
   chain: string;
   /** Market-depth badge for the token's primary venue. */
   liquidity: "high" | "medium" | "low";
+  /** On-chain asset class — drives grouping/order in the list. */
+  assetClass: "tokenized-equity" | "rwa" | "defi" | "major" | "memecoin";
   /** True when it's addable to the basket sleeve now (LIVE-UNISWAP on Polygon). */
   buyable: boolean;
   /** Live price when available (LIVE-UNISWAP via Uniswap); otherwise undefined. */
@@ -50,22 +52,31 @@ export type OnChainAsset = {
   note?: string;
 };
 
+const CLASS_RANK: Record<OnChainAsset["assetClass"], number> = { "tokenized-equity": 1, rwa: 2, defi: 3, major: 4, memecoin: 5 };
 const LIQ_RANK: Record<OnChainAsset["liquidity"], number> = { high: 3, medium: 2, low: 1 };
 
-/** Pick the on-chain tokens for the On-chain Assets section — every security carrying a `liquidity` tag
- *  (buyable + coming-soon). Sorted buyable-first, then by liquidity tier (deep first). Off-rail equities
- *  (no liquidity tag, have an analyst band) are excluded — they live on the analyst-band graph instead. */
+/** Pick the on-chain assets for the On-chain Assets list — every security carrying an `assetClass`
+ *  (tokenized stocks, RWAs, DeFi/infra, majors, memecoins). Off-rail equities (no assetClass) are
+ *  excluded — they live only on the analyst-band chart. Ordered securities-first by class, then buyable,
+ *  then liquidity tier, then ticker. */
 export function selectOnChainAssets(securities: SecurityView[]): OnChainAsset[] {
   return securities
-    .filter((s): s is SecurityView & { liquidity: NonNullable<SecurityView["liquidity"]> } => s.liquidity != null)
+    .filter((s): s is SecurityView & { assetClass: NonNullable<SecurityView["assetClass"]>; liquidity: NonNullable<SecurityView["liquidity"]> } => s.assetClass != null)
     .map((s) => ({
       ticker: s.ticker,
       name: s.name,
       chain: s.chain ?? "—",
-      liquidity: s.liquidity,
+      liquidity: s.liquidity ?? "low",
+      assetClass: s.assetClass,
       buyable: s.availability === "LIVE-UNISWAP",
       priceUsd: s.priceUsd,
       note: s.note,
     }))
-    .sort((a, b) => Number(b.buyable) - Number(a.buyable) || LIQ_RANK[b.liquidity] - LIQ_RANK[a.liquidity]);
+    .sort(
+      (a, b) =>
+        CLASS_RANK[a.assetClass] - CLASS_RANK[b.assetClass] ||
+        Number(b.buyable) - Number(a.buyable) ||
+        LIQ_RANK[b.liquidity] - LIQ_RANK[a.liquidity] ||
+        a.ticker.localeCompare(b.ticker),
+    );
 }

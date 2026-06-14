@@ -1,5 +1,5 @@
 import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg, Security, Availability, Liquidity, Theme, BeliefMarket } from "@/lib/baskets/types";
+import type { PredictionLeg, AssetLeg, Security, Availability, Liquidity, AssetClass, Theme, BeliefMarket } from "@/lib/baskets/types";
 import { fetchBeliefProb, fetchMarketVolumes } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import { fetchEquityQuote } from "@/lib/adapters/equities";
@@ -61,7 +61,9 @@ async function priceSecurity(sec: Security, seed: number | undefined): Promise<{
   // On-chain "coming soon" tokens (liquidity-tagged, not buyable) aren't on the equities feed and we
   // don't live-price them — use the curated seed (usually none) rather than mis-querying equities with a
   // crypto ticker. LIVE-UNISWAP tokens still price via Uniswap; equities still price via the equity feed.
-  const offRailToken = sec.availability !== "LIVE-UNISWAP" && sec.liquidity != null;
+  // On-chain CRYPTO tokens (assetClass set, no analyst band) skip the equities feed. Tokenized stocks keep
+  // their band and ARE priced via the equities feed (so the chart percentile still works).
+  const offRailToken = sec.assetClass != null && sec.analystBand == null;
   try {
     if (viaUniswap) {
       const priceUsd = await fetchAssetPrice(sec.token!, { decimals: sec.decimals });
@@ -148,6 +150,8 @@ export type SecurityView = {
   availability: Availability;
   /** On-chain market-depth badge (high/medium/low) for tokenized assets; undefined for equities. */
   liquidity?: Liquidity;
+  /** On-chain asset class; undefined for off-rail equities. */
+  assetClass?: AssetClass;
   priceUsd?: number;
   priceSource?: Source;
   /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
@@ -234,6 +238,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
           name: sec.name,
           availability: sec.availability,
           liquidity: sec.liquidity,
+          assetClass: sec.assetClass,
           priceUsd,
           priceSource: src,
           bandPercentile,
