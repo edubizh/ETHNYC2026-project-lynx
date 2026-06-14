@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buildDashboard, type DashboardView } from "@/lib/dashboard/service";
-import { selectGraphAssets } from "@/lib/dashboard/graph";
+import { selectGraphAssets, selectOnChainAssets } from "@/lib/dashboard/graph";
+import { OnChainAssets } from "@/components/OnChainAssets";
 import { getBucketMeta } from "@/lib/mindshare";
 import { AnalystBandGraph } from "@/components/AnalystBandGraph";
 import { ArcAccountBar } from "@/components/ArcAccountBar";
@@ -77,6 +78,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
 
   // The relevant off-chain securities, positioned against their analyst bands (the multi-asset graph).
   const graphAssets = selectGraphAssets(view.securities);
+  const onChainAssets = selectOnChainAssets(view.securities);
   const anyFallback =
     h.beliefSource === "fallback" || h.equitySource === "fallback" || view.legs.some((l) => l.beliefSource === "fallback" || l.priceSource === "fallback");
 
@@ -185,6 +187,9 @@ export default async function ThemePage({ params }: { params: { slug: string } }
 
         {/* Multi-asset analyst-band graph (bands + scatter toggle) — the TradFi intelligence centerpiece */}
         <AnalystBandGraph assets={graphAssets} belief={h.belief} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
+
+        {/* On-chain asset universe (buyable Polygon tokens + curated relevant tokens, coming soon) */}
+        <OnChainAssets assets={onChainAssets} title={view.title} />
 
         {/* fallback banner */}
         {anyFallback && (
