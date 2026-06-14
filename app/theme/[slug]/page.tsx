@@ -77,7 +77,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
       <TopBar />
 
       <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 28px 110px" }}>
-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#AAB1BC", fontSize: 13.5, textDecoration: "none", marginBottom: 20 }}>
+        <Link href="/browse" style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#AAB1BC", fontSize: 13.5, textDecoration: "none", marginBottom: 20 }}>
           ← Themes
         </Link>
 

@@ -33,7 +33,7 @@ export function TopBar() {
           borderBottom: "1px solid #2A2D34",
         }}
       >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
+        <Link href="/browse" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
           <span style={{ position: "relative", width: 22, height: 22, display: "inline-grid", placeItems: "center" }}>
             <span style={{ width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", transform: "rotate(45deg)", borderRadius: 2 }} />
             <span style={{ position: "absolute", width: 22, height: 22, border: "1px solid rgba(232,235,239,0.35)", transform: "rotate(45deg)", borderRadius: 4 }} />

@@ -75,3 +75,32 @@ button.cta:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .themecard { display: block; padding: 18px 20px; }
 .themecard:hover { border-color: var(--accent); }
+
+/* ── Motion keyframes — shared overlays (AccountPanel / EnterSheet) + landing ── */
+@keyframes lynxFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lynxSlide { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes lynxSheet { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes lynxPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Landing — "The Gap" ribbons breathe toward/away from each other; content rises in. */
+@keyframes gapBreatheTop { from { transform: translateY(-3vh); } to { transform: translateY(6vh); } }
+@keyframes gapBreatheBottom { from { transform: translateY(3vh); } to { transform: translateY(-6vh); } }
+@keyframes landingRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+.launch-btn { transition: transform .16s cubic-bezier(.165,.84,.44,1), box-shadow .16s; }
+.launch-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 34px rgba(0,0,0,0.55); }
+.launch-btn:active { transform: translateY(0); }
+.nav-link { transition: color .16s; }
+.nav-link:hover { color: #fff !important; }
+
+/* Collapse the marketing links on narrow screens — keep just the wordmark + Launch. */
+@media (max-width: 640px) { .nav-extra { display: none !important; } }
+
+/* Accessibility: honour reduced-motion across the app. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
