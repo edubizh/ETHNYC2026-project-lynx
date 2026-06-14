@@ -16,7 +16,9 @@ const CTA = "linear-gradient(180deg,#F4F6F8,#C4C9D1)";
 
 const ENTER_BASKET = process.env.NEXT_PUBLIC_ENTER_BASKET ?? "0x0000000000000000000000000000000000000000";
 // Real, recorded standalone Uniswap $7k swap — shown as separate evidence (NOT part of the basket).
-const UNISWAP_EVIDENCE = "0x23a05c509b64c36ef38671d19a965f8464ca1c2876848637924972a72327cbde";
+// Sourced from env so the on-screen link provably matches the swap submitted to the Uniswap form.
+const UNISWAP_EVIDENCE =
+  process.env.NEXT_PUBLIC_UNISWAP_EVIDENCE_TX ?? "0x23a05c509b64c36ef38671d19a965f8464ca1c2876848637924972a72327cbde";
 
 type ChipState = "idle" | "pending" | "done";
 type Result = "success" | "refund" | null;
