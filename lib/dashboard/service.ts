@@ -144,6 +144,8 @@ export type LegView = {
   priceSource?: Source;
   /** Public Polymarket market page for a prediction leg (undefined for asset legs). */
   marketUrl?: string;
+  /** This market's normalized weight in the Theme Conviction Index (relevance × liquidity); prediction legs only. */
+  convictionWeight?: number;
 };
 
 export type SecurityView = {
@@ -275,6 +277,13 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   const beliefSource: Source = belief.breakdown.some((b) => b.source === "live") ? "live" : "fallback";
   const beliefLabel = belief.breakdown.length ? `${belief.breakdown.length} markets · ${venues.join(" + ")}` : "no markets";
 
+  // Per-market conviction-index weight (relevance × liquidity, normalized) for each prediction leg —
+  // matched to its belief-breakdown contribution by Gamma id, so each card shows its share of the formula.
+  const predViewsWeighted = predViews.map((pv, i) => ({
+    ...pv,
+    convictionWeight: belief.breakdown.find((b) => b.id === predLegs[i].gammaMarketId)?.weight,
+  }));
+
   return {
     slug: t.slug,
     title: t.title,
@@ -293,7 +302,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
       gapPct: g.gapPct,
       direction: g.direction,
     },
-    legs: [...predViews, ...assetViews],
+    legs: [...predViewsWeighted, ...assetViews],
     securities,
   };
 }

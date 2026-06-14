@@ -97,6 +97,22 @@ describe("buildDashboard", () => {
     expect(called).toContain("NVDA"); // real equities still queried
   });
 
+  it("tags each prediction leg with its conviction-index weight (matches the belief breakdown)", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.5);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 155, changePct: 0 });
+
+    const d = await buildDashboard("ai");
+    const preds = d.legs.filter((l) => l.kind === "prediction");
+    expect(preds.length).toBe(2);
+    for (const p of preds) {
+      expect(p.convictionWeight, p.label).toBeGreaterThan(0); // the conviction formula weight, not the basket weight
+      expect(p.convictionWeight!).toBeLessThanOrEqual(1);
+      const b = d.hero.beliefBreakdown.find((x) => x.label === p.label);
+      expect(p.convictionWeight).toBeCloseTo(b!.weight, 9);
+    }
+  });
+
   it("includes every sleeve asset leg in the view (AI = WETH + LINK)", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);

@@ -213,9 +213,9 @@ export default async function ThemePage({ params }: { params: { slug: string } }
                     </div>
                   </div>
                   <CardSpark color="#8A95A6" />
-                  <div style={{ width: 60, textAlign: "right", display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 15, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>{Math.round(leg.weight * 100)}%</span>
-                    <span style={{ fontSize: 10, color: "#7A828D" }}>weight</span>
+                  <div style={{ width: 76, textAlign: "right", display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 15, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>{Math.round((leg.convictionWeight ?? 0) * 100)}%</span>
+                    <span style={{ fontSize: 10, color: "#7A828D" }}>index weight</span>
                   </div>
                 </div>
               );
