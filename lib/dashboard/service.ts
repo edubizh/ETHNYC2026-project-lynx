@@ -123,51 +123,54 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   const predLegs = t.legs.filter(isPrediction);
   const assetLegs = t.legs.filter(isAsset);
 
-  const predViews: LegView[] = [];
-  for (const leg of predLegs) {
-    const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
-    predViews.push({ kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource });
-  }
-
-  const assetViews: LegView[] = await Promise.all(
-    assetLegs.map(async (assetLeg) => {
-      const [assetUsd, priceSource] = await withFallback(
-        () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
-        assetLeg.fallbackPriceUsd ?? t.display.fallback.assetLegPriceUsd,
-      );
-      return { kind: "asset" as const, label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
-    }),
-  );
-
-  // Price every related security and resolve its analyst band. Prefer the LIVE (free) Yahoo band when
-  // the price is also live, so band & price share ONE worldview — a live price measured against a stale
-  // hardcoded band is exactly what pins markers to the 0th/100th edge. ETFs/crypto have no Yahoo
-  // analyst-target coverage, so they keep the published hardcoded band. This same per-security band drives
-  // BOTH the multi-asset graph and (for the headline) the hero gap, so they can never disagree on screen.
   const headline = getHeadlineSecurity(slug);
-  const securities: SecurityView[] = await Promise.all(
-    getSecurities(slug).map(async (sec) => {
-      const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
-      const { priceUsd, priceSource: src, changePct } = await priceSecurity(sec, seed);
-      let band = sec.analystBand;
-      if (band && priceUsd !== undefined && src === "live") {
-        [band] = await withFallback(() => fetchAnalystBand(sec.ticker), band);
-      }
-      const bandPercentile = band && priceUsd !== undefined ? assetBandPercentile(priceUsd, band.low, band.high) : undefined;
-      return {
-        ticker: sec.ticker,
-        name: sec.name,
-        availability: sec.availability,
-        priceUsd,
-        priceSource: src,
-        bandPercentile,
-        band,
-        changePct,
-        chain: sec.chain,
-        note: sec.note,
-      };
-    }),
-  );
+
+  // Fetch belief legs, asset legs, and related securities CONCURRENTLY (independent feeds; the adapter
+  // cache also dedups overlaps like WETH priced as both an asset leg and a security). Order preserved by map.
+  const [predViews, assetViews, securities] = await Promise.all([
+    Promise.all(
+      predLegs.map(async (leg): Promise<LegView> => {
+        const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
+        return { kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource };
+      }),
+    ),
+    Promise.all(
+      assetLegs.map(async (assetLeg): Promise<LegView> => {
+        const [assetUsd, priceSource] = await withFallback(
+          () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
+          assetLeg.fallbackPriceUsd ?? t.display.fallback.assetLegPriceUsd,
+        );
+        return { kind: "asset", label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
+      }),
+    ),
+    // Price every related security AND resolve its analyst band: prefer the LIVE Yahoo band when the price
+    // is also live (band & price share one worldview — kills the stale-band 0th/100th pinning); ETFs/crypto
+    // keep the hardcoded band. This same per-security band drives BOTH the multi-asset graph and (for the
+    // headline) the hero gap, so they can never disagree on screen.
+    Promise.all(
+      getSecurities(slug).map(async (sec): Promise<SecurityView> => {
+        const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
+        const { priceUsd, priceSource: src, changePct } = await priceSecurity(sec, seed);
+        let band = sec.analystBand;
+        if (band && priceUsd !== undefined && src === "live") {
+          [band] = await withFallback(() => fetchAnalystBand(sec.ticker), band);
+        }
+        const bandPercentile = band && priceUsd !== undefined ? assetBandPercentile(priceUsd, band.low, band.high) : undefined;
+        return {
+          ticker: sec.ticker,
+          name: sec.name,
+          availability: sec.availability,
+          priceUsd,
+          priceSource: src,
+          bandPercentile,
+          band,
+          changePct,
+          chain: sec.chain,
+          note: sec.note,
+        };
+      }),
+    ),
+  ]);
 
   // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile — read straight off its
   // SecurityView so the hero and the graph row for the same ticker always show the identical band.
