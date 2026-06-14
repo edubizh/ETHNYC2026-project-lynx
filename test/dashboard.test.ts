@@ -1,9 +1,15 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as pm from "@/lib/adapters/polymarket";
 import * as us from "@/lib/adapters/uniswap";
 import * as eq from "@/lib/adapters/equities";
+import * as yh from "@/lib/adapters/yahoo";
 import { buildDashboard } from "@/lib/dashboard/service";
 
+// The hero band calls Yahoo only when the equity price is live; mock it off by default so these
+// tests use the hardcoded band (deterministic, no network). Tests override it to assert the live path.
+vi.mock("@/lib/adapters/yahoo", () => ({ fetchAnalystBand: vi.fn() }));
+
+beforeEach(() => vi.mocked(yh.fetchAnalystBand).mockRejectedValue(new Error("yahoo off in tests")));
 afterEach(() => vi.restoreAllMocks());
 
 describe("buildDashboard", () => {
@@ -24,6 +30,19 @@ describe("buildDashboard", () => {
     const preds = d.legs.filter((l) => l.kind === "prediction");
     expect(preds.length).toBe(2);
     expect(d.legs.find((l) => l.kind === "asset")?.priceUsd).toBe(4300);
+  });
+
+  it("uses the LIVE Yahoo analyst band for the hero when the equity price is also live", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.4);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(300); // live price
+    vi.mocked(yh.fetchAnalystBand).mockResolvedValue({ low: 200, high: 600 }); // (300-200)/400 = 0.25
+
+    const d = await buildDashboard("ai");
+    expect(d.hero.band).toEqual({ low: 200, high: 600 });
+    expect(d.hero.assetBandPercentile).toBeCloseTo(0.25, 6);
+    expect(d.hero.gapPct).toBeCloseTo(15, 6); // 40 - 25
+    expect(d.hero.direction).toBe("belief-higher");
   });
 
   it("falls back to VERIFIED seeds (tagged 'fallback') when every live feed is down", async () => {
