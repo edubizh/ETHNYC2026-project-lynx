@@ -114,43 +114,50 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   const predLegs = t.legs.filter(isPrediction);
   const assetLegs = t.legs.filter(isAsset);
 
-  const predViews: LegView[] = [];
-  for (const leg of predLegs) {
-    const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
-    predViews.push({ kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource });
-  }
-
-  const assetViews: LegView[] = await Promise.all(
-    assetLegs.map(async (assetLeg) => {
-      const [assetUsd, priceSource] = await withFallback(
-        () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
-        assetLeg.fallbackPriceUsd ?? t.display.fallback.assetLegPriceUsd,
-      );
-      return { kind: "asset" as const, label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
-    }),
-  );
-
-  // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
   const headline = getHeadlineSecurity(slug);
-  const securities: SecurityView[] = [];
-  for (const sec of getSecurities(slug)) {
-    const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
-    const { priceUsd, priceSource: src } = await priceSecurity(sec, seed);
-    const bandPercentile =
-      sec.analystBand && priceUsd !== undefined
-        ? assetBandPercentile(priceUsd, sec.analystBand.low, sec.analystBand.high)
-        : undefined;
-    securities.push({
-      ticker: sec.ticker,
-      name: sec.name,
-      availability: sec.availability,
-      priceUsd,
-      priceSource: src,
-      bandPercentile,
-      chain: sec.chain,
-      note: sec.note,
-    });
-  }
+
+  // Fetch belief legs, asset legs, and related securities CONCURRENTLY (they are independent feeds).
+  // Previously these ran in three sequential loops (~6-7 serial round-trips incl. slow Uniswap /quote +
+  // Yahoo), which made a cold dashboard ~10s. The adapter cache also dedups overlaps (e.g. WETH priced
+  // as both an asset leg and a security) into one request. Order is preserved by Promise.all(map).
+  const [predViews, assetViews, securities] = await Promise.all([
+    Promise.all(
+      predLegs.map(async (leg): Promise<LegView> => {
+        const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
+        return { kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource };
+      }),
+    ),
+    Promise.all(
+      assetLegs.map(async (assetLeg): Promise<LegView> => {
+        const [assetUsd, priceSource] = await withFallback(
+          () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
+          assetLeg.fallbackPriceUsd ?? t.display.fallback.assetLegPriceUsd,
+        );
+        return { kind: "asset", label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
+      }),
+    ),
+    // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
+    Promise.all(
+      getSecurities(slug).map(async (sec): Promise<SecurityView> => {
+        const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
+        const { priceUsd, priceSource: src } = await priceSecurity(sec, seed);
+        const bandPercentile =
+          sec.analystBand && priceUsd !== undefined
+            ? assetBandPercentile(priceUsd, sec.analystBand.low, sec.analystBand.high)
+            : undefined;
+        return {
+          ticker: sec.ticker,
+          name: sec.name,
+          availability: sec.availability,
+          priceUsd,
+          priceSource: src,
+          bandPercentile,
+          chain: sec.chain,
+          note: sec.note,
+        };
+      }),
+    ),
+  ]);
 
   // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile within its analyst band.
   const primary = predViews[0]!;
