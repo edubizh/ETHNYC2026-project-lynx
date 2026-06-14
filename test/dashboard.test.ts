@@ -112,4 +112,13 @@ describe("buildDashboard", () => {
     expect(wbtc?.availability).toBe("LIVE-UNISWAP");
     expect(wbtc?.priceSource).toBe("live");
   });
+
+  it("exposes the PRIMARY belief market label for the honest hero subtitle", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.515);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(205);
+
+    const d = await buildDashboard("ai");
+    expect(d.hero.beliefLabel).toBe("OpenAI does NOT IPO by Dec 2026");
+  });
 });

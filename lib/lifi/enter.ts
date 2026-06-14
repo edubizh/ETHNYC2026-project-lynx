@@ -20,6 +20,7 @@ export function initLifi(opts: {
 }): void {
   createConfig({
     integrator: "project-lynx",
+    ...(process.env.NEXT_PUBLIC_LIFI_API_KEY ? { apiKey: process.env.NEXT_PUBLIC_LIFI_API_KEY } : {}),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     providers: [EVM({ getWalletClient: opts.getWalletClient as any, switchChain: opts.switchChain as any })],
   });
@@ -39,8 +40,10 @@ export type EnterQuoteParams = {
 
 /** Build the one-signature destination-contract-calls quote (the LI.FI Composer "zap").
  *  Composer splits the bridged capital across EVERY contractCall — i.e. across the bucket's markets per
- *  our strategy weights (an index allocation, not a parlay). Bridge toToken = native USDC on Polygon; each
- *  call consumes USDC.e, so LI.FI inserts the native-USDC → USDC.e hop before invoking EnterBasket.
+ *  our strategy weights (an index allocation, not a parlay). On the same-chain (137) spine, toToken = USDC.e
+ *  — delivered directly as the token every contractCall consumes (see the inline note below). The cross-chain
+ *  (1/8453) stretch instead delivers native USDC with NO native-USDC → USDC.e hop, so it is broken-by-
+ *  construction (the executor would hold the wrong token); keep it disabled for real money (see entryPlan.ts).
  *  Returns a LiFiStep — convert it with convertQuoteToRoute() before executeRoute().
  *  NOTE: there is NO LI.FI pre-sim (integrator_not_allowed) and the destination calls are NOT atomic;
  *  EnterBasket is revert-safe (refunds USDC.e to the recipient on internal failure).

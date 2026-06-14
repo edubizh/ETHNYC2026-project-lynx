@@ -6,7 +6,14 @@ const root = resolve(process.cwd());
 
 export default defineConfig({
   resolve: {
-    alias: [{ find: /^@\//, replacement: root + "/" }],
+    alias: [
+      { find: /^@\//, replacement: root + "/" },
+      // `import "server-only"` (lib/config.ts) is a Next build-time guard that THROWS outside an RSC
+      // bundle. Tests run in node (not RSC), so map it to the package's own no-op `empty.js` — the same
+      // module Next resolves via the `react-server` export condition. Keeps the guard real in the build
+      // while letting server modules be unit-tested. Surgical: affects only `server-only`.
+      { find: /^server-only$/, replacement: resolve(root, "node_modules/server-only/empty.js") },
+    ],
   },
   test: {
     globals: true,

@@ -91,6 +91,7 @@ export type DashboardView = {
   hero: {
     beliefProb: number;
     beliefSource: Source;
+    beliefLabel: string;
     assetSymbol: string;
     equityPrice: number;
     equitySource: Source;
@@ -175,6 +176,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     hero: {
       beliefProb: primary.beliefProb!,
       beliefSource: primary.beliefSource!,
+      beliefLabel: primary.label,
       assetSymbol: headline.ticker,
       equityPrice,
       equitySource,
