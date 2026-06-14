@@ -74,4 +74,6 @@ UNISWAP_API_KEY=… POLYGON_RPC=… PRIVATE_KEY=0x… npx tsx scripts/runPrizeSw
 
 ## Hard constraints (do not relitigate — see `docs/03`)
 
+.
+
 Tap existing markets (never create our own) · non-custodial (never the venue/fund) · positions to the user's own wallet · the prediction leg uses the permissionless `NegRiskAdapter.splitPosition` neutral-set path, never the operator-gated CLOB · the hero is the **AI Sentiment Gap**, never "implied probability."
