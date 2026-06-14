@@ -19,6 +19,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "OpenAI does NOT IPO by Dec 2026",
         gammaMarketId: "608368",
+        marketSlug: "will-openai-not-ipo-by-december-31-2026",
         conditionId: "0x3849e1d62e0807801913d3e2427e8caf3cc6dd1c8ef42d8d5c08c6f9c449dc5e",
         questionId: "0xd2c21cbb9d2cb407ab3dcf619d93f6d65b7967154cd6ee930f7758baa2b4bf06",
         outcomeTokenIds: {
@@ -34,6 +35,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Anthropic has the top AI model",
         gammaMarketId: "631121",
+        marketSlug: "will-anthropic-have-the-top-ai-model-at-the-end-of-june-2026-475",
         conditionId: "0x0811ed7f71c2466d04f9ba801c0e21c9cfb016385cdff97b5c9984df0fa5801e",
         questionId: "0x3dcd0f5c7c6df89336a87be866327c862646e18b5deee05f31c250451b3a2901",
         outcomeTokenIds: {
@@ -99,6 +101,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Bitcoin is the best performer in 2026 (vs Gold & S&P 500)",
         gammaMarketId: "950852",
+        marketSlug: "will-bitcoin-have-the-best-performance-in-2026-749",
         conditionId: "0xb276435811dc77171602f790db2b5900e780adfadb7cff57e547d58fb1a8215f",
         questionId: "0x339a89111ad048709ef27ac9da11e70a28ceaae3a4f494e949c9d68be7c39a00",
         outcomeTokenIds: {
@@ -147,6 +150,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "No Fed rate cuts in 2026",
         gammaMarketId: "616902",
+        marketSlug: "will-no-fed-rate-cuts-happen-in-2026",
         conditionId: "0xd4e77ba6f29fc093509d24f508631abd445ecf506bbdc9c4c80e60256a318527",
         questionId: "0xdcd7daabcacdc4ecf4f9a48d0a2708b52f356dd086c8070992136da62eb72b00",
         outcomeTokenIds: {
@@ -197,6 +201,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Mojtaba Khamenei is Iran's head of state at end of 2026",
         gammaMarketId: "1469737",
+        marketSlug: "will-mojtaba-khamenei-be-head-of-state-in-iran-end-of-2026",
         conditionId: "0x25fb28382075f418a944a781a9f8840e2f541152eea0d9798d1cabfa1466adbb",
         questionId: "0xd72f68ada62aff9ba67dd2cbb56fabec9928aa198daafbd8042ac18ccabec003",
         outcomeTokenIds: {
@@ -210,6 +215,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Nicolás Maduro is Venezuela's leader at end of 2026",
         gammaMarketId: "1105744",
+        marketSlug: "will-nicols-maduro-be-the-leader-of-venezuela-end-of-2026",
         conditionId: "0x67f3f8d0a0ecdfc008c99650284a4674388a8c3029b0eb7ca0abd65dde8d996f",
         questionId: "0x45ec1f7704d0ddd047e70443e830028d8801671283883ad1b46a29659488b604",
         outcomeTokenIds: {
@@ -257,6 +263,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Newsom wins the 2028 Democratic nomination",
         gammaMarketId: "559652",
+        marketSlug: "will-gavin-newsom-win-the-2028-democratic-presidential-nomination-568",
         conditionId: "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
         questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814700",
         outcomeTokenIds: {
@@ -271,6 +278,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "AOC wins the 2028 Democratic nomination",
         gammaMarketId: "559653",
+        marketSlug: "will-alexandria-ocasio-cortez-win-the-2028-democratic-presidential-nomination-653",
         conditionId: "0xe6bcc2f1dd025ce5e1833190f7c60a71171c94f805df55b9ab0ded695ec93565",
         questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814701",
         outcomeTokenIds: {
@@ -321,6 +329,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "USA advances furthest among World Cup hosts",
         gammaMarketId: "2431124",
+        marketSlug: "will-united-states-be-the-furthest-advancing-host-nation-at-the-world-cup-20260603201948567",
         conditionId: "0x5a947653669c8f71ac7b8951f53e3e538dc39025f91482bc606231cf017a3f25",
         questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e102",
         outcomeTokenIds: {
@@ -334,6 +343,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Mexico advances furthest among World Cup hosts",
         gammaMarketId: "2431123",
+        marketSlug: "will-mexico-be-the-furthest-advancing-host-nation-at-the-world-cup-20260603201948566",
         conditionId: "0x0cbee01c8bb40d5a4fc93e08818554e229a424eff354aa189cec4172dcc6ad4c",
         questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e101",
         outcomeTokenIds: {
@@ -382,6 +392,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Spider-Man: Brand New Day is 2026's highest-grossing film",
         gammaMarketId: "678414",
+        marketSlug: "will-spider-man-brand-new-day-be-the-top-grossing-movie-of-2026",
         conditionId: "0xc4b07998e8f9bf6b95f079d6dc0529f3c6f59698d4e168817ad5f99304de6c57",
         questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7207",
         outcomeTokenIds: {
@@ -395,6 +406,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Toy Story 5 is 2026's highest-grossing film",
         gammaMarketId: "678412",
+        marketSlug: "will-toy-story-5-be-the-top-grossing-movie-of-2026",
         conditionId: "0xcd57f3ad3bbbdaa96aacabd35f50c2d6e30f777e4a33876a4ab2dcd9f0b8c170",
         questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7205",
         outcomeTokenIds: {

@@ -142,6 +142,8 @@ export type LegView = {
   beliefSource?: Source;
   priceUsd?: number;
   priceSource?: Source;
+  /** Public Polymarket market page for a prediction leg (undefined for asset legs). */
+  marketUrl?: string;
 };
 
 export type SecurityView = {
@@ -208,7 +210,14 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     Promise.all(
       predLegs.map(async (leg): Promise<LegView> => {
         const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
-        return { kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource };
+        return {
+          kind: "prediction",
+          label: leg.label,
+          weight: leg.weight,
+          beliefProb,
+          beliefSource,
+          marketUrl: leg.marketSlug ? `https://polymarket.com/market/${leg.marketSlug}` : undefined,
+        };
       }),
     ),
     Promise.all(

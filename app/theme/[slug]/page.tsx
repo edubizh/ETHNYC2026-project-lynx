@@ -175,7 +175,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         {/* Prediction markets + asset leg */}
         <section style={{ marginBottom: 16 }}>
           <h2 style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 10, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 18, color: "#FFFFFF" }}>
-            <span>Prediction Markets + Tokenized Assets</span>
+            <span>Prediction Markets</span>
             <span style={{ fontFamily: MONO, fontSize: 10.5, fontWeight: 400, color: "#7A828D", padding: "2px 8px", border: "1px solid #2A2D34", borderRadius: 999 }}>in basket above</span>
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -190,13 +190,16 @@ export default async function ThemePage({ params }: { params: { slug: string } }
                     </span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11, color: "#7A828D" }}>
                       {leg.beliefSource === "live" ? (
-                        <>
-                          <span style={{ color: "#3FBE85" }}>●</span>live · Polymarket
-                        </>
+                        <><span style={{ color: "#3FBE85" }}>●</span>live ·</>
                       ) : (
-                        <>
-                          <span style={{ color: "#7A828D" }}>○</span>fallback · cached
-                        </>
+                        <><span style={{ color: "#7A828D" }}>○</span>cached ·</>
+                      )}
+                      {leg.marketUrl ? (
+                        <a href={leg.marketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#A6B2C2", textDecoration: "underline" }}>
+                          Polymarket ↗
+                        </a>
+                      ) : (
+                        <span>Polymarket</span>
                       )}
                     </span>
                   </div>
@@ -217,34 +220,6 @@ export default async function ThemePage({ params }: { params: { slug: string } }
                 </div>
               );
             })}
-
-            {/* asset sleeve — one card per token */}
-            {assetLegs.map((leg, i) => (
-              <div key={`asset-${i}`} style={{ display: "flex", alignItems: "center", gap: 20, padding: "15px 18px", ...PANEL }}>
-                <div style={{ flex: 1.5, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14.5, color: "#FFFFFF" }}>
-                    <span style={{ color: "#E8EBEF", fontSize: 9 }}>◆</span>
-                    {leg.label}
-                  </span>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11, color: leg.priceSource === "fallback" ? "#7A828D" : "#E8EBEF" }}>
-                    {leg.priceSource === "fallback" ? (
-                      <><span style={{ color: "#7A828D" }}>○</span>fallback · cached</>
-                    ) : (
-                      <><span>◆</span>live · uniswap <span style={{ color: "#7A828D" }}>(Polygon)</span></>
-                    )}
-                  </span>
-                </div>
-                <div style={{ width: 148, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 22, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>${fmt(leg.priceUsd)}</span>
-                  <span style={{ fontSize: 10.5, color: "#7A828D", fontFamily: MONO }}>{leg.priceSource === "fallback" ? "cached fallback price" : "uniswap /quote oracle"}</span>
-                </div>
-                <CardSpark color="#E8EBEF" />
-                <div style={{ width: 60, textAlign: "right", display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 15, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>{Math.round(leg.weight * 100)}%</span>
-                  <span style={{ fontSize: 10, color: "#7A828D" }}>weight</span>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 

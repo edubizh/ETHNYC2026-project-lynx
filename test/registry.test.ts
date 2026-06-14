@@ -28,6 +28,7 @@ describe("basket registry", () => {
         expect(leg.questionId).toMatch(/^0x[0-9a-f]{64}$/);
         expect(leg.outcomeTokenIds.yes).toMatch(/^\d+$/);
         expect(leg.outcomeTokenIds.no).toMatch(/^\d+$/);
+        expect(leg.marketSlug, `${t.slug}/${leg.label}`).toMatch(/^[a-z0-9-]+$/); // Polymarket market slug for the public link
       }
     }
   });

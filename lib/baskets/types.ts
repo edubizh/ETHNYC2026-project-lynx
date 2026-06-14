@@ -3,6 +3,8 @@ export type PredictionLeg = {
   label: string;
   /** Polymarket Gamma numeric market id (for the odds adapter). */
   gammaMarketId: string;
+  /** Polymarket market slug → https://polymarket.com/market/<slug> (the public market page to link to). */
+  marketSlug?: string;
   conditionId: `0x${string}`;
   /** The NegRisk QUESTION id — drives NegRiskAdapter.getPositionId(questionId, true/false). */
   questionId: `0x${string}`;
