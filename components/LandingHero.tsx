@@ -46,6 +46,11 @@ export function LandingHero() {
     const v = videoRef.current;
     if (!v) return;
 
+    // React doesn't reliably reflect the `muted` *attribute* to the DOM property, so a
+    // programmatic play() can be treated as an unmuted autoplay and blocked. Force it.
+    v.muted = true;
+    v.defaultMuted = true;
+    v.playsInline = true;
     v.playbackRate = PLAYBACK_SPEED;
     let raf = 0;
     let last = 0;
