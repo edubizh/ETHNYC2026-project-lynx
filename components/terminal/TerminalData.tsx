@@ -2,28 +2,29 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { FeedContext } from "@/lib/live/types";
 import { usePolymarketStream, type StreamState } from "@/lib/live/usePolymarketStream";
+import { useHyperliquidStream, type HlState } from "@/lib/live/useHyperliquidStream";
 import { usePoll, type PollState } from "@/lib/live/usePoll";
 
 export type OnchainSwap = { ticker: string; amount: number; hash: string; ts: number };
 export type OnchainResp = { swaps: OnchainSwap[] };
-export type PriceRow = { ticker: string; usd: number };
-export type PriceResp = { prices: PriceRow[] };
 
 export type TerminalData = {
   ctx: FeedContext;
-  stream: StreamState;
-  onchain: PollState<OnchainResp>;
-  price: PollState<PriceResp>;
+  stream: StreamState; // Polymarket belief markets (flow + odds)
+  crypto: HlState; // Hyperliquid live trades (firehose)
+  onchain: PollState<OnchainResp>; // Blockscout basket-token transfers
 };
 
 const Ctx = createContext<TerminalData | null>(null);
 
-/** Runs the shared live data layer ONCE for the theme and provides it to every feed slot. */
+/** Runs the shared live data layer ONCE for the theme and provides it to every feed slot.
+ *  Only consistently-flowing sources are wired here (Polymarket belief flow, Hyperliquid trades,
+ *  on-chain transfers) — static/quote feeds were removed so the rails never look dead. */
 export function TerminalDataProvider({ ctx, children }: { ctx: FeedContext; children: ReactNode }) {
   const stream = usePolymarketStream([ctx.yesId, ctx.noId]);
+  const crypto = useHyperliquidStream(["BTC", "ETH", "SOL"]);
   const onchain = usePoll<OnchainResp>(`/api/feeds/onchain?slug=${encodeURIComponent(ctx.slug)}`, 6000);
-  const price = usePoll<PriceResp>(`/api/feeds/price?slug=${encodeURIComponent(ctx.slug)}`, 8000);
-  return <Ctx.Provider value={{ ctx, stream, onchain, price }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ ctx, stream, crypto, onchain }}>{children}</Ctx.Provider>;
 }
 
 export function useTerminalData(): TerminalData {

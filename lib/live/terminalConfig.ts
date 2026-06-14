@@ -1,14 +1,8 @@
 // Pure layout state + persistence for the customizable terminal side rails.
 // No React / no DOM imports here so it stays trivially unit-testable; localStorage access is guarded.
 
-export const FEED_IDS = [
-  "belief-book",
-  "belief-tape",
-  "belief-odds",
-  "onchain-swaps",
-  "price-ticker",
-  "equity-tape",
-] as const;
+// Only consistently-flowing feeds (see lib/live/feeds.ts for measured rates).
+export const FEED_IDS = ["crypto-tape", "belief-tape", "belief-odds", "onchain-swaps"] as const;
 export type FeedId = (typeof FEED_IDS)[number];
 
 export type SidePos = "top" | "bottom";
@@ -19,9 +13,10 @@ export type SideMode = "single" | "split";
 export type SideConfig = { mode: SideMode; top: FeedId; bottom: FeedId };
 export type TerminalConfig = { left: SideConfig; right: SideConfig; hidden: boolean };
 
+// Default to all four flowing feeds (both sides split) so the terminal is alive on first load.
 export const DEFAULT_CONFIG: TerminalConfig = {
-  left: { mode: "single", top: "belief-book", bottom: "belief-odds" },
-  right: { mode: "split", top: "belief-tape", bottom: "onchain-swaps" },
+  left: { mode: "split", top: "belief-tape", bottom: "belief-odds" },
+  right: { mode: "split", top: "crypto-tape", bottom: "onchain-swaps" },
   hidden: false,
 };
 
@@ -50,7 +45,9 @@ export function terminalReducer(state: TerminalConfig, action: TerminalConfig | 
   }
 }
 
-export const STORAGE_KEY = "lynx.terminal.v1";
+// v2: feed catalog changed (firehose added, static feeds removed) — bump key so everyone gets the
+// new all-flowing default instead of a repaired old layout.
+export const STORAGE_KEY = "lynx.terminal.v2";
 
 const isFeedId = (v: unknown): v is FeedId => typeof v === "string" && (FEED_IDS as readonly string[]).includes(v);
 

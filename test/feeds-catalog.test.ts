@@ -11,7 +11,7 @@ describe("feed catalog", () => {
       expect(typeof d.label).toBe("string");
       expect(d.label.length).toBeGreaterThan(0);
       expect(typeof d.Component).toBe("function");
-      expect(["market", "assets", "equity"]).toContain(d.needs);
+      expect(["market", "crypto", "assets"]).toContain(d.needs);
     }
   });
 

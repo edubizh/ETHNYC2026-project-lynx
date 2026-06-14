@@ -11,17 +11,18 @@ import {
 
 describe("terminalConfig reducer", () => {
   it("setFeed swaps the feed in one slot only", () => {
-    const next = terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "left", pos: "top", feed: "price-ticker" });
-    expect(next.left.top).toBe("price-ticker");
+    const next = terminalReducer(DEFAULT_CONFIG, { kind: "setFeed", side: "left", pos: "top", feed: "crypto-tape" });
+    expect(next.left.top).toBe("crypto-tape");
     expect(next.left.bottom).toBe(DEFAULT_CONFIG.left.bottom); // untouched
     expect(next.right).toEqual(DEFAULT_CONFIG.right); // other side untouched
   });
 
   it("toggleSplit flips a side between single and split", () => {
-    const split = terminalReducer(DEFAULT_CONFIG, { kind: "toggleSplit", side: "left" });
-    expect(split.left.mode).toBe("split");
-    const back = terminalReducer(split, { kind: "toggleSplit", side: "left" });
-    expect(back.left.mode).toBe("single");
+    const start = DEFAULT_CONFIG.left.mode;
+    const once = terminalReducer(DEFAULT_CONFIG, { kind: "toggleSplit", side: "left" });
+    expect(once.left.mode).not.toBe(start);
+    const twice = terminalReducer(once, { kind: "toggleSplit", side: "left" });
+    expect(twice.left.mode).toBe(start);
   });
 
   it("toggleHidden flips visibility", () => {
@@ -42,9 +43,9 @@ describe("terminalConfig reducer", () => {
 
 describe("visibleFeeds", () => {
   it("returns 1 feed when single, 2 when split", () => {
-    expect(visibleFeeds({ mode: "single", top: "belief-book", bottom: "belief-odds" })).toEqual(["belief-book"]);
-    expect(visibleFeeds({ mode: "split", top: "belief-book", bottom: "belief-odds" })).toEqual([
-      "belief-book",
+    expect(visibleFeeds({ mode: "single", top: "crypto-tape", bottom: "belief-odds" })).toEqual(["crypto-tape"]);
+    expect(visibleFeeds({ mode: "split", top: "crypto-tape", bottom: "belief-odds" })).toEqual([
+      "crypto-tape",
       "belief-odds",
     ]);
   });
