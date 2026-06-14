@@ -23,8 +23,10 @@ const CROSS_CHAIN_STEPS = ["Swap", "Bridge · to Polygon", "EnterBasket · split
 
 /**
  * Pure selector: connected-wallet chain → the entry plan (LI.FI params + chips), or {supported:false}.
- * Polygon (137) is the always-on same-chain spine; Ethereum (1)/Base (8453) are the cross-chain stretch,
- * gated behind opts.crossChain. Everything else (incl. Arc, undefined) is unsupported.
+ * Polygon (137) is the always-on same-chain real-money spine. Ethereum (1)/Base (8453) are an
+ * EXPERIMENTAL cross-chain stretch behind opts.crossChain and are currently broken-by-construction
+ * (see buildEnterQuote: bridge toToken is native USDC but contract calls expect USDC.e) — keep
+ * opts.crossChain false for any real-money demo. Everything else (incl. Arc, undefined) is unsupported.
  */
 export function planEntry(chainId: number | undefined, opts?: { crossChain?: boolean }): EntrySelection {
   if (chainId === 137) {
