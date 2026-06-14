@@ -88,3 +88,19 @@ Branch: `build/lynx-mvp` (off `main`). Architecture = Approach B+. Plan = `docs/
 - **Decisions implemented as planned:** 3M→volumeNum (no Gamma 90-day bucket); idx=100·√(bandPct·belief); change=equity daily %Δ (seed fallback for crypto/no-feed); Others=24% fixed reserve, buckets split the remainder ∝ real volume.
 - **Not headlessly exercised (no browser tooling installed):** the literal pill-click re-render and keystroke-filter — standard React (`useState` + a context that mirrors the working `ArcProvider`); pure filter + per-window data are unit-tested + live-verified. Recommend a quick eyeball in the browser.
 - **Note:** restarted the dev server (killed the stale one in terminal s003) — fresh instance now running in background on :3000.
+
+## On-chain asset sleeve + 3-track qualification (subagent-driven, 2026-06-13)
+> Spec `docs/superpowers/specs/2026-06-13-onchain-asset-sleeve-design.md`; plan `docs/superpowers/plans/2026-06-13-onchain-asset-sleeve.md`. Pushed to origin/main @ 111dc58.
+- [x] Task 0 — verified on-chain: SwapRouter02 `0x68b3…Fc45` deployed; deepest direct USDC.e pools = WETH 500 / WBTC 500 / LINK 3000; **wstETH USDC.e pools EMPTY → dropped from sleeves**, WETH used instead (wstETH stays a display security).
+- [x] Task 1-2 — `ADDR` swapRouter02 + WBTC/WETH/LINK; pure `buildExactInputSingleData` SwapRouter02 calldata builder (TDD).
+- [x] Task 3 — per-bucket multi-asset sleeves (WETH/WBTC/LINK) + matching LIVE-UNISWAP securities; weights sum to 1; subset-anti-drift guard.
+- [x] Task 4 — `buildBasketContractCalls` splits across ALL legs → `enterPredictionLeg` + `enterAssetLeg` (Uniswap calldata).
+- [x] Task 5 — async Uniswap `/quote` slippage floors (`resolveAssetMinOut(s)`).
+- [x] **Safety fix (review-driven):** `buildSafeBasketContractCalls` + server `app/api/basket-entry/route.ts`; `EnterSheet` now FETCHES it (no server-only Uniswap key in the client bundle); THROWS rather than ship a 0-minOut swap. Closes the unprotected-swap hazard the reviewer caught.
+- [x] Task 6 — `buildEnterQuote` same-chain Polygon (137) mode (verified the live LI.FI Composer builds same-chain).
+- [x] Task 7 — dashboard renders N asset legs + NAV sum.
+- [x] Task 8 — Foundry fork proof: REAL USDC.e→WETH swap inside `enterAssetLeg` on a Polygon fork (recipient gets WETH, contract retains nothing). 7/7 fork tests.
+- [x] Review fix — per-token `fallbackPriceUsd` (WETH 4300 / WBTC 64317 / LINK 15) so a degraded `/quote` no longer shows one shared price; API-route input validation (400/404/502).
+- **Green-bar:** 71/71 vitest, tsc clean, `next build` green (+ `/api/basket-entry` server route), 7/7 forge fork tests.
+- [ ] **Known follow-up (Minor, non-blocking):** the dashboard renders only ONE asset-leg *card* (`assetLegs[0]`) though NAV/securities/Enter-sheet cover all sleeve tokens — render a card per sleeve token for full visual fidelity.
+- [ ] **Task 9 (USER / live):** wire EnterSheet to the same-chain (137) spine; execute ONE live LI.FI same-chain route; Arc Paymaster/CCTP artifact; submit Uniswap Developer Feedback Form with swap `0x23a0…cbde`; record hashes in README.
