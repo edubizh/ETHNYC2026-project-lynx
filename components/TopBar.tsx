@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useArc } from "@/lib/arc/context";
 import { useSearch } from "@/lib/browse/search-context";
 import { AccountPanel } from "@/components/AccountPanel";
@@ -13,8 +14,23 @@ const MONO = "'IBM Plex Mono', monospace";
 export function TopBar() {
   const { connected, address } = useArc();
   const { query, setQuery } = useSearch();
+  const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const short = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "";
+
+  // ⌘K / Ctrl+K focuses the theme search from anywhere on the page.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <>
@@ -33,13 +49,13 @@ export function TopBar() {
           borderBottom: "1px solid #2A2D34",
         }}
       >
-        <Link href="/browse" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flexShrink: 0 }}>
           <span style={{ position: "relative", width: 22, height: 22, display: "inline-grid", placeItems: "center" }}>
             <span style={{ width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", transform: "rotate(45deg)", borderRadius: 2 }} />
             <span style={{ position: "absolute", width: 22, height: 22, border: "1px solid rgba(232,235,239,0.35)", transform: "rotate(45deg)", borderRadius: 4 }} />
           </span>
-          <span style={{ fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 15, color: "#FFFFFF", whiteSpace: "nowrap" }}>
-            Traditional Predictions
+          <span style={{ fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "0.14em", fontSize: 16, color: "#FFFFFF", whiteSpace: "nowrap" }}>
+            LYNX
           </span>
         </Link>
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
@@ -49,13 +65,19 @@ export function TopBar() {
               <path d="m20 20-3-3" />
             </svg>
             <input
+              ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                // Off the browse page (e.g. inside a dashboard), Enter jumps to the browse results —
+                // the query persists via SearchProvider, so the treemap filters on arrival.
+                if (e.key === "Enter" && query.trim() && pathname !== "/browse") router.push("/browse");
+              }}
               placeholder="Search a theme — AI, defense, the Fed…"
               aria-label="Search themes"
               style={{ flex: 1, background: "transparent", border: 0, outline: "none", color: "#FFFFFF", fontSize: 13.5, fontFamily: BODY }}
             />
-            {query && (
+            {query ? (
               <button
                 onClick={() => setQuery("")}
                 aria-label="Clear search"
@@ -63,6 +85,25 @@ export function TopBar() {
               >
                 ×
               </button>
+            ) : (
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  flexShrink: 0,
+                  padding: "2px 6px",
+                  borderRadius: 5,
+                  border: "1px solid #2A2D34",
+                  background: "#1B1E24",
+                  fontFamily: MONO,
+                  fontSize: 10.5,
+                  color: "#7A828D",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                ⌘K
+              </span>
             )}
           </div>
         </div>
@@ -74,7 +115,24 @@ export function TopBar() {
               <span style={{ color: "#7A828D" }}>· Arc</span>
             </span>
           ) : (
-            <span style={{ display: "inline-flex", alignItems: "center", height: 34, padding: "0 15px", border: "1px solid rgba(232,235,239,0.45)", borderRadius: 8, fontFamily: DISPLAY, fontWeight: 600, fontSize: 13, color: "#E8EBEF" }}>
+            <span
+              className="launch-btn"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                height: 34,
+                padding: "0 18px",
+                background: "linear-gradient(180deg,#F4F6F8,#C4C9D1)",
+                color: "#0A0B0E",
+                borderRadius: 8,
+                fontFamily: DISPLAY,
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#0A0B0E", opacity: 0.55 }} />
               Connect
             </span>
           )}

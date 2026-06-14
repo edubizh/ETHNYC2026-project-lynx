@@ -4,34 +4,23 @@ import { DEFAULT_CONFIG, loadConfig, saveConfig, terminalReducer, type SideKey }
 import type { FeedContext } from "@/lib/live/types";
 import { TerminalDataProvider } from "./TerminalData";
 import { SideRail } from "./SideRail";
-import { T } from "./styles";
 
-const RAIL_WIDTH = "clamp(150px, calc((100vw - 1080px) / 2), 240px)";
-const MIN_WIDE = 1360;
+// Rails fill each gutter and line up just outside the centered 1040px dashboard column.
+const DASH = 1040;
+const RAIL_WIDTH = `clamp(170px, calc((100vw - ${DASH}px) / 2 - 30px), 400px)`;
+const MIN_WIDE = 1420;
 
 function railStyle(side: SideKey): CSSProperties {
   return {
     position: "fixed",
-    top: 72,
-    bottom: 14,
-    [side]: 10,
+    top: 78,
+    bottom: 16,
+    [side]: 16,
     width: RAIL_WIDTH,
     zIndex: 30,
     pointerEvents: "auto",
   } as CSSProperties;
 }
-
-const toggleBtn: CSSProperties = {
-  background: T.panel,
-  border: `1px solid ${T.border}`,
-  borderRadius: 7,
-  color: T.dim,
-  fontFamily: T.mono,
-  fontSize: 10,
-  letterSpacing: 0.5,
-  padding: "5px 9px",
-  cursor: "pointer",
-};
 
 // Tape flash-in for new rows + the live status-dot pulse (referenced by feeds/parts.tsx).
 const KEYFRAMES = `
@@ -64,16 +53,6 @@ export function Terminal({ feedContext }: { feedContext: FeedContext }) {
 
   if (!wide) return null;
 
-  const toggle = (
-    <button onClick={() => dispatch({ kind: "toggleHidden" })} style={toggleBtn} title="Show/hide the live terminal">
-      {config.hidden ? "⊞ terminal" : "⊠ hide"}
-    </button>
-  );
-
-  if (config.hidden) {
-    return <div style={{ position: "fixed", right: 14, bottom: 14, zIndex: 40 }}>{toggle}</div>;
-  }
-
   return (
     <TerminalDataProvider ctx={feedContext}>
       <style>{KEYFRAMES}</style>
@@ -83,7 +62,6 @@ export function Terminal({ feedContext }: { feedContext: FeedContext }) {
       <aside style={railStyle("right")}>
         <SideRail side="right" config={config.right} dispatch={dispatch} />
       </aside>
-      <div style={{ position: "fixed", right: 14, bottom: 14, zIndex: 40 }}>{toggle}</div>
     </TerminalDataProvider>
   );
 }
