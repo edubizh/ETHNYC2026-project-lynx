@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buildDashboard, type DashboardView } from "@/lib/dashboard/service";
+import { selectGraphAssets } from "@/lib/dashboard/graph";
 import { getBucketMeta } from "@/lib/mindshare";
+import { AnalystBandGraph } from "@/components/AnalystBandGraph";
 import { ArcAccountBar } from "@/components/ArcAccountBar";
 import { BuyBox, type BuyLeg } from "@/components/BuyBox";
 import { TopBar } from "@/components/TopBar";
@@ -65,8 +67,8 @@ export default async function ThemePage({ params }: { params: { slug: string } }
   const buyLegs: BuyLeg[] = view.legs.map((l) => ({ label: l.label, kind: l.kind, weight: l.weight }));
   const polygonNav = assetLegs.reduce((a, l) => a + (l.priceUsd ?? 0), 0);
 
-  // Headline security (drives the band) → the ANCHOR row, with an honest availability badge.
-  const anchor = view.securities.find((s) => s.ticker === h.assetSymbol) ?? view.securities[0];
+  // The relevant off-chain securities, positioned against their analyst bands (the multi-asset graph).
+  const graphAssets = selectGraphAssets(view.securities);
   const anyFallback =
     h.beliefSource === "fallback" || h.equitySource === "fallback" || view.legs.some((l) => l.beliefSource === "fallback" || l.priceSource === "fallback");
 
@@ -161,24 +163,8 @@ export default async function ThemePage({ params }: { params: { slug: string } }
           <p style={{ margin: "18px 0 0", fontSize: 15, color: "#FFFFFF" }}>{dirText}</p>
         </section>
 
-        {/* Analyst band */}
-        <section style={{ ...PANEL, padding: "22px 24px", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 16, color: "#FFFFFF" }}>Analyst Band · {h.assetSymbol}</h2>
-            <span style={{ fontFamily: MONO, fontSize: 13, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1" }}>${fmt(h.equityPrice)}</span>
-          </div>
-          <div style={{ position: "relative", height: 42, marginTop: 14 }}>
-            <div style={{ position: "absolute", left: 0, right: 0, top: 20, height: 8, background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 999, overflow: "hidden" }}>
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${assetX}%`, background: "linear-gradient(90deg,rgba(232,235,239,0.18),rgba(232,235,239,0.5))" }} />
-            </div>
-            <div style={{ position: "absolute", left: `${assetX}%`, top: 17, transform: "translateX(-50%) rotate(45deg)", width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #E8EBEF", borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: `${assetX}%`, top: -4, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 11, color: "#E8EBEF", whiteSpace: "nowrap", fontFeatureSettings: "'tnum' 1" }}>{pct}th pct</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontFamily: MONO, fontSize: 11.5, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>
-            <span><span style={{ color: "#7A828D" }}>bear</span> ${fmt(h.band.low)}</span>
-            <span><span style={{ color: "#7A828D" }}>bull</span> ${fmt(h.band.high)}</span>
-          </div>
-        </section>
+        {/* Multi-asset analyst-band graph (bands + scatter toggle) — the TradFi intelligence centerpiece */}
+        <AnalystBandGraph assets={graphAssets} beliefProb={h.beliefProb} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
 
         {/* fallback banner */}
         {anyFallback && (
@@ -266,28 +252,6 @@ export default async function ThemePage({ params }: { params: { slug: string } }
           </div>
         </section>
 
-        {/* ANCHOR — related security (honest availability badge) */}
-        {anchor && (
-          <section style={{ background: "#0E1014", border: "1px solid #20242A", borderRadius: 10, padding: "14px 18px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: "#5C636D", letterSpacing: "0.04em" }}>ANCHOR</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#FFFFFF" }}>
-                  <span style={{ color: "#E8EBEF", fontSize: 9 }}>◆</span>{anchor.ticker}
-                </span>
-                {anchor.priceUsd != null && <span style={{ fontFamily: MONO, fontSize: 13, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>${fmt(anchor.priceUsd)}</span>}
-                {anchor.bandPercentile != null && (
-                  <span style={{ fontFamily: MONO, fontSize: 12, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>{Math.round(anchor.bandPercentile * 100)}th pct of band</span>
-                )}
-              </div>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11.5, color: anchor.availability === "LIVE-UNISWAP" ? "#E8EBEF" : "#7A828D" }}>
-                <span>{anchor.availability === "LIVE-UNISWAP" ? "◆" : "◇"}</span>
-                {anchor.availability === "LIVE-UNISWAP" ? "live · uniswap" : "display-only"}
-                {anchor.chain && <span style={{ color: "#5C636D" }}>({anchor.chain})</span>}
-              </span>
-            </div>
-          </section>
-        )}
       </main>
     </div>
   );

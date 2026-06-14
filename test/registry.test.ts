@@ -132,3 +132,33 @@ describe("multi-asset on-chain sleeve", () => {
     expect(tickers).toEqual(["WETH", "LINK"]);
   });
 });
+
+describe("multi-asset analyst graph data", () => {
+  it("every bucket exposes ≥3 securities with a valid analyst band (a real multi-name graph)", () => {
+    for (const t of listThemes()) {
+      const banded = getSecurities(t.slug).filter((s) => s.analystBand);
+      expect(banded.length, `${t.slug} has only ${banded.length} banded securities`).toBeGreaterThanOrEqual(3);
+      for (const s of banded) expect(s.analystBand!.high).toBeGreaterThan(s.analystBand!.low);
+    }
+  });
+
+  it("every non-headline graph security carries a seed price strictly inside its band (renders offline)", () => {
+    for (const t of listThemes()) {
+      const headline = t.display.assetSymbol;
+      const banded = getSecurities(t.slug).filter((s) => s.analystBand && s.ticker !== headline);
+      for (const s of banded) {
+        expect(s.priceUsd, `${t.slug}/${s.ticker} needs a seed priceUsd`).toBeDefined();
+        const { low, high } = s.analystBand!;
+        expect(s.priceUsd! > low && s.priceUsd! < high, `${t.slug}/${s.ticker} seed ${s.priceUsd} outside [${low},${high}]`).toBe(true);
+      }
+    }
+  });
+
+  it("every bucket's display fallback seed sits strictly inside its display band (offline hero never saturates)", () => {
+    for (const t of listThemes()) {
+      const { low, high } = t.display.analystBand;
+      const seed = t.display.fallback.equityPrice;
+      expect(seed > low && seed < high, `${t.slug} seed ${seed} not inside [${low},${high}]`).toBe(true);
+    }
+  });
+});

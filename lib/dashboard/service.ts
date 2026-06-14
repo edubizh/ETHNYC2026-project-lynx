@@ -2,7 +2,7 @@ import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/regi
 import type { PredictionLeg, AssetLeg, Security, Availability } from "@/lib/baskets/types";
 import { fetchBeliefProb } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
-import { fetchEquityPrice } from "@/lib/adapters/equities";
+import { fetchEquityQuote } from "@/lib/adapters/equities";
 import { fetchAnalystBand } from "@/lib/adapters/yahoo";
 import { assetBandPercentile, divergence, type Divergence } from "@/lib/divergence/engine";
 
@@ -52,12 +52,17 @@ async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<[T, S
 }
 
 /** Price one security: LIVE-UNISWAP (with a token) via Uniswap /quote, else via the equities feed.
+ *  Equities also yield `changePct` (daily momentum) for the scatter view; Uniswap quotes don't.
  *  Falls back to the seed when the live feed is down; returns no price when neither is available. */
-async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source }> {
+async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source; changePct?: number }> {
   const viaUniswap = sec.availability === "LIVE-UNISWAP" && !!sec.token;
   try {
-    const priceUsd = viaUniswap ? await fetchAssetPrice(sec.token!, { decimals: sec.decimals }) : await fetchEquityPrice(sec.ticker);
-    return { priceUsd, priceSource: "live" };
+    if (viaUniswap) {
+      const priceUsd = await fetchAssetPrice(sec.token!, { decimals: sec.decimals });
+      return { priceUsd, priceSource: "live" };
+    }
+    const q = await fetchEquityQuote(sec.ticker);
+    return { priceUsd: q.price, priceSource: "live", changePct: q.changePct };
   } catch {
     return seed !== undefined ? { priceUsd: seed, priceSource: "fallback" } : {};
   }
@@ -81,6 +86,10 @@ export type SecurityView = {
   priceSource?: Source;
   /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
   bandPercentile?: number;
+  /** The analyst band the percentile was measured in (bear=low, bull=high) — feeds the multi-asset graph. */
+  band?: { low: number; high: number };
+  /** Daily % change (momentum) from the equities feed; only set for equities-priced securities. */
+  changePct?: number;
   chain?: string;
   note?: string;
 };
@@ -130,44 +139,44 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     }),
   );
 
-  // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
+  // Price every related security and resolve its analyst band. Prefer the LIVE (free) Yahoo band when
+  // the price is also live, so band & price share ONE worldview — a live price measured against a stale
+  // hardcoded band is exactly what pins markers to the 0th/100th edge. ETFs/crypto have no Yahoo
+  // analyst-target coverage, so they keep the published hardcoded band. This same per-security band drives
+  // BOTH the multi-asset graph and (for the headline) the hero gap, so they can never disagree on screen.
   const headline = getHeadlineSecurity(slug);
-  const securities: SecurityView[] = [];
-  for (const sec of getSecurities(slug)) {
-    const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
-    const { priceUsd, priceSource: src } = await priceSecurity(sec, seed);
-    const bandPercentile =
-      sec.analystBand && priceUsd !== undefined
-        ? assetBandPercentile(priceUsd, sec.analystBand.low, sec.analystBand.high)
-        : undefined;
-    securities.push({
-      ticker: sec.ticker,
-      name: sec.name,
-      availability: sec.availability,
-      priceUsd,
-      priceSource: src,
-      bandPercentile,
-      chain: sec.chain,
-      note: sec.note,
-    });
-  }
+  const securities: SecurityView[] = await Promise.all(
+    getSecurities(slug).map(async (sec) => {
+      const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
+      const { priceUsd, priceSource: src, changePct } = await priceSecurity(sec, seed);
+      let band = sec.analystBand;
+      if (band && priceUsd !== undefined && src === "live") {
+        [band] = await withFallback(() => fetchAnalystBand(sec.ticker), band);
+      }
+      const bandPercentile = band && priceUsd !== undefined ? assetBandPercentile(priceUsd, band.low, band.high) : undefined;
+      return {
+        ticker: sec.ticker,
+        name: sec.name,
+        availability: sec.availability,
+        priceUsd,
+        priceSource: src,
+        bandPercentile,
+        band,
+        changePct,
+        chain: sec.chain,
+        note: sec.note,
+      };
+    }),
+  );
 
-  // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile within its analyst band.
+  // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile — read straight off its
+  // SecurityView so the hero and the graph row for the same ticker always show the identical band.
   const primary = predViews[0]!;
   const hv = securities.find((s) => s.ticker === headline.ticker)!;
   const equityPrice = hv.priceUsd ?? t.display.fallback.equityPrice;
   const equitySource = hv.priceSource ?? "fallback";
-  // Use the live (free) Yahoo analyst band ONLY when the equity price is also live, so band and
-  // price share one worldview — a live band paired with a stale fallback price can push the price
-  // outside the band and yield a bogus gap. Otherwise (and for ETF/crypto headlines with no Yahoo
-  // coverage) keep the hardcoded band. Per-security rows keep their own hardcoded bands.
-  let band = headline.analystBand ?? t.display.analystBand;
-  if (equitySource === "live") {
-    [band] = await withFallback(() => fetchAnalystBand(headline.ticker), band);
-  }
-  // Measure the hero percentile in the SAME band shown above so the displayed band and the
-  // computed gap never disagree.
-  const pct = assetBandPercentile(equityPrice, band.low, band.high);
+  const band = hv.band ?? headline.analystBand ?? t.display.analystBand;
+  const pct = hv.bandPercentile ?? assetBandPercentile(equityPrice, band.low, band.high);
   const d = divergence(primary.beliefProb!, pct);
 
   return {

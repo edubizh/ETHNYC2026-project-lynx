@@ -4,6 +4,8 @@ import * as us from "@/lib/adapters/uniswap";
 import * as eq from "@/lib/adapters/equities";
 import * as yh from "@/lib/adapters/yahoo";
 import { buildDashboard } from "@/lib/dashboard/service";
+import { selectGraphAssets } from "@/lib/dashboard/graph";
+import { listThemes, getHeadlineSecurity } from "@/lib/baskets/registry";
 
 // The hero band calls Yahoo only when the equity price is live; mock it off by default so these
 // tests use the hardcoded band (deterministic, no network). Tests override it to assert the live path.
@@ -16,7 +18,7 @@ describe("buildDashboard", () => {
   it("composes the hero AI Sentiment Gap from live feeds + lists every leg", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155); // (155-105)/200 = 0.25 percentile
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 155, changePct: 0 }); // (155-105)/200 = 0.25 percentile
 
     const d = await buildDashboard("ai");
     expect(d.title).toBe("AI");
@@ -35,7 +37,7 @@ describe("buildDashboard", () => {
   it("uses the LIVE Yahoo analyst band for the hero when the equity price is also live", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.4);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(300); // live price
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 300, changePct: 0 }); // live price
     vi.mocked(yh.fetchAnalystBand).mockResolvedValue({ low: 200, high: 600 }); // (300-200)/400 = 0.25
 
     const d = await buildDashboard("ai");
@@ -48,7 +50,7 @@ describe("buildDashboard", () => {
   it("falls back to VERIFIED seeds (tagged 'fallback') when every live feed is down", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockRejectedValue(new Error("gamma down"));
     vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("no key"));
-    vi.spyOn(eq, "fetchEquityPrice").mockRejectedValue(new Error("no key"));
+    vi.spyOn(eq, "fetchEquityQuote").mockRejectedValue(new Error("no key"));
 
     const d = await buildDashboard("ai");
     expect(d.hero.beliefSource).toBe("fallback");
@@ -61,7 +63,7 @@ describe("buildDashboard", () => {
   it("exposes the bucket's securities with availability tags + per-source prices", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 155, changePct: 0 });
 
     const d = await buildDashboard("ai");
     const nvda = d.securities.find((s) => s.ticker === "NVDA");
@@ -75,7 +77,7 @@ describe("buildDashboard", () => {
   it("includes every sleeve asset leg in the view (AI = WETH + LINK)", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(155);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 155, changePct: 0 });
 
     const d = await buildDashboard("ai");
     const assets = d.legs.filter((l) => l.kind === "asset");
@@ -88,7 +90,7 @@ describe("buildDashboard", () => {
   it("falls back to a PER-TOKEN price (not one shared bucket seed) when sleeve quotes degrade", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
     vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("quote down"));
-    vi.spyOn(eq, "fetchEquityPrice").mockRejectedValue(new Error("no equities"));
+    vi.spyOn(eq, "fetchEquityQuote").mockRejectedValue(new Error("no equities"));
 
     const d = await buildDashboard("crypto");
     const assets = d.legs.filter((l) => l.kind === "asset");
@@ -102,7 +104,7 @@ describe("buildDashboard", () => {
   it("prices a crypto bucket's headline via Uniswap /quote, not the equities feed", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);
-    vi.spyOn(eq, "fetchEquityPrice").mockRejectedValue(new Error("no equities feed for WBTC"));
+    vi.spyOn(eq, "fetchEquityQuote").mockRejectedValue(new Error("no equities feed for WBTC"));
 
     const d = await buildDashboard("crypto");
     expect(d.hero.assetSymbol).toBe("WBTC");
@@ -116,9 +118,70 @@ describe("buildDashboard", () => {
   it("exposes the PRIMARY belief market label for the honest hero subtitle", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.515);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
-    vi.spyOn(eq, "fetchEquityPrice").mockResolvedValue(205);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 205, changePct: 0 });
 
     const d = await buildDashboard("ai");
     expect(d.hero.beliefLabel).toBe("OpenAI does NOT IPO by Dec 2026");
   });
+
+  it("exposes a per-security analyst band + momentum for the multi-asset graph", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.72);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 165, changePct: 2.5 });
+
+    const d = await buildDashboard("ai");
+    const nvda = d.securities.find((s) => s.ticker === "NVDA")!;
+    expect(nvda.band).toEqual({ low: 105, high: 305 });
+    expect(nvda.bandPercentile).toBeCloseTo(0.3, 6); // (165-105)/200
+    expect(nvda.changePct).toBe(2.5);
+  });
+
+  it("uses the LIVE analyst band for EVERY graph security (not just the headline) when its price is live", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.5);
+    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4300);
+    vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 300, changePct: 1 });
+    vi.mocked(yh.fetchAnalystBand).mockResolvedValue({ low: 200, high: 600 }); // (300-200)/400 = 0.25
+
+    const d = await buildDashboard("ai");
+    const msft = d.securities.find((s) => s.ticker === "MSFT")!; // a NON-headline graph security
+    expect(msft.band).toEqual({ low: 200, high: 600 });
+    expect(msft.bandPercentile).toBeCloseTo(0.25, 6);
+  });
+});
+
+// The product's core claim: every category bridges prediction-market belief → traditional-asset bands.
+// This guards ALL categories (incl. any newly added) — the graph must be a real multi-name chart with the
+// belief overlay and a non-degenerate hero anchor, even with every live feed down (verified seeds only).
+describe("every category bridges prediction belief → traditional-asset bands", () => {
+  beforeEach(() => {
+    vi.spyOn(pm, "fetchBeliefProb").mockRejectedValue(new Error("offline"));
+    vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("offline"));
+    vi.spyOn(eq, "fetchEquityQuote").mockRejectedValue(new Error("offline"));
+  });
+
+  for (const t of listThemes()) {
+    it(`${t.slug}: belief overlay + a real multi-name band graph (headline interior, no degenerate points)`, async () => {
+      const d = await buildDashboard(t.slug);
+
+      // the prediction-market belief that overlays the graph
+      expect(d.hero.beliefProb).toBeGreaterThanOrEqual(0);
+      expect(d.hero.beliefProb).toBeLessThanOrEqual(1);
+      expect(Number.isFinite(d.hero.gapPct)).toBe(true);
+      // the hero anchor sits STRICTLY inside its band — never pinned to an edge / broken
+      expect(d.hero.assetBandPercentile, `${t.slug} hero pct saturated`).toBeGreaterThan(0);
+      expect(d.hero.assetBandPercentile, `${t.slug} hero pct saturated`).toBeLessThan(1);
+
+      // the multi-asset graph: ≥3 well-formed securities, headline present
+      const assets = selectGraphAssets(d.securities);
+      expect(assets.length, `${t.slug} graph has only ${assets.length} securities`).toBeGreaterThanOrEqual(3);
+      const headline = getHeadlineSecurity(t.slug).ticker;
+      expect(assets.some((a) => a.ticker === headline), `${t.slug} graph missing headline ${headline}`).toBe(true);
+      for (const a of assets) {
+        expect(Number.isFinite(a.priceUsd), `${t.slug}/${a.ticker} non-finite price`).toBe(true);
+        expect(a.high, `${t.slug}/${a.ticker} band`).toBeGreaterThan(a.low);
+        expect(a.pct).toBeGreaterThanOrEqual(0);
+        expect(a.pct).toBeLessThanOrEqual(1);
+      }
+    });
+  }
 });
