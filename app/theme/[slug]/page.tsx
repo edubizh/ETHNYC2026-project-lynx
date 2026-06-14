@@ -62,7 +62,6 @@ export default async function ThemePage({ params }: { params: { slug: string } }
 
   const predLegs = view.legs.filter((l) => l.kind === "prediction");
   const assetLegs = view.legs.filter((l) => l.kind === "asset");
-  const assetLeg = assetLegs[0];
   const buyLegs: BuyLeg[] = view.legs.map((l) => ({ label: l.label, kind: l.kind, weight: l.weight }));
   const polygonNav = assetLegs.reduce((a, l) => a + (l.priceUsd ?? 0), 0);
 
@@ -233,29 +232,29 @@ export default async function ThemePage({ params }: { params: { slug: string } }
               );
             })}
 
-            {/* asset leg */}
-            {assetLeg && (
-              <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "15px 18px", ...PANEL }}>
+            {/* asset sleeve — one card per token */}
+            {assetLegs.map((leg, i) => (
+              <div key={`asset-${i}`} style={{ display: "flex", alignItems: "center", gap: 20, padding: "15px 18px", ...PANEL }}>
                 <div style={{ flex: 1.5, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14.5, color: "#FFFFFF" }}>
                     <span style={{ color: "#E8EBEF", fontSize: 9 }}>◆</span>
-                    {assetLeg.label}
+                    {leg.label}
                   </span>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11, color: "#E8EBEF" }}>
                     <span>◆</span>live · uniswap <span style={{ color: "#7A828D" }}>(Polygon)</span>
                   </span>
                 </div>
                 <div style={{ width: 148, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 22, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>${fmt(assetLeg.priceUsd)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 22, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>${fmt(leg.priceUsd)}</span>
                   <span style={{ fontSize: 10.5, color: "#7A828D", fontFamily: MONO }}>uniswap /quote oracle</span>
                 </div>
                 <CardSpark color="#E8EBEF" />
                 <div style={{ width: 60, textAlign: "right", display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 15, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>{Math.round(assetLeg.weight * 100)}%</span>
+                  <span style={{ fontFamily: MONO, fontSize: 15, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>{Math.round(leg.weight * 100)}%</span>
                   <span style={{ fontSize: 10, color: "#7A828D" }}>weight</span>
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </section>
 
