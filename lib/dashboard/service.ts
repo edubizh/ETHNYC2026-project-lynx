@@ -1,10 +1,12 @@
 import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg, Security, Availability } from "@/lib/baskets/types";
-import { fetchBeliefProb } from "@/lib/adapters/polymarket";
+import type { PredictionLeg, AssetLeg, Security, Availability, Theme, BeliefMarket } from "@/lib/baskets/types";
+import { fetchBeliefProb, fetchMarketVolumes } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
-import { fetchEquityPrice } from "@/lib/adapters/equities";
+import { fetchEquityQuote } from "@/lib/adapters/equities";
 import { fetchAnalystBand } from "@/lib/adapters/yahoo";
-import { assetBandPercentile, divergence, type Divergence } from "@/lib/divergence/engine";
+import { fetchKalshiOdds } from "@/lib/adapters/kalshi";
+import { computeBelief, type Belief, type BeliefInput } from "@/lib/belief/engine";
+import { assetBandPercentile, divergence, gapVsRange, type Divergence } from "@/lib/divergence/engine";
 
 const isPrediction = (l: PredictionLeg | AssetLeg): l is PredictionLeg => l.kind === "prediction";
 const isAsset = (l: PredictionLeg | AssetLeg): l is AssetLeg => l.kind === "asset";
@@ -52,15 +54,75 @@ async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<[T, S
 }
 
 /** Price one security: LIVE-UNISWAP (with a token) via Uniswap /quote, else via the equities feed.
+ *  Equities also yield `changePct` (daily momentum) for the scatter view; Uniswap quotes don't.
  *  Falls back to the seed when the live feed is down; returns no price when neither is available. */
-async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source }> {
+async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source; changePct?: number }> {
   const viaUniswap = sec.availability === "LIVE-UNISWAP" && !!sec.token;
   try {
-    const priceUsd = viaUniswap ? await fetchAssetPrice(sec.token!, { decimals: sec.decimals }) : await fetchEquityPrice(sec.ticker);
-    return { priceUsd, priceSource: "live" };
+    if (viaUniswap) {
+      const priceUsd = await fetchAssetPrice(sec.token!, { decimals: sec.decimals });
+      return { priceUsd, priceSource: "live" };
+    }
+    const q = await fetchEquityQuote(sec.ticker);
+    return { priceUsd: q.price, priceSource: "live", changePct: q.changePct };
   } catch {
     return seed !== undefined ? { priceUsd: seed, priceSource: "fallback" } : {};
   }
+}
+
+// --- crowd-belief aggregation (Theme Conviction Index across Polymarket + Kalshi) ---
+
+const DEFAULT_LEG_POLARITY: 1 | -1 = 1;
+const DEFAULT_LEG_RELEVANCE = 0.6;
+
+/** One Polymarket belief input: live YES odds (cached, dedups with the leg view) + total volume, seed fallback. */
+async function polymarketBeliefInput(
+  id: string,
+  label: string,
+  polarity: 1 | -1,
+  relevance: number,
+  seedProb: number,
+  seedVolume: number,
+): Promise<BeliefInput> {
+  const [prob, source] = await withFallback(() => fetchBeliefProb(id), seedProb);
+  let volume = seedVolume;
+  try {
+    volume = (await fetchMarketVolumes(id))["3m"] || seedVolume;
+  } catch {
+    /* keep seed volume */
+  }
+  return { id, label, venue: "polymarket", prob, polarity, relevance, volume, source };
+}
+
+/** One Kalshi belief input: live YES odds + (volume + open interest) as liquidity, seed fallback. */
+async function kalshiBeliefInput(m: BeliefMarket): Promise<BeliefInput> {
+  try {
+    const o = await fetchKalshiOdds(m.id);
+    return { id: m.id, label: m.label, venue: "kalshi", prob: o.prob, polarity: m.polarity, relevance: m.relevance, volume: o.volume + o.openInterest, source: "live" };
+  } catch {
+    return { id: m.id, label: m.label, venue: "kalshi", prob: m.seedProb, polarity: m.polarity, relevance: m.relevance, volume: m.seedVolume ?? 0, source: "fallback" };
+  }
+}
+
+/** The theme's crowd-belief range: pool the buyable prediction legs with the curated extra belief markets
+ *  (Polymarket + Kalshi), fetch each live (cached) with a seed fallback, and run the conviction engine. */
+async function buildBelief(t: Theme): Promise<Belief> {
+  const legInputs = t.legs
+    .filter(isPrediction)
+    .map((leg) =>
+      polymarketBeliefInput(
+        leg.gammaMarketId,
+        leg.label,
+        leg.polarity ?? DEFAULT_LEG_POLARITY,
+        leg.relevance ?? DEFAULT_LEG_RELEVANCE,
+        leg.seedBeliefProb,
+        leg.seedVolume ?? 0,
+      ),
+    );
+  const extraInputs = (t.display.beliefMarkets ?? []).map((m) =>
+    m.venue === "kalshi" ? kalshiBeliefInput(m) : polymarketBeliefInput(m.id, m.label, m.polarity, m.relevance, m.seedProb, m.seedVolume ?? 0),
+  );
+  return computeBelief(await Promise.all([...legInputs, ...extraInputs]));
 }
 
 export type LegView = {
@@ -81,6 +143,10 @@ export type SecurityView = {
   priceSource?: Source;
   /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
   bandPercentile?: number;
+  /** The analyst band the percentile was measured in (bear=low, bull=high) — feeds the multi-asset graph. */
+  band?: { low: number; high: number };
+  /** Daily % change (momentum) from the equities feed; only set for equities-priced securities. */
+  changePct?: number;
   chain?: string;
   note?: string;
 };
@@ -89,8 +155,15 @@ export type DashboardView = {
   slug: string;
   title: string;
   hero: {
+    /** The crowd-belief CENTER (aggregate of all theme markets) — kept for back-compat / the headline %. */
     beliefProb: number;
+    /** The full crowd-belief RANGE: low ≤ center ≤ high, in [0,1]. */
+    belief: { low: number; center: number; high: number };
+    beliefConfidence: number;
+    /** Per-market contributions (oriented prob + weight share + venue) for the belief tooltip. */
+    beliefBreakdown: { label?: string; venue: string; q: number; weight: number; source?: Source }[];
     beliefSource: Source;
+    /** Summary of what fed the belief (e.g. "5 markets · polymarket + kalshi"). */
     beliefLabel: string;
     assetSymbol: string;
     equityPrice: number;
@@ -116,11 +189,9 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
 
   const headline = getHeadlineSecurity(slug);
 
-  // Fetch belief legs, asset legs, and related securities CONCURRENTLY (they are independent feeds).
-  // Previously these ran in three sequential loops (~6-7 serial round-trips incl. slow Uniswap /quote +
-  // Yahoo), which made a cold dashboard ~10s. The adapter cache also dedups overlaps (e.g. WETH priced
-  // as both an asset leg and a security) into one request. Order is preserved by Promise.all(map).
-  const [predViews, assetViews, securities] = await Promise.all([
+  // Fetch belief legs, asset legs, and related securities CONCURRENTLY (independent feeds; the adapter
+  // cache also dedups overlaps like WETH priced as both an asset leg and a security). Order preserved by map.
+  const [predViews, assetViews, securities, belief] = await Promise.all([
     Promise.all(
       predLegs.map(async (leg): Promise<LegView> => {
         const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
@@ -136,15 +207,19 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
         return { kind: "asset", label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
       }),
     ),
-    // Price every related security, routing by availability (LIVE-UNISWAP -> Uniswap /quote, else equities feed).
+    // Price every related security AND resolve its analyst band: prefer the LIVE Yahoo band when the price
+    // is also live (band & price share one worldview — kills the stale-band 0th/100th pinning); ETFs/crypto
+    // keep the hardcoded band. This same per-security band drives BOTH the multi-asset graph and (for the
+    // headline) the hero gap, so they can never disagree on screen.
     Promise.all(
       getSecurities(slug).map(async (sec): Promise<SecurityView> => {
         const seed = sec.ticker === headline.ticker ? t.display.fallback.equityPrice : sec.priceUsd;
-        const { priceUsd, priceSource: src } = await priceSecurity(sec, seed);
-        const bandPercentile =
-          sec.analystBand && priceUsd !== undefined
-            ? assetBandPercentile(priceUsd, sec.analystBand.low, sec.analystBand.high)
-            : undefined;
+        const { priceUsd, priceSource: src, changePct } = await priceSecurity(sec, seed);
+        let band = sec.analystBand;
+        if (band && priceUsd !== undefined && src === "live") {
+          [band] = await withFallback(() => fetchAnalystBand(sec.ticker), band);
+        }
+        const bandPercentile = band && priceUsd !== undefined ? assetBandPercentile(priceUsd, band.low, band.high) : undefined;
         return {
           ticker: sec.ticker,
           name: sec.name,
@@ -152,45 +227,47 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
           priceUsd,
           priceSource: src,
           bandPercentile,
+          band,
+          changePct,
           chain: sec.chain,
           note: sec.note,
         };
       }),
     ),
+    buildBelief(t),
   ]);
 
-  // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile within its analyst band.
-  const primary = predViews[0]!;
+  // Headline security's band percentile — read straight off its SecurityView so the hero and the graph
+  // row for the same ticker always show the identical band.
   const hv = securities.find((s) => s.ticker === headline.ticker)!;
   const equityPrice = hv.priceUsd ?? t.display.fallback.equityPrice;
   const equitySource = hv.priceSource ?? "fallback";
-  // Use the live (free) Yahoo analyst band ONLY when the equity price is also live, so band and
-  // price share one worldview — a live band paired with a stale fallback price can push the price
-  // outside the band and yield a bogus gap. Otherwise (and for ETF/crypto headlines with no Yahoo
-  // coverage) keep the hardcoded band. Per-security rows keep their own hardcoded bands.
-  let band = headline.analystBand ?? t.display.analystBand;
-  if (equitySource === "live") {
-    [band] = await withFallback(() => fetchAnalystBand(headline.ticker), band);
-  }
-  // Measure the hero percentile in the SAME band shown above so the displayed band and the
-  // computed gap never disagree.
-  const pct = assetBandPercentile(equityPrice, band.low, band.high);
-  const d = divergence(primary.beliefProb!, pct);
+  const band = hv.band ?? headline.analystBand ?? t.display.analystBand;
+  const pct = hv.bandPercentile ?? assetBandPercentile(equityPrice, band.low, band.high);
+
+  // The Sentiment Gap is now measured against the crowd-belief RANGE (0 if the asset sits inside it).
+  const g = gapVsRange(belief.low, belief.high, pct);
+  const venues = Array.from(new Set(belief.breakdown.map((b) => b.venue)));
+  const beliefSource: Source = belief.breakdown.some((b) => b.source === "live") ? "live" : "fallback";
+  const beliefLabel = belief.breakdown.length ? `${belief.breakdown.length} markets · ${venues.join(" + ")}` : "no markets";
 
   return {
     slug: t.slug,
     title: t.title,
     hero: {
-      beliefProb: primary.beliefProb!,
-      beliefSource: primary.beliefSource!,
-      beliefLabel: primary.label,
+      beliefProb: belief.center,
+      belief: { low: belief.low, center: belief.center, high: belief.high },
+      beliefConfidence: belief.confidence,
+      beliefBreakdown: belief.breakdown.map((b) => ({ label: b.label, venue: b.venue, q: b.q, weight: b.weight, source: b.source })),
+      beliefSource,
+      beliefLabel,
       assetSymbol: headline.ticker,
       equityPrice,
       equitySource,
       band,
       assetBandPercentile: pct,
-      gapPct: d.gapPct,
-      direction: d.direction,
+      gapPct: g.gapPct,
+      direction: g.direction,
     },
     legs: [...predViews, ...assetViews],
     securities,

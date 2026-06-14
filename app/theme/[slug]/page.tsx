@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buildDashboard, type DashboardView } from "@/lib/dashboard/service";
+import { selectGraphAssets } from "@/lib/dashboard/graph";
 import { getBucketMeta } from "@/lib/mindshare";
+import { AnalystBandGraph } from "@/components/AnalystBandGraph";
 import { ArcAccountBar } from "@/components/ArcAccountBar";
 import { BuyBox, type BuyLeg } from "@/components/BuyBox";
 import { TopBar } from "@/components/TopBar";
+import { InfoTip } from "@/components/InfoTip";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +49,19 @@ export default async function ThemePage({ params }: { params: { slug: string } }
   const meta = getBucketMeta(params.slug);
   const h = view.hero;
   const belief = Math.round(h.beliefProb * 100);
+  const beliefLoR = Math.round(h.belief.low * 100);
+  const beliefHiR = Math.round(h.belief.high * 100);
   const pct = Math.round(h.assetBandPercentile * 100);
   const gap = Math.round(h.gapPct);
-  const beliefX = clampPct(h.beliefProb * 100);
   const assetX = clampPct(h.assetBandPercentile * 100);
-  const gapLeft = Math.min(beliefX, assetX);
-  const gapW = Math.abs(assetX - beliefX);
+  // belief is a RANGE → render a shaded band [lo,hi] with the center marked; the gap fill spans from the
+  // asset marker to the NEARER edge of the band (nothing when the asset sits inside the crowd's range).
+  const beliefC = clampPct(h.belief.center * 100);
+  const beliefLo = clampPct(h.belief.low * 100);
+  const beliefHi = clampPct(h.belief.high * 100);
+  const gapEdge = assetX > beliefHi ? beliefHi : assetX < beliefLo ? beliefLo : assetX;
+  const gapLeft = Math.min(assetX, gapEdge);
+  const gapW = Math.abs(assetX - gapEdge);
   const dirText =
     h.direction === "asset-higher"
       ? "The asset runs hotter than belief."
@@ -65,8 +75,8 @@ export default async function ThemePage({ params }: { params: { slug: string } }
   const buyLegs: BuyLeg[] = view.legs.map((l) => ({ label: l.label, kind: l.kind, weight: l.weight }));
   const polygonNav = assetLegs.reduce((a, l) => a + (l.priceUsd ?? 0), 0);
 
-  // Headline security (drives the band) → the ANCHOR row, with an honest availability badge.
-  const anchor = view.securities.find((s) => s.ticker === h.assetSymbol) ?? view.securities[0];
+  // The relevant off-chain securities, positioned against their analyst bands (the multi-asset graph).
+  const graphAssets = selectGraphAssets(view.securities);
   const anyFallback =
     h.beliefSource === "fallback" || h.equitySource === "fallback" || view.legs.some((l) => l.beliefSource === "fallback" || l.priceSource === "fallback");
 
@@ -123,20 +133,23 @@ export default async function ThemePage({ params }: { params: { slug: string } }
             </span>
           </div>
 
-          <p style={{ margin: "-22px 0 26px", maxWidth: 620, fontSize: 13, lineHeight: 1.55, color: "#7A828D" }}>
-            Belief markets price <span style={{ color: "#A6B2C2" }}>&ldquo;{h.beliefLabel}&rdquo;</span> at <span style={{ color: "#A6B2C2", fontFamily: MONO }}>{belief}%</span>; {h.assetSymbol} sits at the <span style={{ color: "#E8EBEF", fontFamily: MONO }}>{pct}th</span> percentile of its published analyst band (${fmt(h.band.low)}–${fmt(h.band.high)}). The gap is a divergence signal between crowd belief and analyst valuation — not a probability or trade recommendation.
+          <p style={{ margin: "-22px 0 26px", maxWidth: 640, fontSize: 13, lineHeight: 1.55, color: "#7A828D" }}>
+            The crowd&apos;s odds — a weighted blend across <span style={{ color: "#A6B2C2" }}>{h.beliefLabel}</span> (Polymarket + Kalshi) — sit at <span style={{ color: "#A6B2C2", fontFamily: MONO }}>{belief}%</span> <span style={{ fontFamily: MONO }}>({beliefLoR}–{beliefHiR}%)</span>; {h.assetSymbol} sits at the <span style={{ color: "#E8EBEF", fontFamily: MONO }}>{pct}th</span> percentile of its analyst band (${fmt(h.band.low)}–${fmt(h.band.high)}). The gap is a divergence signal — not a probability or trade recommendation.
           </p>
 
           <div style={{ position: "relative", height: 56, margin: "0 6px" }}>
             {/* track */}
             <div style={{ position: "absolute", left: 0, right: 0, top: 18, height: 8, background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 999 }}>
-              <div style={{ position: "absolute", left: `${gapLeft}%`, width: `${gapW}%`, top: -1, bottom: -1, background: "linear-gradient(90deg,rgba(138,149,166,0.5),rgba(232,235,239,0.5))", borderRadius: 2 }} />
+              {/* belief RANGE band */}
+              <div style={{ position: "absolute", left: `${beliefLo}%`, width: `${Math.max(beliefHi - beliefLo, 0.5)}%`, top: -1, bottom: -1, background: "rgba(138,149,166,0.45)", border: "1px solid rgba(138,149,166,0.6)", borderRadius: 3 }} />
+              {/* gap fill (asset → nearer belief edge) */}
+              <div style={{ position: "absolute", left: `${gapLeft}%`, width: `${gapW}%`, top: -1, bottom: -1, background: "linear-gradient(90deg,rgba(138,149,166,0.35),rgba(232,235,239,0.35))", borderRadius: 2 }} />
             </div>
             {/* ticks */}
             <div style={{ position: "absolute", left: 0, top: 30, fontFamily: MONO, fontSize: 10, color: "#5C636D" }}>0%</div>
             <div style={{ position: "absolute", right: 0, top: 30, fontFamily: MONO, fontSize: 10, color: "#5C636D" }}>100%</div>
-            {/* belief marker (●) */}
-            <div style={{ position: "absolute", left: `${beliefX}%`, top: 14, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: "#8A95A6", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #8A95A6" }} />
+            {/* belief center marker (●) */}
+            <div style={{ position: "absolute", left: `${beliefC}%`, top: 15, transform: "translateX(-50%)", width: 13, height: 13, borderRadius: "50%", background: "#8A95A6", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #8A95A6" }} />
             {/* asset marker (◆) */}
             <div style={{ position: "absolute", left: `${assetX}%`, top: 15, transform: "translateX(-50%) rotate(45deg)", width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #E8EBEF", borderRadius: 2 }} />
           </div>
@@ -146,8 +159,17 @@ export default async function ThemePage({ params }: { params: { slug: string } }
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#8A95A6", flexShrink: 0 }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span style={{ fontSize: 12, color: "#AAB1BC" }}>Belief · the crowd&apos;s odds</span>
-                <span style={{ fontFamily: MONO, fontSize: 20, color: "#A6B2C2", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>{belief}%</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#AAB1BC" }}>
+                  Belief · the crowd&apos;s odds
+                  <InfoTip ariaLabel="How the crowd's odds are calculated">
+                    <span style={{ color: "#E8EBEF" }}>Crowd odds</span> blend every related market on Polymarket + Kalshi, each weighted by <span style={{ color: "#E8EBEF" }}>liquidity × relevance</span> and flipped to one bullish axis. The shaded band is the uncertainty — how much the markets disagree and how thin they are.{" "}
+                    <a href="/docs/sentiment-gap" style={{ color: "#A6B2C2", textDecoration: "underline" }}>Full method →</a>
+                  </InfoTip>
+                </span>
+                <span style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 20, color: "#A6B2C2", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>{belief}%</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A828D", fontFeatureSettings: "'tnum' 1" }}>range {beliefLoR}–{beliefHiR}%</span>
+                </span>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -161,24 +183,8 @@ export default async function ThemePage({ params }: { params: { slug: string } }
           <p style={{ margin: "18px 0 0", fontSize: 15, color: "#FFFFFF" }}>{dirText}</p>
         </section>
 
-        {/* Analyst band */}
-        <section style={{ ...PANEL, padding: "22px 24px", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 16, color: "#FFFFFF" }}>Analyst Band · {h.assetSymbol}</h2>
-            <span style={{ fontFamily: MONO, fontSize: 13, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1" }}>${fmt(h.equityPrice)}</span>
-          </div>
-          <div style={{ position: "relative", height: 42, marginTop: 14 }}>
-            <div style={{ position: "absolute", left: 0, right: 0, top: 20, height: 8, background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 999, overflow: "hidden" }}>
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${assetX}%`, background: "linear-gradient(90deg,rgba(232,235,239,0.18),rgba(232,235,239,0.5))" }} />
-            </div>
-            <div style={{ position: "absolute", left: `${assetX}%`, top: 17, transform: "translateX(-50%) rotate(45deg)", width: 13, height: 13, background: "linear-gradient(135deg,#F2F4F6,#ADB3BC)", border: "2px solid #0A0B0E", boxShadow: "0 0 0 1px #E8EBEF", borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: `${assetX}%`, top: -4, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 11, color: "#E8EBEF", whiteSpace: "nowrap", fontFeatureSettings: "'tnum' 1" }}>{pct}th pct</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontFamily: MONO, fontSize: 11.5, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>
-            <span><span style={{ color: "#7A828D" }}>bear</span> ${fmt(h.band.low)}</span>
-            <span><span style={{ color: "#7A828D" }}>bull</span> ${fmt(h.band.high)}</span>
-          </div>
-        </section>
+        {/* Multi-asset analyst-band graph (bands + scatter toggle) — the TradFi intelligence centerpiece */}
+        <AnalystBandGraph assets={graphAssets} belief={h.belief} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
 
         {/* fallback banner */}
         {anyFallback && (
@@ -266,28 +272,6 @@ export default async function ThemePage({ params }: { params: { slug: string } }
           </div>
         </section>
 
-        {/* ANCHOR — related security (honest availability badge) */}
-        {anchor && (
-          <section style={{ background: "#0E1014", border: "1px solid #20242A", borderRadius: 10, padding: "14px 18px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: "#5C636D", letterSpacing: "0.04em" }}>ANCHOR</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#FFFFFF" }}>
-                  <span style={{ color: "#E8EBEF", fontSize: 9 }}>◆</span>{anchor.ticker}
-                </span>
-                {anchor.priceUsd != null && <span style={{ fontFamily: MONO, fontSize: 13, color: "#FFFFFF", fontFeatureSettings: "'tnum' 1" }}>${fmt(anchor.priceUsd)}</span>}
-                {anchor.bandPercentile != null && (
-                  <span style={{ fontFamily: MONO, fontSize: 12, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>{Math.round(anchor.bandPercentile * 100)}th pct of band</span>
-                )}
-              </div>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 11.5, color: anchor.availability === "LIVE-UNISWAP" ? "#E8EBEF" : "#7A828D" }}>
-                <span>{anchor.availability === "LIVE-UNISWAP" ? "◆" : "◇"}</span>
-                {anchor.availability === "LIVE-UNISWAP" ? "live · uniswap" : "display-only"}
-                {anchor.chain && <span style={{ color: "#5C636D" }}>({anchor.chain})</span>}
-              </span>
-            </div>
-          </section>
-        )}
       </main>
     </div>
   );

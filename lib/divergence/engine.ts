@@ -21,3 +21,16 @@ export function divergence(beliefProb: number, assetBandPct: number): Divergence
   const direction = Math.abs(gapPct) < 1 ? "aligned" : gapPct > 0 ? "belief-higher" : "asset-higher";
   return { beliefProb, assetBandPercentile: assetBandPct, gapPct: Math.abs(gapPct), direction };
 }
+
+/** The Sentiment Gap when belief is a RANGE [low, high] rather than a point: 0 (aligned) if the asset's
+ *  band percentile sits inside the crowd's range, otherwise the distance (in pts) to the nearer edge.
+ *  Asset above the range → "asset-higher"; below → "belief-higher". */
+export function gapVsRange(
+  beliefLow: number,
+  beliefHigh: number,
+  assetBandPct: number,
+): { gapPct: number; direction: Divergence["direction"] } {
+  if (assetBandPct > beliefHigh) return { gapPct: (assetBandPct - beliefHigh) * 100, direction: "asset-higher" };
+  if (assetBandPct < beliefLow) return { gapPct: (beliefLow - assetBandPct) * 100, direction: "belief-higher" };
+  return { gapPct: 0, direction: "aligned" };
+}

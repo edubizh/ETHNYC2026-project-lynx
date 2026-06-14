@@ -27,6 +27,7 @@ const THEMES: Record<string, Theme> = {
         },
         seedBeliefProb: 0.51,
         weight: 0.35,
+        relevance: 0.3, // "no IPO" is only a weak AI-sentiment signal — low weight in the belief index
       },
       // SECONDARY / vivid prediction leg (~89.5% YES) — great demo number, may resolve sooner.
       {
@@ -51,6 +52,15 @@ const THEMES: Record<string, Theme> = {
       analystBand: AI_BAND,
       // Seed values for the offline/no-key demo.
       fallback: { beliefProb: 0.51, equityPrice: 165, assetLegPriceUsd: 4300 },
+      // Extra (non-buyable) belief markets, oriented bullish = AI progress/valuations up. Live-verified ids
+      // 2026-06-14; seeds are the live values then (a bad id degrades to its seed, never breaks the index).
+      beliefMarkets: [
+        { venue: "polymarket", id: "631181", label: "NVIDIA is the largest company by market cap", polarity: 1, relevance: 0.8, seedProb: 0.95, seedVolume: 2_810_000 },
+        { venue: "polymarket", id: "653788", label: "OpenAI announces AGI before 2027", polarity: 1, relevance: 0.6, seedProb: 0.125, seedVolume: 79_800 },
+        { venue: "polymarket", id: "2110294", label: "A new Gemini flagship model is released", polarity: 1, relevance: 0.4, seedProb: 0.82, seedVolume: 36_000 },
+        { venue: "kalshi", id: "KXLLM1-26DEC31-OAI", label: "OpenAI has the top LLM (LMArena) at EOY", polarity: 1, relevance: 0.6, seedProb: 0.155, seedVolume: 1_099_000 },
+        { venue: "kalshi", id: "KXAGICO-COMP-26Q4", label: "Any company announces AGI before 2027", polarity: 1, relevance: 0.5, seedProb: 0.13, seedVolume: 7_800 },
+      ],
       // Thematically-related securities — display/anchor only. NVDA is not Uniswap-tradeable for a
       // US/ungated user (xStocks NVDAx live on Solana, US-gated), so it renders an honest badge, not a buy.
       securities: [
@@ -62,6 +72,10 @@ const THEMES: Record<string, Theme> = {
           chain: "solana/CEX",
           note: "Tradeable for eligible users as NVDAx (xStocks, Solana) / CEX — no EVM-Uniswap venue, so it's the analyst anchor here.",
         },
+        { ticker: "MSFT", name: "Microsoft", analystBand: { low: 380, high: 600 }, priceUsd: 480, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "AI/cloud bellwether (Azure + OpenAI stake) — tokenized as MSFTx on Solana; coming soon to our rails." },
+        { ticker: "GOOGL", name: "Alphabet", analystBand: { low: 150, high: 260 }, priceUsd: 200, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Gemini / DeepMind AI exposure — tokenized as GOOGLx on Solana; coming soon." },
+        { ticker: "TSM", name: "Taiwan Semiconductor", analystBand: { low: 160, high: 300 }, priceUsd: 230, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Fabricates the AI accelerators — tokenized as TSMx on Solana; coming soon." },
+        { ticker: "AMD", name: "Advanced Micro Devices", analystBand: { low: 110, high: 220 }, priceUsd: 160, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "AI-GPU challenger — tokenized as AMDx on Solana; coming soon." },
         {
           ticker: "wstETH",
           name: "Lido Wrapped Staked ETH",
@@ -99,12 +113,23 @@ const THEMES: Record<string, Theme> = {
     ],
     display: {
       assetSymbol: "WBTC",
-      analystBand: { low: 45000, high: 95000 },
+      analystBand: { low: 40000, high: 130000 },
       fallback: { beliefProb: 0.165, equityPrice: 64317, assetLegPriceUsd: 64317 },
+      // Oriented bullish = crypto/BTC up. Live-verified ids 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "701496", label: "Bitcoin reaches $100,000 in 2026", polarity: 1, relevance: 0.8, seedProb: 0.155, seedVolume: 1_920_000 },
+        { venue: "polymarket", id: "701486", label: "Bitcoin reaches $200,000 in 2026", polarity: 1, relevance: 0.4, seedProb: 0.02, seedVolume: 1_800_000 },
+        { venue: "polymarket", id: "701539", label: "Ethereum reaches $10,000 in 2026", polarity: 1, relevance: 0.4, seedProb: 0.0145, seedVolume: 516_000 },
+        { venue: "kalshi", id: "KXCRYPTORETURNY-26-BTC", label: "Bitcoin has a positive return in 2026", polarity: 1, relevance: 0.7, seedProb: 0.31, seedVolume: 119_200 },
+        { venue: "kalshi", id: "KXCRYPTORETURNY-26-SOL", label: "Solana has a positive return in 2026", polarity: 1, relevance: 0.4, seedProb: 0.13, seedVolume: 69_700 },
+      ],
       securities: [
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 45000, high: 95000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 40000, high: 130000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable ETH exposure on Uniswap (Polygon)." },
-        { ticker: "COIN", name: "Coinbase Global", availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Crypto-beta equity; tradeable for eligible users via xStocks/CEX — no EVM-Uniswap venue, shown as anchor." },
+        { ticker: "COIN", name: "Coinbase Global", analystBand: { low: 150, high: 400 }, priceUsd: 260, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Crypto-exchange beta — tokenized as COINx on Solana; coming soon." },
+        { ticker: "MSTR", name: "Strategy (MicroStrategy)", analystBand: { low: 200, high: 600 }, priceUsd: 380, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Leveraged BTC-treasury proxy — tokenized as MSTRx on Solana; coming soon." },
+        { ticker: "HOOD", name: "Robinhood Markets", analystBand: { low: 30, high: 110 }, priceUsd: 65, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Retail crypto brokerage — tokenized as HOODx on Solana; coming soon." },
+        { ticker: "MARA", name: "MARA Holdings", analystBand: { low: 12, high: 40 }, priceUsd: 22, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Bitcoin miner — no EVM-Uniswap venue; tokenized version coming soon." },
       ],
     },
   },
@@ -126,17 +151,28 @@ const THEMES: Record<string, Theme> = {
         },
         seedBeliefProb: 0.7685,
         weight: 0.5,
+        polarity: -1, // "no cuts" is hawkish → bearish for TLT (belief axis = dovish / rates-down)
+        relevance: 0.7,
       },
       { kind: "asset", label: "Rate-sensitive risk (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
       { kind: "asset", label: "Store-of-value hedge (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
     ],
     display: {
       assetSymbol: "TLT",
-      analystBand: { low: 82, high: 108 },
+      analystBand: { low: 76, high: 112 },
       fallback: { beliefProb: 0.7685, equityPrice: 95, assetLegPriceUsd: 4300 },
+      // Oriented bullish = TLT up = DOVISH (rates down). Hawkish markets get polarity -1. Verified 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "616903", label: "At least one Fed rate cut in 2026 (dovish)", polarity: 1, relevance: 0.7, seedProb: 0.145, seedVolume: 1_510_000 },
+        { venue: "polymarket", id: "609655", label: "US recession by end of 2026 (flight to bonds)", polarity: 1, relevance: 0.6, seedProb: 0.175, seedVolume: 1_560_000 },
+        { venue: "kalshi", id: "KXFEDDECISION-26JUL-H0", label: "Fed holds rates at the July 2026 meeting (hawkish)", polarity: -1, relevance: 0.5, seedProb: 0.91, seedVolume: 346_600 },
+        { venue: "kalshi", id: "KXNBERRECESSQ-Q1-2026", label: "A US recession starts in Q1 2026", polarity: 1, relevance: 0.4, seedProb: 0.033, seedVolume: 81_800 },
+      ],
       securities: [
-        { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", analystBand: { low: 82, high: 108 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline rates anchor — no EVM-Uniswap venue; shown for the belief-vs-rates cross." },
-        { ticker: "GLD", name: "SPDR Gold Shares", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Real-asset hedge vs higher-for-longer." },
+        { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", analystBand: { low: 76, high: 112 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline rates anchor — no EVM-Uniswap venue; shown for the belief-vs-rates cross (illustrative band)." },
+        { ticker: "GLD", name: "SPDR Gold Shares", analystBand: { low: 300, high: 460 }, priceUsd: 380, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Real-asset hedge vs higher-for-longer — no EVM-Uniswap venue (no analyst-target feed; illustrative band)." },
+        { ticker: "SPY", name: "SPDR S&P 500 ETF", analystBand: { low: 600, high: 860 }, priceUsd: 720, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Broad risk gauge vs the rate path — no EVM-Uniswap venue (illustrative band)." },
+        { ticker: "HYG", name: "iShares iBoxx High Yield Bond ETF", analystBand: { low: 70, high: 92 }, priceUsd: 80, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Credit-spread proxy — no EVM-Uniswap venue (illustrative band)." },
         { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain rate-sensitive risk asset." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable rate-sensitive risk asset on Uniswap (Polygon)." },
         { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable store-of-value hedge on Uniswap (Polygon)." },
@@ -182,9 +218,18 @@ const THEMES: Record<string, Theme> = {
       assetSymbol: "ITA",
       analystBand: { low: 150, high: 300 },
       fallback: { beliefProb: 0.793, equityPrice: 230, assetLegPriceUsd: 4300 },
+      // Oriented bullish = ITA defense up = MORE conflict. De-escalation markets get polarity -1. Verified 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "567621", label: "China invades Taiwan before 2027", polarity: 1, relevance: 0.8, seedProb: 0.0615, seedVolume: 34_700_000 },
+        { venue: "polymarket", id: "2243897", label: "Russia–Ukraine ceasefire in 2026 (de-escalation)", polarity: -1, relevance: 0.8, seedProb: 0.475, seedVolume: 1_780_000 },
+        { venue: "polymarket", id: "2126516", label: "Israel–Iran permanent peace deal (de-escalation)", polarity: -1, relevance: 0.5, seedProb: 0.165, seedVolume: 7_700 },
+        { venue: "kalshi", id: "KXVENEZUELALEADER-26DEC31-NMAD", label: "Maduro is Venezuela's head of state at EOY 2026", polarity: 1, relevance: 0.4, seedProb: 0.59, seedVolume: 708_000 },
+      ],
       securities: [
         { ticker: "ITA", name: "iShares U.S. Aerospace & Defense ETF", analystBand: { low: 150, high: 300 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline conflict-beta anchor — no EVM-Uniswap venue." },
-        { ticker: "LMT", name: "Lockheed Martin", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime." },
+        { ticker: "LMT", name: "Lockheed Martin", analystBand: { low: 400, high: 600 }, priceUsd: 480, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime — no EVM-Uniswap venue." },
+        { ticker: "RTX", name: "RTX (Raytheon)", analystBand: { low: 110, high: 180 }, priceUsd: 145, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Missiles / defense systems — no EVM-Uniswap venue." },
+        { ticker: "NOC", name: "Northrop Grumman", analystBand: { low: 450, high: 650 }, priceUsd: 540, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime — no EVM-Uniswap venue." },
         { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
         { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable digital safe-haven on Uniswap (Polygon)." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
@@ -209,6 +254,7 @@ const THEMES: Record<string, Theme> = {
         },
         seedBeliefProb: 0.2325,
         weight: 0.25,
+        relevance: 0.2, // a Dem-primary race barely signals DJT/GOP-strength — low weight
       },
       {
         kind: "prediction",
@@ -222,6 +268,7 @@ const THEMES: Record<string, Theme> = {
         },
         seedBeliefProb: 0.0885,
         weight: 0.25,
+        relevance: 0.2, // a Dem-primary race barely signals DJT/GOP-strength — low weight
       },
       { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
       { kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
@@ -230,9 +277,17 @@ const THEMES: Record<string, Theme> = {
       assetSymbol: "DJT",
       analystBand: { low: 3, high: 14 },
       fallback: { beliefProb: 0.2325, equityPrice: 8, assetLegPriceUsd: 4300 },
+      // Oriented bullish = DJT up = GOP/Trump strength. Dem-strength markets get polarity -1. Verified 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "1389021", label: "Democrats win the House in the 2026 midterms", polarity: -1, relevance: 0.7, seedProb: 0.825, seedVolume: 3_930_000 },
+        { venue: "kalshi", id: "KXBALANCEPOWERCOMBO-27FEB-RR", label: "Republicans hold the House AND Senate after 2026", polarity: 1, relevance: 0.7, seedProb: 0.22, seedVolume: 2_600_000 },
+        { venue: "kalshi", id: "KXTRUMPAPPROVALBELOW-26DEC31-36", label: "Trump approval is below 36% in 2026", polarity: -1, relevance: 0.4, seedProb: 0.53, seedVolume: 37_000 },
+      ],
       securities: [
         { ticker: "DJT", name: "Trump Media & Technology Group", analystBand: { low: 3, high: 14 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline politically-correlated equity — no EVM-Uniswap venue." },
-        { ticker: "GEO", name: "GEO Group", availability: "DISPLAY-ONLY", chain: "off-rail", note: "Policy-sensitive equity." },
+        { ticker: "GEO", name: "GEO Group", analystBand: { low: 18, high: 40 }, priceUsd: 28, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Immigration-policy-sensitive equity — no EVM-Uniswap venue." },
+        { ticker: "CXW", name: "CoreCivic", analystBand: { low: 15, high: 35 }, priceUsd: 23, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Policy-sensitive equity — no EVM-Uniswap venue." },
+        { ticker: "PLTR", name: "Palantir Technologies", analystBand: { low: 30, high: 120 }, priceUsd: 70, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Government / defense data — tokenized as PLTRx on Solana; coming soon." },
         { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
         { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
@@ -280,8 +335,17 @@ const THEMES: Record<string, Theme> = {
       assetSymbol: "DKNG",
       analystBand: { low: 30, high: 60 },
       fallback: { beliefProb: 0.5, equityPrice: 44, assetLegPriceUsd: 4300 },
+      // Oriented bullish = DKNG up = betting engagement/drama (upsets, first-time runs). Verified 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "563698", label: "A first-time nation wins the 2026 World Cup (upset)", polarity: 1, relevance: 0.5, seedProb: 0.315, seedVolume: 119_000 },
+        { venue: "kalshi", id: "KXWC1STTIMEWIN-26-Y", label: "A first-time nation wins the 2026 World Cup", polarity: 1, relevance: 0.5, seedProb: 0.3, seedVolume: 91_000 },
+        { venue: "kalshi", id: "KXWCFIFATOP10-26SF-Y", label: "A non-top-10 nation reaches the World Cup semis", polarity: 1, relevance: 0.4, seedProb: 0.67, seedVolume: 112_000 },
+      ],
       securities: [
         { ticker: "DKNG", name: "DraftKings", analystBand: { low: 30, high: 60 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Sports-betting beta anchor — no EVM-Uniswap venue; shown for the belief-vs-attention cross." },
+        { ticker: "FLUT", name: "Flutter Entertainment", analystBand: { low: 200, high: 320 }, priceUsd: 250, availability: "DISPLAY-ONLY", chain: "off-rail", note: "FanDuel parent — sports-betting leader; no EVM-Uniswap venue." },
+        { ticker: "PENN", name: "PENN Entertainment", analystBand: { low: 14, high: 32 }, priceUsd: 22, availability: "DISPLAY-ONLY", chain: "off-rail", note: "ESPN Bet operator — no EVM-Uniswap venue." },
+        { ticker: "MANU", name: "Manchester United", analystBand: { low: 12, high: 28 }, priceUsd: 18, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Listed football club — World-Cup-cycle attention proxy; no EVM-Uniswap venue." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
         { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
@@ -328,8 +392,18 @@ const THEMES: Record<string, Theme> = {
       assetSymbol: "DIS",
       analystBand: { low: 85, high: 135 },
       fallback: { beliefProb: 0.545, equityPrice: 108, assetLegPriceUsd: 4300 },
+      // Oriented bullish = DIS up = strong box office / studio prestige. Verified 2026-06-14.
+      beliefMarkets: [
+        { venue: "polymarket", id: "678419", label: "Super Mario Galaxy is 2026's top-grossing film (big box office)", polarity: 1, relevance: 0.5, seedProb: 0.045, seedVolume: 346_000 },
+        { venue: "kalshi", id: "KXOSCARNOMPIC-27-PRO", label: "'Project Hail Mary' is nominated for Best Picture", polarity: 1, relevance: 0.5, seedProb: 0.77, seedVolume: 72_000 },
+        { venue: "kalshi", id: "KXOSCARNOMPIC-27-DIS", label: "'Disclosure Day' is nominated for Best Picture", polarity: 1, relevance: 0.3, seedProb: 0.16, seedVolume: 22_000 },
+      ],
+
       securities: [
         { ticker: "DIS", name: "The Walt Disney Company", analystBand: { low: 85, high: 135 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Box-office/studio beta anchor (makes the marquee 2026 tentpoles) — no EVM-Uniswap venue." },
+        { ticker: "NFLX", name: "Netflix", analystBand: { low: 600, high: 1300 }, priceUsd: 950, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Streaming / box-office beta — tokenized as NFLXx on Solana; coming soon." },
+        { ticker: "WBD", name: "Warner Bros. Discovery", analystBand: { low: 8, high: 20 }, priceUsd: 13, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Studio behind major 2026 tentpoles — no EVM-Uniswap venue." },
+        { ticker: "CMCSA", name: "Comcast (Universal)", analystBand: { low: 30, high: 55 }, priceUsd: 42, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Universal / Illumination parent — no EVM-Uniswap venue." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
         { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
