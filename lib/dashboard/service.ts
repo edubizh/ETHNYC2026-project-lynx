@@ -1,5 +1,5 @@
 import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg, Security, Availability, Theme, BeliefMarket } from "@/lib/baskets/types";
+import type { PredictionLeg, AssetLeg, Security, Availability, Liquidity, Theme, BeliefMarket } from "@/lib/baskets/types";
 import { fetchBeliefProb, fetchMarketVolumes } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import { fetchEquityQuote } from "@/lib/adapters/equities";
@@ -58,10 +58,17 @@ async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<[T, S
  *  Falls back to the seed when the live feed is down; returns no price when neither is available. */
 async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source; changePct?: number }> {
   const viaUniswap = sec.availability === "LIVE-UNISWAP" && !!sec.token;
+  // On-chain "coming soon" tokens (liquidity-tagged, not buyable) aren't on the equities feed and we
+  // don't live-price them — use the curated seed (usually none) rather than mis-querying equities with a
+  // crypto ticker. LIVE-UNISWAP tokens still price via Uniswap; equities still price via the equity feed.
+  const offRailToken = sec.availability !== "LIVE-UNISWAP" && sec.liquidity != null;
   try {
     if (viaUniswap) {
       const priceUsd = await fetchAssetPrice(sec.token!, { decimals: sec.decimals });
       return { priceUsd, priceSource: "live" };
+    }
+    if (offRailToken) {
+      return seed !== undefined ? { priceUsd: seed, priceSource: "fallback" } : {};
     }
     const q = await fetchEquityQuote(sec.ticker);
     return { priceUsd: q.price, priceSource: "live", changePct: q.changePct };
@@ -139,6 +146,8 @@ export type SecurityView = {
   ticker: string;
   name: string;
   availability: Availability;
+  /** On-chain market-depth badge (high/medium/low) for tokenized assets; undefined for equities. */
+  liquidity?: Liquidity;
   priceUsd?: number;
   priceSource?: Source;
   /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
@@ -224,6 +233,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
           ticker: sec.ticker,
           name: sec.name,
           availability: sec.availability,
+          liquidity: sec.liquidity,
           priceUsd,
           priceSource: src,
           bandPercentile,
