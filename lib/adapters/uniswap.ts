@@ -5,20 +5,23 @@ import { cached } from "./cache";
 const ORACLE_SWAPPER = "0x000000000000000000000000000000000000dEaD";
 const TIMEOUT_MS = 6000;
 
-/** Price of 1 unit of `token` in USDC via the Uniswap Trading API /quote (oracle, NOT the prize swap).
- *  VERIFIED shape (2026-06-13): the response is `{ routing, quote, permitData }` where `quote` is an
- *  OBJECT — the output amount is `quote.output.amount` (string, USDC 6dp) and the swapper is nested at
- *  `quote.swapper`. We stay tolerant of a flat `{ quote: "<amount>", swapper }` shape as a fallback. */
+/** DISPLAY price of 1 unit of `token` in USDC via the Uniswap Trading API /quote oracle, cached 15s.
+ *  Use this for dashboards/treemap reads ONLY. The real-money slippage-floor path (resolveAssetMinOut)
+ *  MUST use fetchAssetPriceFresh — a stale price must never set an on-chain minAmountOut. */
 export async function fetchAssetPrice(
   token: string,
   opts: { swapper?: string; decimals?: number } = {},
 ): Promise<number> {
   return cached(`uni:price:${token.toLowerCase()}:${opts.decimals ?? 18}`, 15_000, () =>
-    fetchAssetPriceLive(token, opts),
+    fetchAssetPriceFresh(token, opts),
   );
 }
 
-async function fetchAssetPriceLive(
+/** UNCACHED live /quote — for the execution path (slippage floor) where a fresh price is mandatory.
+ *  VERIFIED shape (2026-06-13): the response is `{ routing, quote, permitData }` where `quote` is an
+ *  OBJECT — the output amount is `quote.output.amount` (string, USDC 6dp) and the swapper is nested at
+ *  `quote.swapper`. We stay tolerant of a flat `{ quote: "<amount>", swapper }` shape as a fallback. */
+export async function fetchAssetPriceFresh(
   token: string,
   opts: { swapper?: string; decimals?: number } = {},
 ): Promise<number> {

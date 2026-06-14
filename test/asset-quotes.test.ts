@@ -10,21 +10,21 @@ const weth: AssetLeg = { kind: "asset", label: "x", token: "0x7ceB23fD6bC0adD59E
 describe("resolveAssetMinOut", () => {
   it("converts a USDC.e amount to a slippage-floored token-out using the Uniswap /quote price", async () => {
     // 1 WETH = 4000 USDC -> 3 USDC.e buys 0.00075 WETH; 1% slippage floor = 0.0007425 WETH.
-    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(4000);
+    vi.spyOn(us, "fetchAssetPriceFresh").mockResolvedValue(4000);
     const minOut = await resolveAssetMinOut(weth, 3_000_000n, 0.01);
     // 3/4000 = 0.00075 ETH = 7.5e14 wei; *0.99 = 7.425e14
     expect(minOut).toBe(742_500_000_000_000n);
   });
 
   it("returns 0n if the quote feed is down (entry still proceeds; the contract slippage check is the backstop)", async () => {
-    vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("no key"));
+    vi.spyOn(us, "fetchAssetPriceFresh").mockRejectedValue(new Error("no key"));
     expect(await resolveAssetMinOut(weth, 3_000_000n, 0.01)).toBe(0n);
   });
 
   it("floors with pure-bigint integer division on an 18dp non-round case (never over-states the floor)", async () => {
     // 1 USDC.e at $7/token, 1% slippage: (1/7)*0.99*1e18 = 141428571428571428.57… -> exact integer floor below.
     // A float path (Math.floor of ~1.41e17, where the ulp is ~32) could NOT land on this exact value.
-    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(7);
+    vi.spyOn(us, "fetchAssetPriceFresh").mockResolvedValue(7);
     const minOut = await resolveAssetMinOut(weth, 1_000_000n, 0.01);
     expect(minOut).toBe(141_428_571_428_571_428n);
   });
@@ -35,7 +35,7 @@ const wbtc: AssetLeg = { kind: "asset", label: "x", token: "0x1BFD67037B42Cf73ac
 describe("resolveAssetMinOut — WBTC 8dp", () => {
   it("scales the floor by the token's decimals (8dp), not 18", async () => {
     // 1 WBTC = 64000 USDC -> 64 USDC.e buys 0.001 WBTC; 1% floor = 0.00099 WBTC = 99000 sats (8dp).
-    vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);
+    vi.spyOn(us, "fetchAssetPriceFresh").mockResolvedValue(64000);
     const minOut = await resolveAssetMinOut(wbtc, 64_000_000n, 0.01);
     expect(minOut).toBe(99_000n); // 0.00099 * 1e8
   });
