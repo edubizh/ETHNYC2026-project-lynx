@@ -122,7 +122,7 @@ const THEMES: Record<string, Theme> = {
         { venue: "kalshi", id: "KXCRYPTORETURNY-26-SOL", label: "Solana has a positive return in 2026", polarity: 1, relevance: 0.4, seedProb: 0.13, seedVolume: 69_700 },
       ],
       securities: [
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 40000, high: 130000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 40000, high: 130000 }, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
         { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", note: "Buyable ETH exposure on Uniswap (Polygon)." },
         // On-chain DeFi blue-chips (display-only; deep Polygon liquidity; near-term integration candidates).
         { ticker: "UNI", name: "Uniswap", token: "0xb33EaAd8d922B1083446DC23f610c2567fB5180f", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", note: "Governance token of our swap venue — deep Polygon liquidity; a near-term basket-integration candidate." },

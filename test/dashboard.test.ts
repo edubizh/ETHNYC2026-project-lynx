@@ -92,7 +92,7 @@ describe("buildDashboard", () => {
     const eqSpy = vi.spyOn(eq, "fetchEquityQuote").mockResolvedValue({ price: 1, changePct: 0 });
     await buildDashboard("ai");
     const called = eqSpy.mock.calls.map((c) => c[0]);
-    expect(called).not.toContain("FET"); // off-rail token -> skipped
+    expect(called).not.toContain("FET"); // on-chain but not Polygon-rails -> skipped by the equities-feed guard
     expect(called).not.toContain("TAO");
     expect(called).toContain("NVDA"); // real equities still queried
   });
