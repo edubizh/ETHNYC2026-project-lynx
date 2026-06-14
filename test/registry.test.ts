@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getTheme, themeWeightsSumToOne, getSecurities, getHeadlineSecurity, listThemes } from "@/lib/baskets/registry";
 import { assetBandPercentile } from "@/lib/divergence/engine";
+import { ADDR } from "@/lib/addresses";
 
 describe("basket registry", () => {
   it("returns the AI theme with at least one prediction leg and one asset leg", () => {
@@ -78,5 +79,39 @@ describe("bucket securities (display/anchor model)", () => {
     const pct = assetBandPercentile(t.display.fallback.equityPrice, h.analystBand!.low, h.analystBand!.high);
     expect(pct).toBeGreaterThan(0.2);
     expect(pct).toBeLessThan(0.8);
+  });
+});
+
+describe("multi-asset on-chain sleeve", () => {
+  it("every bucket has ≥1 asset leg, each with a token, a v3 swapFee, and a ticker", () => {
+    for (const t of listThemes()) {
+      const assets = t.legs.filter((l) => l.kind === "asset") as Array<{ token: string; swapFee?: number; ticker?: string }>;
+      expect(assets.length).toBeGreaterThanOrEqual(1);
+      for (const a of assets) {
+        expect(a.token).toMatch(/^0x[0-9a-fA-F]{40}$/);
+        expect([500, 3000, 10000]).toContain(a.swapFee);
+        expect(a.ticker).toBeTruthy();
+      }
+    }
+  });
+
+  it("weights still sum to 1 across predictions + the sleeve", () => {
+    for (const t of listThemes()) expect(themeWeightsSumToOne(t.slug)).toBe(true);
+  });
+
+  it("anti-drift: every asset-leg token is a LIVE-UNISWAP security in the same bucket", () => {
+    for (const t of listThemes()) {
+      const secTokens = new Set(
+        getSecurities(t.slug).filter((s) => s.availability === "LIVE-UNISWAP" && s.token).map((s) => s.token!.toLowerCase()),
+      );
+      for (const a of t.legs.filter((l) => l.kind === "asset")) {
+        expect(secTokens.has((a as { token: string }).token.toLowerCase())).toBe(true);
+      }
+    }
+  });
+
+  it("AI sleeve is WETH + LINK (risk-on / data-infra), NVDA stays display-only", () => {
+    const tickers = getTheme("ai").legs.filter((l) => l.kind === "asset").map((l) => (l as { ticker: string }).ticker);
+    expect(tickers).toEqual(["WETH", "LINK"]);
   });
 });

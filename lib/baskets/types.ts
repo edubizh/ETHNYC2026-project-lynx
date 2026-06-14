@@ -20,6 +20,10 @@ export type AssetLeg = {
   weight: number;
   /** Token decimals for Uniswap /quote sizing (default 18; WBTC = 8). */
   decimals?: number;
+  /** Display ticker (must match a LIVE-UNISWAP security in the same bucket). */
+  ticker: string;
+  /** Verified Uniswap V3 fee tier for the direct USDC.e -> token pool: 500 | 3000 | 10000. */
+  swapFee: number;
 };
 export type Leg = PredictionLeg | AssetLeg;
 
