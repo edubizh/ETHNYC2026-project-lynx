@@ -3,6 +3,10 @@
 Everything here needs a real key / funded wallet (org policy keeps keys out of the repo + my hands).
 Run top to bottom. Use a **throwaway wallet** funded with a few $ of POL + USDC on Polygon.
 
+> **For the 3-track live qualification (LI.FI entry + Arc artifact + Uniswap form), use the current runbook:
+> `docs/task-9-live-qualification.md`.** §3 (Arc) and §4 (LI.FI) below predate the same-chain Polygon (137)
+> spine — entry now originates on **Polygon**, not Ethereum/Base, and the Arc artifact is a USDC-gas userOp.
+
 ## 0. Prereqs (collect at the booths)
 - `UNISWAP_API_KEY` — Uniswap Trading API Developer Platform (the $7k gate).
 - `NEXT_PUBLIC_CIRCLE_CLIENT_KEY` — Circle Modular Wallets console (Arc account layer).
