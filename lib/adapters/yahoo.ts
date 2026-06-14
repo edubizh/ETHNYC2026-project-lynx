@@ -5,7 +5,8 @@ import { cached } from "./cache";
 // retry can otherwise burn ~5s before failing. Keep the timeout short — the registry seed band is a fine
 // fallback — and negative-cache failures for 2min (below) so a rate-limited Yahoo isn't re-hit per request.
 const TIMEOUT_MS = 2500;
-const ERROR_TTL_MS = 120_000;
+const SUCCESS_TTL_MS = 600_000; // live band cached 10min
+const ERROR_TTL_MS = 120_000; // a 429 is negative-cached 2min so we don't re-hit rate-limited Yahoo
 
 // yahoo-finance2 v3 exports a class to instantiate (v2 exported a ready-made instance).
 const yahooFinance = new YahooFinance();
@@ -21,8 +22,7 @@ export type AnalystBand = { low: number; high: number; mean?: number };
  *  cookie/crumb so server-side calls are reliable. `validateResult: false` keeps Yahoo's occasional
  *  extra fields from throwing schema errors on otherwise-valid data. */
 export async function fetchAnalystBand(symbol: string): Promise<AnalystBand> {
-  return cached(`yh:band:${symbol}`, 600_000, async () => {
-    /* live for 10min on success; negative-cached for ERROR_TTL_MS on a 429 so we stop hammering Yahoo */
+  return cached(`yh:band:${symbol}`, SUCCESS_TTL_MS, async () => {
     const r = await yahooFinance.quoteSummary(
       symbol,
       { modules: ["financialData"] },

@@ -6,7 +6,7 @@ const PANEL = { background: "#14161B", border: "1px solid #2A2D34", borderRadius
 const BODY = "'IBM Plex Sans', system-ui, sans-serif";
 
 function Bar({ w, h = 14, r = 6 }: { w: number | string; h?: number; r?: number }) {
-  return <div className="lx-sk" style={{ width: w, height: h, borderRadius: r, background: "#1B1E24" }} />;
+  return <div className="lx-sk" style={{ width: w, maxWidth: "100%", height: h, borderRadius: r, background: "#1B1E24" }} />;
 }
 
 export default function ThemeLoading() {
