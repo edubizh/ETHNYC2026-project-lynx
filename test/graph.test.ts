@@ -58,11 +58,23 @@ describe("selectOnChainAssets", () => {
     expect(out[1]).toMatchObject({ ticker: "FET", buyable: false, liquidity: "high" });
   });
 
+  it("orders buyable tokens by liquidity tier (deep first)", () => {
+    const out = selectOnChainAssets([
+      sec({ ticker: "LINK", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "medium" }),
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high" }),
+    ]);
+    expect(out.map((a) => a.buyable)).toEqual([true, true]);
+    expect(out.map((a) => a.ticker)).toEqual(["WETH", "LINK"]);
+  });
+
   it("partitions cleanly against selectGraphAssets (no overlap)", () => {
     const secs = [
       sec({ ticker: "NVDA", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }),
       sec({ ticker: "FET", chain: "ethereum", liquidity: "high" }),
     ];
+    // Note: the selectors partition purely by liquidity (here) vs analystBand (graph). A security with
+    // BOTH would appear in both; the registry invariant in Task 3 forbids that (except the crypto headline),
+    // so in practice the partition is clean.
     expect(selectOnChainAssets(secs).map((a) => a.ticker)).toEqual(["FET"]);
     expect(selectGraphAssets(secs).map((a) => a.ticker)).toEqual(["NVDA"]);
   });
