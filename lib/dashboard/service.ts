@@ -277,11 +277,14 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   const beliefSource: Source = belief.breakdown.some((b) => b.source === "live") ? "live" : "fallback";
   const beliefLabel = belief.breakdown.length ? `${belief.breakdown.length} markets · ${venues.join(" + ")}` : "no markets";
 
-  // Per-market conviction-index weight (relevance × liquidity, normalized) for each prediction leg —
-  // matched to its belief-breakdown contribution by Gamma id, so each card shows its share of the formula.
+  // Per-market conviction-index weight for each prediction leg, NORMALIZED among the shown legs so they
+  // sum to 1 (each leg's share = its formula weight ÷ the legs' combined formula weight). The full formula
+  // also weights the off-card belief markets; here we renormalize over just the displayed prediction legs.
+  const legWeights = predLegs.map((leg) => belief.breakdown.find((b) => b.id === leg.gammaMarketId)?.weight ?? 0);
+  const legWeightSum = legWeights.reduce((a, w) => a + w, 0);
   const predViewsWeighted = predViews.map((pv, i) => ({
     ...pv,
-    convictionWeight: belief.breakdown.find((b) => b.id === predLegs[i].gammaMarketId)?.weight,
+    convictionWeight: legWeightSum > 0 ? legWeights[i] / legWeightSum : undefined,
   }));
 
   return {
