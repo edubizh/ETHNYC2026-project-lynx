@@ -23,7 +23,7 @@ const Ctx = createContext<TerminalData | null>(null);
 export function TerminalDataProvider({ ctx, children }: { ctx: FeedContext; children: ReactNode }) {
   const stream = usePolymarketStream([ctx.yesId, ctx.noId]);
   const crypto = useHyperliquidStream(["BTC", "ETH", "SOL"]);
-  const kalshi = useTapePoll<KalshiItem>("/api/feeds/kalshi", 3000);
+  const kalshi = useTapePoll<KalshiItem>(`/api/feeds/kalshi?slug=${encodeURIComponent(ctx.slug)}`, 3000);
   const uniswap = useTapePoll<UniswapItem>("/api/feeds/uniswap", 4000);
   return <Ctx.Provider value={{ ctx, stream, crypto, kalshi, uniswap }}>{children}</Ctx.Provider>;
 }
