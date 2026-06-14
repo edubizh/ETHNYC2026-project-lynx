@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAccount, useConnect, useWalletClient, useSwitchChain } from "wagmi";
 import { initLifi, buildEnterQuote, convertQuoteToRoute, executeRoute } from "@/lib/lifi/enter";
-import { buildBasketContractCalls } from "@/lib/lifi/basket";
 import type { BuyLeg } from "@/components/BuyBox";
 
 const DISPLAY = "'Inter Tight', system-ui, sans-serif";
@@ -123,7 +122,14 @@ export function EnterSheet({
       if (!address || !walletClient || !onAllowedChain) throw new Error("Connect on Ethereum or Base first.");
       if (ENTER_BASKET === "0x0000000000000000000000000000000000000000") throw new Error("EnterBasket address not set.");
       const totalUsdce = BigInt(Math.round(amount * 1e6));
-      const contractCalls = buildBasketContractCalls(slug, totalUsdce, address as `0x${string}`, ENTER_BASKET as `0x${string}`);
+      const res = await fetch("/api/basket-entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, amount, recipient: address, enterBasket: ENTER_BASKET }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? `basket-entry ${res.status}`);
+      const contractCalls = body.contractCalls;
       initLifi({ getWalletClient: async () => walletClient, switchChain: async () => walletClient });
       const quote = await buildEnterQuote({
         fromChainId: chainId as 1 | 8453,
