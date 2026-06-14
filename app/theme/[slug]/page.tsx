@@ -115,13 +115,17 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         {/* Sentiment Gap meter */}
         <section style={{ ...PANEL, padding: "26px 28px 24px", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 34 }}>
-            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20, color: "#FFFFFF" }}>Sentiment Gap</h2>
+            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20, color: "#FFFFFF" }}>AI Sentiment Gap</h2>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 28, padding: "0 12px", background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 8, fontFamily: MONO, fontSize: 13, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>
               <span style={{ color: "#7A828D" }}>gap</span>
               <span style={{ color: "#FFFFFF" }}>{gap} pts</span>
               <span style={{ color: "#E8EBEF" }}>{dirChip}</span>
             </span>
           </div>
+
+          <p style={{ margin: "-22px 0 26px", maxWidth: 620, fontSize: 13, lineHeight: 1.55, color: "#7A828D" }}>
+            Belief markets price <span style={{ color: "#A6B2C2" }}>&ldquo;{h.beliefLabel}&rdquo;</span> at <span style={{ color: "#A6B2C2", fontFamily: MONO }}>{belief}%</span>; {h.assetSymbol} sits at the <span style={{ color: "#E8EBEF", fontFamily: MONO }}>{pct}th</span> percentile of its published analyst band (${fmt(h.band.low)}–${fmt(h.band.high)}). The gap is a divergence signal between crowd belief and analyst valuation — not a probability or trade recommendation.
+          </p>
 
           <div style={{ position: "relative", height: 56, margin: "0 6px" }}>
             {/* track */}

@@ -10,7 +10,8 @@ export type Divergence = {
   beliefProb: number;
   /** The asset's percentile within the published analyst band (NOT a probability). */
   assetBandPercentile: number;
-  /** The "AI Sentiment Gap": belief odds minus the asset's band percentile, in percentage points. */
+  /** The "AI Sentiment Gap": the unsigned distance (percentage points) between belief-market odds and the
+   *  asset's analyst-band percentile. A DIVERGENCE/attention indicator — NOT a probability, edge, or advice. */
   gapPct: number;
   direction: "belief-higher" | "asset-higher" | "aligned";
 };
