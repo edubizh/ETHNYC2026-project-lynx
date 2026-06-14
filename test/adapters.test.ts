@@ -52,6 +52,14 @@ describe("Polymarket Gamma adapter", () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503 }) as any;
     await expect(fetchBeliefProb("608368")).rejects.toThrow(/Gamma 503/);
   });
+
+  it("throws for a closed/resolved market so the dashboard degrades to the seed (not a fake live 100%)", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ outcomes: '["Yes","No"]', outcomePrices: '["1","0"]', closed: true, active: false }),
+    }) as any;
+    await expect(fetchBeliefProb("631121")).rejects.toThrow(/closed|resolved/i);
+  });
 });
 
 describe("Uniswap /quote price oracle", () => {

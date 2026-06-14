@@ -31,6 +31,9 @@ export async function fetchBeliefProb(gammaMarketId: string): Promise<number> {
   });
   if (!res.ok) throw new Error(`Gamma ${res.status}`);
   const m = await res.json();
+  // A resolved/closed market returns settled 0/1 prices; surface it as a feed failure so the dashboard
+  // degrades to the verified seed (tagged `fallback`) rather than showing a fake "live" 100%/0%.
+  if (m.closed === true || m.active === false) throw new Error("Gamma: market closed/resolved");
   const outcomes: string[] = JSON.parse(m.outcomes);
   const prices: string[] = JSON.parse(m.outcomePrices);
   const yesIdx = outcomes.findIndex((o) => o.toLowerCase() === "yes");
