@@ -122,7 +122,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     assetLegs.map(async (assetLeg) => {
       const [assetUsd, priceSource] = await withFallback(
         () => fetchAssetPrice(assetLeg.token, { decimals: assetLeg.decimals }),
-        t.display.fallback.assetLegPriceUsd,
+        assetLeg.fallbackPriceUsd ?? t.display.fallback.assetLegPriceUsd,
       );
       return { kind: "asset" as const, label: assetLeg.label, weight: assetLeg.weight, priceUsd: assetUsd, priceSource };
     }),

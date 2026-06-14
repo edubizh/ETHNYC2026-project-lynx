@@ -24,6 +24,9 @@ export type AssetLeg = {
   ticker: string;
   /** Verified Uniswap V3 fee tier for the direct USDC.e -> token pool: 500 | 3000 | 10000. */
   swapFee: number;
+  /** Per-token offline fallback price (USD) used when the live Uniswap /quote is unavailable.
+   *  Falls back to the bucket-wide display.fallback.assetLegPriceUsd if unset. */
+  fallbackPriceUsd?: number;
 };
 export type Leg = PredictionLeg | AssetLeg;
 

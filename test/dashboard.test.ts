@@ -66,6 +66,20 @@ describe("buildDashboard", () => {
     expect(d.hero.assetSymbol).toBe("NVDA");      // hero anchor unchanged
   });
 
+  it("falls back to a PER-TOKEN price (not one shared bucket seed) when sleeve quotes degrade", async () => {
+    vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
+    vi.spyOn(us, "fetchAssetPrice").mockRejectedValue(new Error("quote down"));
+    vi.spyOn(eq, "fetchEquityPrice").mockRejectedValue(new Error("no equities"));
+
+    const d = await buildDashboard("crypto");
+    const assets = d.legs.filter((l) => l.kind === "asset");
+    const wbtc = assets.find((a) => a.label.includes("WBTC"));
+    const weth = assets.find((a) => a.label.includes("WETH"));
+    expect(wbtc?.priceUsd).toBe(64317);
+    expect(weth?.priceUsd).toBe(4300); // distinct per-token fallback, NOT the bucket-wide 64317
+    expect(weth?.priceSource).toBe("fallback");
+  });
+
   it("prices a crypto bucket's headline via Uniswap /quote, not the equities feed", async () => {
     vi.spyOn(pm, "fetchBeliefProb").mockResolvedValue(0.165);
     vi.spyOn(us, "fetchAssetPrice").mockResolvedValue(64000);

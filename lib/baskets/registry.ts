@@ -43,8 +43,8 @@ const THEMES: Record<string, Theme> = {
         weight: 0.15,
       },
       // NVDA is display-only (equities API); the on-chain sleeve is WETH + LINK.
-      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
-      { kind: "asset", label: "Data/oracle infra proxy (LINK on Polygon)", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", ticker: "LINK", swapFee: 3000, weight: 0.2 },
+      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
+      { kind: "asset", label: "Data/oracle infra proxy (LINK on Polygon)", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", ticker: "LINK", swapFee: 3000, weight: 0.2, fallbackPriceUsd: 15 },
     ],
     display: {
       assetSymbol: "NVDA",
@@ -94,8 +94,8 @@ const THEMES: Record<string, Theme> = {
         seedBeliefProb: 0.165,
         weight: 0.4,
       },
-      { kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.4, decimals: 8 },
-      { kind: "asset", label: "ETH exposure (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2 },
+      { kind: "asset", label: "BTC exposure (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.4, decimals: 8, fallbackPriceUsd: 64317 },
+      { kind: "asset", label: "ETH exposure (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2, fallbackPriceUsd: 4300 },
     ],
     display: {
       assetSymbol: "WBTC",
@@ -127,8 +127,8 @@ const THEMES: Record<string, Theme> = {
         seedBeliefProb: 0.7685,
         weight: 0.5,
       },
-      { kind: "asset", label: "Rate-sensitive risk (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
-      { kind: "asset", label: "Store-of-value hedge (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8 },
+      { kind: "asset", label: "Rate-sensitive risk (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
+      { kind: "asset", label: "Store-of-value hedge (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
     ],
     display: {
       assetSymbol: "TLT",
@@ -175,8 +175,8 @@ const THEMES: Record<string, Theme> = {
         seedBeliefProb: 0.7295,
         weight: 0.25,
       },
-      { kind: "asset", label: "Digital safe-haven (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.3, decimals: 8 },
-      { kind: "asset", label: "Risk asset (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2 },
+      { kind: "asset", label: "Digital safe-haven (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.3, decimals: 8, fallbackPriceUsd: 64317 },
+      { kind: "asset", label: "Risk asset (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.2, fallbackPriceUsd: 4300 },
     ],
     display: {
       assetSymbol: "ITA",
@@ -223,8 +223,8 @@ const THEMES: Record<string, Theme> = {
         seedBeliefProb: 0.0885,
         weight: 0.25,
       },
-      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3 },
-      { kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8 },
+      { kind: "asset", label: "Risk-on (WETH on Polygon)", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", ticker: "WETH", swapFee: 500, weight: 0.3, fallbackPriceUsd: 4300 },
+      { kind: "asset", label: "Risk asset (WBTC on Polygon)", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", ticker: "WBTC", swapFee: 500, weight: 0.2, decimals: 8, fallbackPriceUsd: 64317 },
     ],
     display: {
       assetSymbol: "DJT",
