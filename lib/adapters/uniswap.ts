@@ -1,4 +1,5 @@
 import { config } from "@/lib/config";
+import { cached } from "./cache";
 
 // A read-only price quote still requires a `swapper` in the request; this placeholder is never executed.
 const ORACLE_SWAPPER = "0x000000000000000000000000000000000000dEaD";
@@ -9,6 +10,15 @@ const TIMEOUT_MS = 6000;
  *  OBJECT — the output amount is `quote.output.amount` (string, USDC 6dp) and the swapper is nested at
  *  `quote.swapper`. We stay tolerant of a flat `{ quote: "<amount>", swapper }` shape as a fallback. */
 export async function fetchAssetPrice(
+  token: string,
+  opts: { swapper?: string; decimals?: number } = {},
+): Promise<number> {
+  return cached(`uni:price:${token.toLowerCase()}:${opts.decimals ?? 18}`, 15_000, () =>
+    fetchAssetPriceLive(token, opts),
+  );
+}
+
+async function fetchAssetPriceLive(
   token: string,
   opts: { swapper?: string; decimals?: number } = {},
 ): Promise<number> {
