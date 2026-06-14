@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useArc } from "@/lib/arc/context";
+import { useSearch } from "@/lib/browse/search-context";
 import { AccountPanel } from "@/components/AccountPanel";
 
 const DISPLAY = "'Inter Tight', system-ui, sans-serif";
@@ -11,6 +12,7 @@ const MONO = "'IBM Plex Mono', monospace";
 
 export function TopBar() {
   const { connected, address } = useArc();
+  const { query, setQuery } = useSearch();
   const [open, setOpen] = useState(false);
   const short = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "";
 
@@ -47,9 +49,21 @@ export function TopBar() {
               <path d="m20 20-3-3" />
             </svg>
             <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search a theme — AI, defense, the Fed…"
+              aria-label="Search themes"
               style={{ flex: 1, background: "transparent", border: 0, outline: "none", color: "#FFFFFF", fontSize: 13.5, fontFamily: BODY }}
             />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                style={{ background: "transparent", border: 0, cursor: "pointer", color: "#7A828D", fontSize: 16, lineHeight: 1, padding: 0 }}
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
         <div onClick={() => setOpen(true)} style={{ flexShrink: 0, cursor: "pointer" }}>
