@@ -94,31 +94,31 @@ export type BucketMeta = { status: string; thesis: string };
 const META: Record<string, BucketMeta> = {
   ai: {
     status: "Flagship",
-    thesis: "Belief markets price the AI model race and OpenAI's path to IPO; NVDA is the analyst-banded asset proxy.",
+    thesis: "The artificial-intelligence race — the model labs, chipmakers, and companies driving it.",
   },
   crypto: {
     status: "Demo-ready",
-    thesis: "Belief odds on Bitcoin's 2026 performance vs. the on-chain asset itself — the one bucket where the asset is the theme.",
+    thesis: "Digital assets and the on-chain economy — the sector's defining narratives.",
   },
   macro: {
     status: "Demo-ready",
-    thesis: "The Fed rate-cut path and recession odds vs. a long-duration Treasury proxy.",
+    thesis: "Interest rates, inflation, and the macro policy that moves every market.",
   },
   geopolitics: {
     status: "Demo-ready",
-    thesis: "Conflict and leadership odds vs. defense and safe-haven anchors.",
+    thesis: "Global conflict, elections, and the geopolitical shifts that reprice risk.",
   },
   "us-politics": {
     status: "Demo-ready",
-    thesis: "The 2028 Democratic nomination race vs. policy-sensitive equities.",
+    thesis: "US elections, policy, and the balance of political power.",
   },
   sports: {
     status: "Demo-ready",
-    thesis: "2026 World Cup host-nation runs (US-co-hosted) vs. a sports-betting equity anchor.",
+    thesis: "Major competitions and the outcomes the world is watching.",
   },
   entertainment: {
     status: "Demo-ready",
-    thesis: "2026 box-office odds (the year's highest-grossing film) vs. a studio equity anchor.",
+    thesis: "Film, streaming, and the business of popular culture.",
   },
 };
 export function getBucketMeta(slug: string): BucketMeta {

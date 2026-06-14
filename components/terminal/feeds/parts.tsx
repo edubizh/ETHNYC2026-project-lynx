@@ -9,7 +9,7 @@ export const bodyWrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 3,
-  padding: "8px 11px",
+  padding: "10px 13px",
   overflow: "hidden",
 };
 
@@ -34,8 +34,8 @@ export function StatusLine({ status, note }: { status: FeedStatus; note: string 
       : "none";
   const label = live ? note : `${status} · ${note}`;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: T.mono, fontSize: 10, color: T.faint, letterSpacing: "0.4px", padding: "1px 1px 5px" }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, boxShadow: live ? `0 0 6px ${T.asset}` : "none", animation: anim }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: "0.4px", padding: "1px 1px 6px" }}>
+      <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot, boxShadow: live ? `0 0 6px ${T.asset}` : "none", animation: anim }} />
       <span style={{ textTransform: "uppercase" }}>{label}</span>
     </div>
   );
@@ -43,7 +43,7 @@ export function StatusLine({ status, note }: { status: FeedStatus; note: string 
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 60, color: T.faintest, fontFamily: T.mono, fontSize: 12, textAlign: "center", padding: 10 }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 60, color: T.faintest, fontFamily: T.mono, fontSize: 13, textAlign: "center", padding: 10 }}>
       {children}
     </div>
   );
@@ -52,7 +52,7 @@ export function Empty({ children }: { children: ReactNode }) {
 /** One tape row: monochrome grid, 13px mono; flashes in (lynxTapeIn) when `fresh` (newest). */
 export function Row({ cols, fresh, children }: { cols: string; fresh?: boolean; children: ReactNode }) {
   return (
-    <div style={{ position: "relative", display: "grid", gridTemplateColumns: cols, alignItems: "center", gap: 7, fontFamily: T.mono, fontSize: 13, lineHeight: "21px", color: T.dim, borderRadius: 3, animation: fresh ? "lynxTapeIn .5s ease" : undefined }}>
+    <div style={{ position: "relative", display: "grid", gridTemplateColumns: cols, alignItems: "center", gap: 8, fontFamily: T.mono, fontSize: 14, lineHeight: "23px", color: T.dim, borderRadius: 3, animation: fresh ? "lynxTapeIn .5s ease" : undefined }}>
       {children}
     </div>
   );
