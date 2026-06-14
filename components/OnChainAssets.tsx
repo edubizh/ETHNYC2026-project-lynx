@@ -35,7 +35,10 @@ const chainLabel = (c: string) => CHAIN_LABEL[c] ?? c;
 const LIQ_LABEL: Record<OnChainAsset["liquidity"], string> = { high: "high liquidity", medium: "med liquidity", low: "low liquidity" };
 const LIQ_COLOR: Record<OnChainAsset["liquidity"], string> = { high: C.asset, medium: C.dim, low: C.faint };
 
-const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: n >= 1000 ? 0 : 2 });
+const fmt = (n: number) =>
+  n > 0 && n < 0.01
+    ? n.toLocaleString("en-US", { maximumSignificantDigits: 2 })
+    : n.toLocaleString("en-US", { maximumFractionDigits: n >= 1000 ? 0 : 2 });
 
 function Badge({ children, color = C.dim }: { children: ReactNode; color?: string }) {
   return (
@@ -56,7 +59,7 @@ export function OnChainAssets({ assets, title }: { assets: OnChainAsset[]; title
       <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 18, color: C.white }}>
         {title} on-chain assets
       </h2>
-      <p style={{ margin: "6px 0 18px", maxWidth: 660, fontSize: 12.5, lineHeight: 1.5, color: C.faint }}>
+      <p style={{ margin: "6px 0 18px", maxWidth: 640, fontSize: 12.5, lineHeight: 1.5, color: C.faint }}>
         Relevant tokenized assets on-chain. <span style={{ color: C.up }}>● buyable</span> = addable to the basket now on Polygon-Uniswap;
         {" "}<span style={{ color: C.dim }}>○ coming soon</span> = real on-chain assets on other ecosystems we plan to integrate but can&apos;t add yet — each tagged with where it trades and its market depth.
       </p>
@@ -82,7 +85,7 @@ export function OnChainAssets({ assets, title }: { assets: OnChainAsset[]; title
             {/* note: where it trades / why not buyable here */}
             <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, lineHeight: 1.4, color: C.faint }}>{a.note}</span>
 
-            {/* price (live, buyable only) */}
+            {/* price (live where available) */}
             <div style={{ width: 88, textAlign: "right", flexShrink: 0 }}>
               {a.priceUsd != null ? (
                 <span style={{ fontFamily: MONO, fontSize: 13, color: C.asset, fontFeatureSettings: "'tnum' 1" }}>${fmt(a.priceUsd)}</span>
