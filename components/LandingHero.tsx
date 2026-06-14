@@ -8,9 +8,9 @@ const DISPLAY = "'Inter Tight', system-ui, sans-serif";
 const BODY = "'IBM Plex Sans', system-ui, sans-serif";
 const MONO = "'IBM Plex Mono', monospace";
 
-// Two-voice palette (DESIGN.md): amber = real assets, azure = belief markets.
-const AMBER = "#E0A33C";
-const AZURE = "#5B8DEF";
+// Two-voice palette (monochrome): silver ◆ = real assets, steel ● = belief markets.
+const ASSET = "#E8EBEF";
+const BELIEF = "#8A95A6";
 const CTA = "linear-gradient(180deg,#F4F6F8,#C4C9D1)";
 
 // The clip is a pre-baked boomerang (forward + reversed, slowed + interpolated to 48fps —
@@ -112,7 +112,7 @@ export function LandingHero() {
             right: "-12%",
             top: "26%",
             height: 170,
-            background: `radial-gradient(ellipse 58% 100% at 50% 50%, ${AMBER}, transparent 72%)`,
+            background: `radial-gradient(ellipse 58% 100% at 50% 50%, ${ASSET}, transparent 72%)`,
             opacity: 0.22,
             filter: "blur(46px)",
             animation: reduced ? undefined : "gapBreatheTop 17s ease-in-out infinite alternate",
@@ -125,7 +125,7 @@ export function LandingHero() {
             right: "-12%",
             bottom: "26%",
             height: 170,
-            background: `radial-gradient(ellipse 58% 100% at 50% 50%, ${AZURE}, transparent 72%)`,
+            background: `radial-gradient(ellipse 58% 100% at 50% 50%, ${BELIEF}, transparent 72%)`,
             opacity: 0.2,
             filter: "blur(46px)",
             animation: reduced ? undefined : "gapBreatheBottom 17s ease-in-out infinite alternate",
@@ -169,75 +169,54 @@ export function LandingHero() {
           <div
             style={{
               textAlign: "center",
-              maxWidth: 720,
+              maxWidth: 780,
               animation: reduced ? undefined : "landingRise .7s cubic-bezier(.2,.7,.3,1) both",
             }}
           >
-            {/* two-voice signal — echoes the animation's meaning (not an uppercase eyebrow kicker) */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 14,
-                fontFamily: MONO,
-                fontSize: 11.5,
-                color: "#9aa3b2",
-                marginBottom: 22,
-              }}
-            >
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ color: AZURE }}>●</span> belief
-              </span>
-              <span style={{ color: "#3a3f4a" }}>/</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ color: AMBER }}>◆</span> assets
-              </span>
-            </div>
-
             <h1
               style={{
                 margin: 0,
                 fontFamily: DISPLAY,
                 fontWeight: 700,
                 letterSpacing: "-0.03em",
-                lineHeight: 1.02,
-                fontSize: "clamp(40px, 7vw, 76px)",
-                color: "#fff",
+                lineHeight: 1.06,
+                fontSize: "clamp(32px, 5.6vw, 52px)",
+                color: "#7A828D",
                 textShadow: "0 2px 30px rgba(0,0,0,0.55)",
               }}
             >
-              Index funds for
+              <span style={{ color: "#FFFFFF" }}>Prediction</span> markets,
               <br />
-              prediction markets
+              meet <span style={{ color: "#FFFFFF" }}>tradition</span>al markets.
             </h1>
 
-            <p style={{ margin: "22px auto 0", maxWidth: 540, fontSize: 16, lineHeight: 1.55, color: "#c2c8d2", textShadow: "0 1px 18px rgba(0,0,0,0.55)" }}>
-              Belief markets, crossed with the real assets of the same narrative — bought in one signature, into your own
-              wallet.
+            <p style={{ margin: "24px auto 0", maxWidth: 560, fontSize: 16, lineHeight: 1.55, color: "#AAB1BC", textShadow: "0 1px 18px rgba(0,0,0,0.55)" }}>
+              The research terminal where belief-market odds meet the real assets of the same narrative — entered in one
+              signature, into your own wallet.
             </p>
 
-            <div style={{ marginTop: 34, display: "flex", justifyContent: "center" }}>
+            <div style={{ marginTop: 42, display: "flex", justifyContent: "center" }}>
               <Link
                 href="/browse"
                 className="launch-btn"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 10,
-                  height: 52,
-                  padding: "0 30px",
+                  gap: 12,
+                  height: 64,
+                  padding: "0 46px",
                   background: CTA,
                   color: "#0A0B0E",
-                  borderRadius: 10,
+                  borderRadius: 12,
                   textDecoration: "none",
                   fontFamily: DISPLAY,
                   fontWeight: 700,
-                  fontSize: 16,
+                  fontSize: 19,
                   letterSpacing: "-0.01em",
                 }}
               >
                 Launch App
-                <span style={{ fontSize: 15 }}>→</span>
+                <span style={{ fontSize: 18 }}>→</span>
               </Link>
             </div>
           </div>

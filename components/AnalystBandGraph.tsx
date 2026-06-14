@@ -27,20 +27,28 @@ const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: n 
 /** Belief range as on-track percentages: lo ≤ c ≤ hi, each 0–100. */
 type BeliefBand = { lo: number; c: number; hi: number };
 
-/** A monochrome diamond marker (filled = buyable on-chain, hollow = off-rail "coming soon"). */
-function Diamond({ filled, size = 12 }: { filled: boolean; size?: number }) {
+/** A monochrome diamond marker (filled = buyable on-chain, hollow = off-rail "coming soon").
+ *  `highlight` (on hover) scales it up with a soft monochrome glow — same palette, just emphasis. */
+function Diamond({ filled, size = 12, highlight = false }: { filled: boolean; size?: number; highlight?: boolean }) {
   return (
     <span
       style={{
         width: size,
         height: size,
         flexShrink: 0,
-        transform: "rotate(45deg)",
+        transform: highlight ? "rotate(45deg) scale(1.35)" : "rotate(45deg)",
         borderRadius: 2,
         background: filled ? "linear-gradient(135deg,#F2F4F6,#ADB3BC)" : "transparent",
-        border: filled ? "2px solid #0A0B0E" : `1.5px solid ${C.faint}`,
-        boxShadow: filled ? "0 0 0 1px #E8EBEF" : "none",
+        border: filled ? "2px solid #0A0B0E" : `1.5px solid ${highlight ? C.dim : C.faint}`,
+        boxShadow: filled
+          ? highlight
+            ? "0 0 0 1px #E8EBEF, 0 0 10px 2px rgba(232,235,239,0.45)"
+            : "0 0 0 1px #E8EBEF"
+          : highlight
+            ? `0 0 0 1px ${C.dim}`
+            : "none",
         display: "inline-block",
+        transition: "transform .16s ease, box-shadow .16s ease, border-color .16s ease",
       }}
     />
   );
@@ -83,6 +91,8 @@ function Toggle({ view, setView }: { view: "bands" | "scatter"; setView: (v: "ba
  *  security's position, and the crowd belief drawn as a vertical line across every row (the gap reads
  *  against every name at once). */
 function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; belief: BeliefBand; headlineTicker?: string }) {
+  const [hov, setHov] = useState<string | null>(null); // hovered asset ticker, or "belief"
+  const beliefHot = hov === "belief";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* axis header */}
@@ -91,19 +101,28 @@ function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; b
         <div style={{ flex: 1, position: "relative", height: 14 }}>
           <span style={{ position: "absolute", left: 0, top: 0, fontFamily: MONO, fontSize: 9.5, color: C.faintest }}>bear</span>
           <span style={{ position: "absolute", right: 0, top: 0, fontFamily: MONO, fontSize: 9.5, color: C.faintest }}>bull</span>
-          <span style={{ position: "absolute", left: `${belief.c}%`, top: 0, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(belief.c)}%</span>
+          <span
+            onMouseEnter={() => setHov("belief")}
+            onMouseLeave={() => setHov(null)}
+            style={{ position: "absolute", left: `${belief.c}%`, top: 0, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: beliefHot ? C.white : C.steel, whiteSpace: "nowrap", cursor: "default", transition: "color .16s ease" }}
+          >
+            belief {Math.round(belief.c)}%
+          </span>
         </div>
         <div style={{ width: 132 }} />
       </div>
 
       {assets.map((a) => {
         const isHead = a.ticker === headlineTicker;
+        const hot = hov === a.ticker;
         // True percentile drives the label; the marker position is nudged a few % off the rails so a
         // legitimate 0th/100th (price below/above every analyst target) reads as a real edge, not a clip.
         const markerX = Math.min(96, Math.max(4, a.pct * 100));
         return (
           <div
             key={a.ticker}
+            onMouseEnter={() => setHov(a.ticker)}
+            onMouseLeave={() => setHov(null)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -111,12 +130,13 @@ function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; b
               height: 40,
               padding: "0 8px",
               borderRadius: 8,
-              background: isHead ? "rgba(232,235,239,0.05)" : "transparent",
+              background: hot ? "rgba(232,235,239,0.07)" : isHead ? "rgba(232,235,239,0.05)" : "transparent",
+              transition: "background .16s ease",
             }}
           >
             {/* ticker + availability */}
             <div style={{ width: 78, display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 13, color: isHead ? C.white : C.dim, fontWeight: isHead ? 600 : 400 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 13, color: isHead || hot ? C.white : C.dim, fontWeight: isHead ? 600 : 400, transition: "color .16s ease" }}>
                 {a.ticker}
                 {isHead && <span style={{ fontFamily: MONO, fontSize: 8, color: C.faintest }}>★</span>}
               </span>
@@ -129,11 +149,11 @@ function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; b
             <div style={{ flex: 1, position: "relative", height: 10 }}>
               <div style={{ position: "absolute", left: 0, right: 0, top: 1, height: 8, background: C.track, border: `1px solid ${C.border}`, borderRadius: 999 }} />
               {/* belief RANGE band + center */}
-              <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: -4, bottom: -4, background: "rgba(138,149,166,0.22)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}` }} />
-              <div style={{ position: "absolute", left: `${belief.c}%`, top: -4, bottom: -4, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.7 }} />
+              <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: -4, bottom: -4, background: beliefHot ? "rgba(138,149,166,0.34)" : "rgba(138,149,166,0.22)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}`, transition: "background .16s ease" }} />
+              <div style={{ position: "absolute", left: `${belief.c}%`, top: -4, bottom: -4, width: beliefHot ? 2 : 1.5, transform: "translateX(-50%)", background: C.steel, opacity: beliefHot ? 1 : 0.7, transition: "opacity .16s ease, width .16s ease" }} />
               {/* asset marker (filled = buyable on-chain, hollow = off-rail "coming soon") */}
               <div style={{ position: "absolute", left: `${markerX}%`, top: -1, transform: "translateX(-50%)", display: "flex" }}>
-                <Diamond filled={!a.comingSoon} size={11} />
+                <Diamond filled={!a.comingSoon} size={11} highlight={hot} />
               </div>
             </div>
 
@@ -154,6 +174,8 @@ function BandsView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; b
 /** Scatter view: x = band percentile (bear→bull), y = day momentum (%). Each security is a ◆; the
  *  crowd belief is a vertical line. Distance left/right of belief = the sentiment gap for that name. */
 function ScatterView({ assets, belief, headlineTicker }: { assets: GraphAsset[]; belief: BeliefBand; headlineTicker?: string }) {
+  const [hov, setHov] = useState<string | null>(null); // hovered asset ticker, or "belief"
+  const beliefHot = hov === "belief";
   const H = 300;
   const padX = 30; // room for y labels
   const padY = 22; // room for x labels
@@ -164,6 +186,11 @@ function ScatterView({ assets, belief, headlineTicker }: { assets: GraphAsset[];
     return padY + frac * (H - 2 * padY);
   };
   const zeroTop = yToTop(0);
+
+  // Hovered point (not the belief label) → drives the crosshair guides + stat readout.
+  const hovA = hov && hov !== "belief" ? assets.find((a) => a.ticker === hov) : undefined;
+  const hovLeft = hovA ? Math.min(96, Math.max(4, hovA.pct * 100)) : 0;
+  const hovTop = hovA ? yToTop(hovA.changePct) : 0;
 
   return (
     <div style={{ position: "relative", height: H, marginTop: 4 }}>
@@ -180,21 +207,82 @@ function ScatterView({ assets, belief, headlineTicker }: { assets: GraphAsset[];
         {/* zero momentum line */}
         <div style={{ position: "absolute", left: 0, right: 0, top: zeroTop, height: 1, background: C.soft }} />
         {/* belief RANGE band + center */}
-        <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: 0, bottom: 0, background: "rgba(138,149,166,0.16)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}` }} />
-        <div style={{ position: "absolute", left: `${belief.c}%`, top: 0, bottom: 0, width: 1.5, transform: "translateX(-50%)", background: C.steel, opacity: 0.7 }} />
-        <span style={{ position: "absolute", left: `${belief.c}%`, top: 2, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: C.steel, whiteSpace: "nowrap" }}>belief {Math.round(belief.c)}%</span>
+        <div style={{ position: "absolute", left: `${belief.lo}%`, width: `${Math.max(belief.hi - belief.lo, 0.5)}%`, top: 0, bottom: 0, background: beliefHot ? "rgba(138,149,166,0.26)" : "rgba(138,149,166,0.16)", borderLeft: `1px solid ${C.steel}`, borderRight: `1px solid ${C.steel}`, transition: "background .16s ease" }} />
+        <div style={{ position: "absolute", left: `${belief.c}%`, top: 0, bottom: 0, width: beliefHot ? 2 : 1.5, transform: "translateX(-50%)", background: C.steel, opacity: beliefHot ? 1 : 0.7, transition: "opacity .16s ease, width .16s ease" }} />
+        <span onMouseEnter={() => setHov("belief")} onMouseLeave={() => setHov(null)} style={{ position: "absolute", left: `${belief.c}%`, top: 2, transform: "translateX(-50%)", fontFamily: MONO, fontSize: 9.5, color: beliefHot ? C.white : C.steel, whiteSpace: "nowrap", cursor: "default", transition: "color .16s ease" }}>belief {Math.round(belief.c)}%</span>
+
+        {/* hover crosshair → dotted guides from the point to both axes */}
+        {hovA && (
+          <>
+            <div style={{ position: "absolute", left: `${hovLeft}%`, top: 0, bottom: 0, width: 0, borderLeft: `1px dashed ${C.faint}`, opacity: 0.8, pointerEvents: "none" }} />
+            <div style={{ position: "absolute", left: 0, right: 0, top: hovTop, height: 0, borderTop: `1px dashed ${C.faint}`, opacity: 0.8, pointerEvents: "none" }} />
+          </>
+        )}
 
         {assets.map((a) => {
           const isHead = a.ticker === headlineTicker;
+          const hot = hov === a.ticker;
           const left = Math.min(96, Math.max(4, a.pct * 100)); // nudge legit 0th/100th off the frame edge
           const top = yToTop(a.changePct);
           return (
-            <div key={a.ticker} style={{ position: "absolute", left: `${left}%`, top, transform: "translate(-50%,-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-              <Diamond filled={!a.comingSoon} size={11} />
-              <span style={{ fontFamily: MONO, fontSize: 10, color: isHead ? C.white : C.dim, fontWeight: isHead ? 600 : 400, whiteSpace: "nowrap" }}>{a.ticker}</span>
+            <div key={a.ticker} onMouseEnter={() => setHov(a.ticker)} onMouseLeave={() => setHov(null)} style={{ position: "absolute", left: `${left}%`, top, transform: "translate(-50%,-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "default", zIndex: hot ? 2 : 1 }}>
+              <Diamond filled={!a.comingSoon} size={11} highlight={hot} />
+              <span style={{ fontFamily: MONO, fontSize: 10, color: isHead || hot ? C.white : C.dim, fontWeight: isHead ? 600 : 400, whiteSpace: "nowrap", transition: "color .16s ease" }}>{a.ticker}</span>
             </div>
           );
         })}
+
+        {/* hover readout → the hovered stock's stats, anchored to its point */}
+        {hovA && (() => {
+          const up = hovA.changePct >= 0;
+          const tipRight = hovLeft > 55; // point on the right half → readout opens leftward
+          const tipBelow = hovTop < 78; // point near the top → readout drops below
+          return (
+            <div
+              style={{
+                position: "absolute",
+                left: `${hovLeft}%`,
+                top: hovTop,
+                transform: `translate(${tipRight ? "calc(-100% - 12px)" : "12px"}, ${tipBelow ? "10px" : "calc(-100% - 10px)"})`,
+                background: C.panel,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                padding: "8px 10px",
+                minWidth: 142,
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                pointerEvents: "none",
+                zIndex: 5,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 12.5, letterSpacing: "-0.01em", color: C.white }}>{hovA.ticker}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.faint, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 92 }}>{hovA.name}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 14, fontFamily: MONO, fontSize: 10.5 }}>
+                <span style={{ color: C.faint }}>price</span>
+                <span style={{ color: C.white, fontFeatureSettings: "'tnum' 1" }}>${fmt(hovA.priceUsd)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 14, fontFamily: MONO, fontSize: 10.5 }}>
+                <span style={{ color: C.faint }}>band</span>
+                <span style={{ color: C.dim, fontFeatureSettings: "'tnum' 1" }}>
+                  ${fmt(hovA.low)}–${fmt(hovA.high)} · <span style={{ color: C.asset }}>{Math.round(hovA.pct * 100)}th</span>
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 14, fontFamily: MONO, fontSize: 10.5 }}>
+                <span style={{ color: C.faint }}>day</span>
+                <span style={{ color: up ? C.asset : C.steel, fontFeatureSettings: "'tnum' 1" }}>
+                  {up ? "▲" : "▼"} {up ? "+" : ""}{hovA.changePct.toFixed(1)}%
+                </span>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.02em", color: hovA.comingSoon ? C.faint : C.up, paddingTop: 1 }}>
+                {hovA.comingSoon ? "○ coming soon" : "● buyable"}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* x axis labels */}

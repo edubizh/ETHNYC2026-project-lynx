@@ -92,26 +92,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         </Link>
 
         {/* header */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 6 }}>
-          <h1 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.03em", fontSize: 52, lineHeight: 1, color: "#FFFFFF" }}>{view.title}</h1>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              height: 24,
-              padding: "0 10px",
-              background: "rgba(232,235,239,0.12)",
-              border: "1px solid rgba(232,235,239,0.3)",
-              borderRadius: 999,
-              fontFamily: MONO,
-              fontSize: 11,
-              color: "#E8EBEF",
-              marginTop: 8,
-            }}
-          >
-            {meta.status}
-          </span>
-        </div>
+        <h1 style={{ margin: "0 0 6px", fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.03em", fontSize: 52, lineHeight: 1, color: "#FFFFFF" }}>{view.title}</h1>
         <p style={{ margin: "0 0 22px", maxWidth: 680, fontSize: 15.5, lineHeight: 1.55, color: "#AAB1BC" }}>{meta.thesis}</p>
 
         {/* Arc NAV bar */}
@@ -186,20 +167,10 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         {/* Multi-asset analyst-band graph (bands + scatter toggle) — the TradFi intelligence centerpiece */}
         <AnalystBandGraph assets={graphAssets} belief={h.belief} beliefLabel={h.beliefLabel} headlineTicker={h.assetSymbol} title={view.title} />
 
-        {/* fallback banner */}
-        {anyFallback && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(115,124,138,0.08)", border: "1px solid #2A2D34", borderRadius: 10, padding: "13px 16px", marginBottom: 16 }}>
-            <span style={{ color: "#7A828D", fontSize: 14 }}>○</span>
-            <span style={{ fontSize: 13, color: "#AAB1BC" }}>
-              One source is serving a <span style={{ color: "#FFFFFF" }}>cached fallback</span> value — its feed may be delayed. Everything else is live.
-            </span>
-          </div>
-        )}
-
         {/* Prediction markets + asset leg */}
         <section style={{ marginBottom: 16 }}>
           <h2 style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 10, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 18, color: "#FFFFFF" }}>
-            <span>Prediction markets</span>
+            <span>Prediction Markets + Tokenized Assets</span>
             <span style={{ fontFamily: MONO, fontSize: 10.5, fontWeight: 400, color: "#7A828D", padding: "2px 8px", border: "1px solid #2A2D34", borderRadius: 999 }}>in basket above</span>
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -271,6 +242,13 @@ export default async function ThemePage({ params }: { params: { slug: string } }
             ))}
           </div>
         </section>
+
+        {/* Data-freshness note — centered plain text, pushed toward the bottom of the page. */}
+        {anyFallback && (
+          <p style={{ margin: "64px 0 0", textAlign: "center", fontSize: 12.5, lineHeight: 1.5, color: "#7A828D" }}>
+            One source is serving a <span style={{ color: "#AAB1BC" }}>cached fallback</span> value — its feed may be delayed. Everything else is live.
+          </p>
+        )}
 
       </main>
     </div>

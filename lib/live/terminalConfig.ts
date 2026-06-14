@@ -7,22 +7,25 @@ export type FeedId = (typeof FEED_IDS)[number];
 
 export type SidePos = "top" | "bottom";
 export type SideKey = "left" | "right";
-export type SideMode = "single" | "split";
+export type SideMode = "single" | "split" | "empty";
 
-/** A gutter: `top` is always shown; `bottom` is shown only when mode === "split". */
+/** A gutter: `top` shown when single/split; `bottom` only when split; nothing when empty (feeds closed). */
 export type SideConfig = { mode: SideMode; top: FeedId; bottom: FeedId };
 export type TerminalConfig = { left: SideConfig; right: SideConfig; hidden: boolean };
 
-// Default to all four flowing feeds (both sides split) so the terminal is alive on first load.
+// Default to one feed per side (two total); the + button splits a side to add a second. The retained
+// `bottom` is what that side's + adds first (then it's switchable via the feed dropdown).
 export const DEFAULT_CONFIG: TerminalConfig = {
-  left: { mode: "split", top: "polymarket", bottom: "kalshi" },
-  right: { mode: "split", top: "hyperliquid", bottom: "uniswap" },
+  left: { mode: "single", top: "polymarket", bottom: "kalshi" },
+  right: { mode: "single", top: "hyperliquid", bottom: "uniswap" },
   hidden: false,
 };
 
 export type TerminalAction =
   | { kind: "setFeed"; side: SideKey; pos: SidePos; feed: FeedId }
   | { kind: "toggleSplit"; side: SideKey }
+  | { kind: "closeFeed"; side: SideKey; pos: SidePos }
+  | { kind: "addFeed"; side: SideKey }
   | { kind: "toggleHidden" };
 
 export function terminalReducer(state: TerminalConfig, action: TerminalConfig | TerminalAction): TerminalConfig {
@@ -38,6 +41,25 @@ export function terminalReducer(state: TerminalConfig, action: TerminalConfig | 
       const side: SideConfig = { ...cur, mode: cur.mode === "split" ? "single" : "split" };
       return { ...state, [action.side]: side };
     }
+    case "closeFeed": {
+      const cur = state[action.side];
+      // split → drop the closed slot, keep the other as the single feed; otherwise empty the gutter.
+      if (cur.mode === "split") {
+        const keep = action.pos === "top" ? cur.bottom : cur.top;
+        return { ...state, [action.side]: { ...cur, mode: "single", top: keep } };
+      }
+      return { ...state, [action.side]: { ...cur, mode: "empty" } };
+    }
+    case "addFeed": {
+      const cur = state[action.side];
+      // empty → show one feed; single → re-split, ensuring the new slot differs from the first.
+      if (cur.mode === "empty") return { ...state, [action.side]: { ...cur, mode: "single" } };
+      if (cur.mode === "single") {
+        const bottom = cur.bottom !== cur.top ? cur.bottom : (FEED_IDS.find((f) => f !== cur.top) ?? cur.bottom);
+        return { ...state, [action.side]: { ...cur, mode: "split", bottom } };
+      }
+      return state;
+    }
     case "toggleHidden":
       return { ...state, hidden: !state.hidden };
     default:
@@ -45,16 +67,16 @@ export function terminalReducer(state: TerminalConfig, action: TerminalConfig | 
   }
 }
 
-// v3: feeds restructured to one-per-venue (Uniswap/Kalshi/Polymarket/Hyperliquid) — bump key so
-// everyone gets the new default instead of a repaired old layout.
-export const STORAGE_KEY = "lynx.terminal.v3";
+// v4: default to one feed per side (two total). Bump the key so everyone gets the new default
+// instead of a repaired old (both-split) layout.
+export const STORAGE_KEY = "lynx.terminal.v4";
 
 const isFeedId = (v: unknown): v is FeedId => typeof v === "string" && (FEED_IDS as readonly string[]).includes(v);
 
 function coerceSide(v: unknown, fallback: SideConfig): SideConfig {
   const o = (v ?? {}) as Partial<SideConfig>;
   return {
-    mode: o.mode === "split" || o.mode === "single" ? o.mode : fallback.mode,
+    mode: o.mode === "split" || o.mode === "single" || o.mode === "empty" ? o.mode : fallback.mode,
     top: isFeedId(o.top) ? o.top : fallback.top,
     bottom: isFeedId(o.bottom) ? o.bottom : fallback.bottom,
   };
@@ -93,5 +115,6 @@ export function saveConfig(c: TerminalConfig): void {
 
 /** The visible feed ids for a side (1 when single, 2 when split). */
 export function visibleFeeds(side: SideConfig): FeedId[] {
+  if (side.mode === "empty") return [];
   return side.mode === "split" ? [side.top, side.bottom] : [side.top];
 }

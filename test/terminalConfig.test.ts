@@ -29,6 +29,45 @@ describe("terminalConfig reducer", () => {
     expect(terminalReducer(DEFAULT_CONFIG, { kind: "toggleHidden" }).hidden).toBe(true);
   });
 
+  it("closeFeed on a split side → single, keeping the other slot", () => {
+    const cfg: TerminalConfig = {
+      left: { mode: "split", top: "polymarket", bottom: "kalshi" },
+      right: { mode: "single", top: "hyperliquid", bottom: "uniswap" },
+      hidden: false,
+    };
+    const closedTop = terminalReducer(cfg, { kind: "closeFeed", side: "left", pos: "top" });
+    expect(closedTop.left.mode).toBe("single");
+    expect(closedTop.left.top).toBe("kalshi"); // surviving feed promoted to top
+    const closedBottom = terminalReducer(cfg, { kind: "closeFeed", side: "left", pos: "bottom" });
+    expect(closedBottom.left.mode).toBe("single");
+    expect(closedBottom.left.top).toBe("polymarket");
+  });
+
+  it("closeFeed on a single side → empty (gutter cleared)", () => {
+    const single: TerminalConfig = {
+      left: { mode: "single", top: "polymarket", bottom: "kalshi" },
+      right: { mode: "single", top: "hyperliquid", bottom: "uniswap" },
+      hidden: false,
+    };
+    const emptied = terminalReducer(single, { kind: "closeFeed", side: "right", pos: "top" });
+    expect(emptied.right.mode).toBe("empty");
+    expect(visibleFeeds(emptied.right)).toEqual([]);
+  });
+
+  it("addFeed re-opens a gutter: empty → single → split (with a distinct second feed)", () => {
+    const empty: TerminalConfig = {
+      left: { mode: "empty", top: "polymarket", bottom: "kalshi" },
+      right: { mode: "single", top: "hyperliquid", bottom: "uniswap" },
+      hidden: false,
+    };
+    const reopened = terminalReducer(empty, { kind: "addFeed", side: "left" });
+    expect(reopened.left.mode).toBe("single");
+    const split = terminalReducer(reopened, { kind: "addFeed", side: "left" });
+    expect(split.left.mode).toBe("split");
+    expect(split.left.bottom).not.toBe(split.left.top); // second slot differs
+    expect(visibleFeeds(split.left)).toHaveLength(2);
+  });
+
   it("accepts a full config object (hydrate path)", () => {
     const hydrated: TerminalConfig = { ...DEFAULT_CONFIG, hidden: true };
     expect(terminalReducer(DEFAULT_CONFIG, hydrated)).toEqual(hydrated);
@@ -48,6 +87,10 @@ describe("visibleFeeds", () => {
       "uniswap",
       "kalshi",
     ]);
+  });
+
+  it("returns 0 feeds when empty", () => {
+    expect(visibleFeeds({ mode: "empty", top: "uniswap", bottom: "kalshi" })).toEqual([]);
   });
 });
 
