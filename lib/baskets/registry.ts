@@ -136,7 +136,7 @@ const THEMES: Record<string, Theme> = {
     },
   },
 
-  // MACRO & FED — executable NegRisk "no Fed cuts in 2026" leg + buyable wstETH asset leg.
+  // MACRO & FED — executable NegRisk "no Fed cuts in 2026" leg + buyable WETH + WBTC sleeve.
   macro: {
     slug: "macro",
     title: "Macro & Fed",
@@ -186,7 +186,7 @@ const THEMES: Record<string, Theme> = {
     },
   },
 
-  // GEOPOLITICS & CONFLICT — executable NegRisk "next leader" ladders (Iran, Venezuela) + buyable wstETH.
+  // GEOPOLITICS & CONFLICT — executable NegRisk "next leader" ladders (Iran, Venezuela) + buyable WBTC + WETH sleeve.
   geopolitics: {
     slug: "geopolitics",
     title: "Geopolitics & Conflict",
@@ -246,7 +246,7 @@ const THEMES: Record<string, Theme> = {
     },
   },
 
-  // US POLITICS — executable NegRisk 2028 nomination legs (Newsom, AOC) + buyable wstETH.
+  // US POLITICS — executable NegRisk 2028 nomination legs (Newsom, AOC) + buyable WETH + WBTC sleeve.
   "us-politics": {
     slug: "us-politics",
     title: "US Politics",
