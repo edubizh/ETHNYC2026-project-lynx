@@ -80,6 +80,20 @@ describe("bucket securities (display/anchor model)", () => {
     expect(pct).toBeGreaterThan(0.2);
     expect(pct).toBeLessThan(0.8);
   });
+
+  // Invariant lock (A2): guard the *display* path directly — display.analystBand + display.fallback —
+  // so the offline hero percentile can never saturate. (test 76-82 covers the headline-security path.)
+  it("AI fallback seed price sits strictly inside the fallback band (never saturates the hero)", () => {
+    const ai = getTheme("ai");
+    const { low, high } = ai.display.analystBand;
+    const seed = ai.display.fallback.equityPrice;
+    expect(seed).toBeGreaterThan(low);
+    expect(seed).toBeLessThan(high);
+    // and not pinned to an edge: at least 15% in from either bound
+    const pct = (seed - low) / (high - low);
+    expect(pct).toBeGreaterThan(0.15);
+    expect(pct).toBeLessThan(0.85);
+  });
 });
 
 describe("multi-asset on-chain sleeve", () => {
