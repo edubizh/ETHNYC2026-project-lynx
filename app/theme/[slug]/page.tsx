@@ -115,7 +115,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
         {/* Sentiment Gap meter */}
         <section style={{ ...PANEL, padding: "26px 28px 24px", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 34 }}>
-            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20, color: "#FFFFFF" }}>AI Sentiment Gap</h2>
+            <h2 style={{ margin: 0, fontFamily: DISPLAY, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20, color: "#FFFFFF" }}>{view.title} Sentiment Gap</h2>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 28, padding: "0 12px", background: "#1B1E24", border: "1px solid #2A2D34", borderRadius: 8, fontFamily: MONO, fontSize: 13, color: "#AAB1BC", fontFeatureSettings: "'tnum' 1" }}>
               <span style={{ color: "#7A828D" }}>gap</span>
               <span style={{ color: "#FFFFFF" }}>{gap} pts</span>
@@ -254,7 +254,7 @@ export default async function ThemePage({ params }: { params: { slug: string } }
                 </div>
                 <div style={{ width: 148, display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontFamily: MONO, fontSize: 22, color: "#E8EBEF", fontFeatureSettings: "'tnum' 1", lineHeight: 1 }}>${fmt(leg.priceUsd)}</span>
-                  <span style={{ fontSize: 10.5, color: "#7A828D", fontFamily: MONO }}>uniswap /quote oracle</span>
+                  <span style={{ fontSize: 10.5, color: "#7A828D", fontFamily: MONO }}>{leg.priceSource === "fallback" ? "cached fallback price" : "uniswap /quote oracle"}</span>
                 </div>
                 <CardSpark color="#E8EBEF" />
                 <div style={{ width: 60, textAlign: "right", display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
