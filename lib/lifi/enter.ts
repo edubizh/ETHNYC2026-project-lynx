@@ -26,8 +26,9 @@ export function initLifi(opts: {
 }
 
 export type EnterQuoteParams = {
-  /** Source chain — Ethereum (1) or Base (8453). NEVER Arc (Arc→Polygon routing is dead). */
-  fromChainId: 1 | 8453;
+  /** Source chain — Polygon (137, same-chain demo spine) or Ethereum (1)/Base (8453, cross-chain stretch).
+   *  NEVER Arc (Arc→Polygon routing is dead). */
+  fromChainId: 1 | 8453 | 137;
   fromToken: string;
   fromAddress: string;
   /** Total source-token amount the user funds with (base units of fromToken) — covers every call + fees. */
