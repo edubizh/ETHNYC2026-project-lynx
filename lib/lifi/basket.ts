@@ -1,9 +1,9 @@
 import { encodeFunctionData, type Address, type Hex } from "viem";
-import { ADDR } from "@/lib/addresses"; // client-safe public addresses (not the server-only config)
+import { ADDR } from "@/lib/addresses";
 import { getTheme } from "@/lib/baskets/registry";
-import type { PredictionLeg } from "@/lib/baskets/types";
+import type { PredictionLeg, AssetLeg } from "@/lib/baskets/types";
+import { buildExactInputSingleData } from "@/lib/uniswap/router";
 
-/** Minimal ABI for the destination call LI.FI invokes per market. */
 export const ENTER_PREDICTION_LEG_ABI = [
   {
     type: "function",
@@ -19,9 +19,26 @@ export const ENTER_PREDICTION_LEG_ABI = [
   },
 ] as const;
 
-/** One LI.FI Composer contract call — buys a single market's neutral YES+NO set into the recipient. */
+export const ENTER_ASSET_LEG_ABI = [
+  {
+    type: "function",
+    name: "enterAssetLeg",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "amount", type: "uint256" },
+      { name: "recipient", type: "address" },
+      { name: "router", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "assetOut", type: "address" },
+      { name: "minAmountOut", type: "uint256" },
+      { name: "swapData", type: "bytes" },
+    ],
+    outputs: [],
+  },
+] as const;
+
 export type ContractCall = {
-  fromAmount: string; // USDC.e base units (6dp) for THIS market's slice
+  fromAmount: string;
   fromTokenAddress: Address;
   toContractAddress: Address;
   toContractCallData: Hex;
@@ -30,52 +47,64 @@ export type ContractCall = {
 };
 
 /**
- * Split a single deposit across a bucket's prediction MARKETS per our curated strategy weights —
- * one weighted LI.FI contractCall per market (Composer splits the capital across all of them in one
- * signature). This is an INDEX ALLOCATION, not a parlay: each market is bought independently and its
- * neutral YES+NO set lands in `recipient`'s own wallet.
+ * Split a single USDC.e deposit across the bucket's FULL strategy — prediction markets (neutral YES+NO
+ * sets) AND the on-chain asset sleeve (Uniswap swaps) — one weighted LI.FI contractCall each. Weights
+ * sum to 1 across all legs; the LAST leg absorbs the rounding remainder so the deposit is fully allocated.
+ * Asset legs route through EnterBasket.enterAssetLeg (Uniswap SwapRouter02), revert-safe.
  *
- * Weights are re-normalized among the prediction legs (the asset leg is handled separately), and the
- * LAST market absorbs any rounding remainder so the deposit is allocated to the wei with nothing lost.
- *
- * @param slug         bucket slug (e.g. "ai")
- * @param totalUsdce   the deposit in USDC.e base units (6dp)
- * @param recipient    the end user's wallet (positions are delivered here — non-custodial)
- * @param enterBasket  the deployed EnterBasket executor address
+ * @param opts.minOut  per-asset-leg minimum output (token base units). Pure/injected so this stays
+ *                     synchronous + testable; the async Uniswap /quote layer supplies real slippage floors
+ *                     in production. Defaults to 0n (NO protection — tests/dev only).
  */
 export function buildBasketContractCalls(
   slug: string,
   totalUsdce: bigint,
   recipient: Address,
   enterBasket: Address,
+  opts?: { minOut?: (leg: AssetLeg, amount: bigint) => bigint },
 ): ContractCall[] {
-  const preds = getTheme(slug).legs.filter((l): l is PredictionLeg => l.kind === "prediction");
-  if (preds.length === 0) throw new Error(`no prediction markets in bucket: ${slug}`);
+  const legs = getTheme(slug).legs;
+  if (!legs.some((l) => l.kind === "prediction")) throw new Error(`no prediction markets in bucket: ${slug}`);
 
-  const weightSum = preds.reduce((a, l) => a + l.weight, 0);
+  const weightSum = legs.reduce((a, l) => a + l.weight, 0);
   let allocated = 0n;
 
-  return preds.map((leg, i) => {
-    const isLast = i === preds.length - 1;
-    // Scale via integer math (1e6 fixed-point) to avoid float drift; the last leg takes the remainder.
+  return legs.map((leg, i) => {
+    const isLast = i === legs.length - 1;
     const amount = isLast
       ? totalUsdce - allocated
       : (totalUsdce * BigInt(Math.round((leg.weight / weightSum) * 1_000_000))) / 1_000_000n;
     allocated += amount;
 
-    const toContractCallData = encodeFunctionData({
-      abi: ENTER_PREDICTION_LEG_ABI,
-      functionName: "enterPredictionLeg",
-      args: [leg.conditionId, leg.questionId, amount, recipient],
-    });
+    let toContractCallData: Hex;
+    let toContractGasLimit: string;
+    if (leg.kind === "prediction") {
+      const p = leg as PredictionLeg;
+      toContractCallData = encodeFunctionData({
+        abi: ENTER_PREDICTION_LEG_ABI,
+        functionName: "enterPredictionLeg",
+        args: [p.conditionId, p.questionId, amount, recipient],
+      });
+      toContractGasLimit = "500000";
+    } else {
+      const a = leg as AssetLeg;
+      const minOut = opts?.minOut?.(a, amount) ?? 0n;
+      const swapData = buildExactInputSingleData({ tokenOut: a.token, fee: a.swapFee, amountIn: amount, minOut, recipient: enterBasket });
+      toContractCallData = encodeFunctionData({
+        abi: ENTER_ASSET_LEG_ABI,
+        functionName: "enterAssetLeg",
+        args: [amount, recipient, ADDR.swapRouter02, ADDR.swapRouter02, a.token, minOut, swapData],
+      });
+      toContractGasLimit = "700000";
+    }
 
     return {
       fromAmount: amount.toString(),
-      fromTokenAddress: ADDR.usdce, // each call consumes USDC.e (LI.FI swaps native USDC -> USDC.e)
+      fromTokenAddress: ADDR.usdce,
       toContractAddress: enterBasket,
       toContractCallData,
-      toContractGasLimit: "500000",
-      toApprovalAddress: enterBasket, // executor approves USDC.e to EnterBasket before the call
+      toContractGasLimit,
+      toApprovalAddress: enterBasket,
     };
   });
 }
