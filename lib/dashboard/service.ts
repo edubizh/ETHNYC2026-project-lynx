@@ -3,6 +3,7 @@ import type { PredictionLeg, AssetLeg, Security, Availability } from "@/lib/bask
 import { fetchBeliefProb } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import { fetchEquityPrice } from "@/lib/adapters/equities";
+import { fetchAnalystBand } from "@/lib/adapters/yahoo";
 import { assetBandPercentile, divergence, type Divergence } from "@/lib/divergence/engine";
 
 const isPrediction = (l: PredictionLeg | AssetLeg): l is PredictionLeg => l.kind === "prediction";
@@ -153,10 +154,19 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   // The hero gap = PRIMARY belief odds vs the HEADLINE security's percentile within its analyst band.
   const primary = predViews[0]!;
   const hv = securities.find((s) => s.ticker === headline.ticker)!;
-  const band = headline.analystBand ?? t.display.analystBand;
   const equityPrice = hv.priceUsd ?? t.display.fallback.equityPrice;
   const equitySource = hv.priceSource ?? "fallback";
-  const pct = hv.bandPercentile ?? assetBandPercentile(equityPrice, band.low, band.high);
+  // Use the live (free) Yahoo analyst band ONLY when the equity price is also live, so band and
+  // price share one worldview — a live band paired with a stale fallback price can push the price
+  // outside the band and yield a bogus gap. Otherwise (and for ETF/crypto headlines with no Yahoo
+  // coverage) keep the hardcoded band. Per-security rows keep their own hardcoded bands.
+  let band = headline.analystBand ?? t.display.analystBand;
+  if (equitySource === "live") {
+    [band] = await withFallback(() => fetchAnalystBand(headline.ticker), band);
+  }
+  // Measure the hero percentile in the SAME band shown above so the displayed band and the
+  // computed gap never disagree.
+  const pct = assetBandPercentile(equityPrice, band.low, band.high);
   const d = divergence(primary.beliefProb!, pct);
 
   return {
