@@ -12,7 +12,12 @@ export const WINDOWS: Window[] = ["24h", "7d", "30d", "3m"];
  *  tile's up/down treatment. Live values come from lib/mindshare-live.ts; SEED is the offline fallback. */
 export type Mindshare = { mindshare: number; idx: number; change: number };
 export type RankedTheme = { slug: string; title: string; ms: Mindshare };
-export type MindshareView = { ranked: RankedTheme[]; others: { mindshare: number; sectors: number } };
+export type MindshareView = {
+  ranked: RankedTheme[];
+  others: { mindshare: number; sectors: number };
+  /** "live" = sized from real Gamma volume; "fallback" = verified SEED (a feed was down / no volume). */
+  source?: "live" | "fallback";
+};
 /** Ranked treemap data for every timeframe — server-computed once, toggled client-side. */
 export type WindowsView = Record<Window, MindshareView>;
 
