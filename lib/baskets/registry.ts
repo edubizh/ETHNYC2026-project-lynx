@@ -19,6 +19,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "OpenAI does NOT IPO by Dec 2026",
         gammaMarketId: "608368",
+        marketSlug: "will-openai-not-ipo-by-december-31-2026",
         conditionId: "0x3849e1d62e0807801913d3e2427e8caf3cc6dd1c8ef42d8d5c08c6f9c449dc5e",
         questionId: "0xd2c21cbb9d2cb407ab3dcf619d93f6d65b7967154cd6ee930f7758baa2b4bf06",
         outcomeTokenIds: {
@@ -34,6 +35,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Anthropic has the top AI model",
         gammaMarketId: "631121",
+        marketSlug: "will-anthropic-have-the-top-ai-model-at-the-end-of-june-2026-475",
         conditionId: "0x0811ed7f71c2466d04f9ba801c0e21c9cfb016385cdff97b5c9984df0fa5801e",
         questionId: "0x3dcd0f5c7c6df89336a87be866327c862646e18b5deee05f31c250451b3a2901",
         outcomeTokenIds: {
@@ -69,23 +71,23 @@ const THEMES: Record<string, Theme> = {
           name: "NVIDIA",
           analystBand: AI_BAND,
           availability: "DISPLAY-ONLY",
+          liquidity: "low",
+          assetClass: "tokenized-equity",
           chain: "solana/CEX",
           note: "Tradeable for eligible users as NVDAx (xStocks, Solana) / CEX — no EVM-Uniswap venue, so it's the analyst anchor here.",
         },
-        { ticker: "MSFT", name: "Microsoft", analystBand: { low: 380, high: 600 }, priceUsd: 480, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "AI/cloud bellwether (Azure + OpenAI stake) — tokenized as MSFTx on Solana; coming soon to our rails." },
-        { ticker: "GOOGL", name: "Alphabet", analystBand: { low: 150, high: 260 }, priceUsd: 200, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Gemini / DeepMind AI exposure — tokenized as GOOGLx on Solana; coming soon." },
-        { ticker: "TSM", name: "Taiwan Semiconductor", analystBand: { low: 160, high: 300 }, priceUsd: 230, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Fabricates the AI accelerators — tokenized as TSMx on Solana; coming soon." },
-        { ticker: "AMD", name: "Advanced Micro Devices", analystBand: { low: 110, high: 220 }, priceUsd: 160, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "AI-GPU challenger — tokenized as AMDx on Solana; coming soon." },
-        {
-          ticker: "wstETH",
-          name: "Lido Wrapped Staked ETH",
-          token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
-          availability: "LIVE-UNISWAP",
-          chain: "polygon",
-          note: "The buyable on-chain AI/risk-on asset leg.",
-        },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
-        { ticker: "LINK", name: "Chainlink", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable data/oracle-infra risk proxy on Uniswap (Polygon)." },
+        { ticker: "MSFT", name: "Microsoft", analystBand: { low: 380, high: 600 }, priceUsd: 480, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "AI/cloud bellwether (Azure + OpenAI stake) — tokenized as MSFTx on Solana; coming soon to our rails." },
+        { ticker: "GOOGL", name: "Alphabet", analystBand: { low: 150, high: 260 }, priceUsd: 200, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Gemini / DeepMind AI exposure — tokenized as GOOGLx on Solana; coming soon." },
+        { ticker: "TSM", name: "Taiwan Semiconductor", analystBand: { low: 160, high: 300 }, priceUsd: 230, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Fabricates the AI accelerators — tokenized as TSMx on Solana; coming soon." },
+        { ticker: "AMD", name: "Advanced Micro Devices", analystBand: { low: 110, high: 220 }, priceUsd: 160, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "AI-GPU challenger — tokenized as AMDx on Solana; coming soon." },
+        // On-chain AI tokens (display-only; MCP-verified addresses; not on our Polygon basket rails yet).
+        { ticker: "FET", name: "Artificial Superintelligence Alliance", token: "0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "high", assetClass: "defi", note: "AI-agents alliance (Fetch.ai/SingularityNET/Ocean) — deep on Ethereum + CEX; Polygon bridge is thin, not a basket leg yet." },
+        { ticker: "RENDER", name: "Render Network", availability: "DISPLAY-ONLY", chain: "solana", liquidity: "high", assetClass: "defi", note: "Decentralized GPU rendering for AI/3D — primary market migrated to Solana (legacy ERC-20 0x6De0…7e4Aeb24 on Ethereum); not on our EVM rails yet." },
+        { ticker: "TAO", name: "Bittensor", availability: "DISPLAY-ONLY", chain: "bittensor", liquidity: "high", assetClass: "defi", note: "Decentralized machine-learning network on its own L1 — trades via CEX; thin ETH wrapper WTAO 0x77E0…b0A44; not bridgeable to our rails." },
+        { ticker: "GRT", name: "The Graph", token: "0x5fe2B58c013d7601147DcdD68C143A77499f5531", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "medium", assetClass: "defi", note: "AI/data indexing protocol — live on Polygon-Uniswap (medium depth); a near-term basket-integration candidate." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "low", assetClass: "major", note: "Routable via Uniswap (it powers our standalone prize swap) but has no direct USDC.e pool for the fixed-fee sleeve — not a basket leg yet." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "LINK", name: "Chainlink", token: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable data/oracle-infra risk proxy on Uniswap (Polygon)." },
       ],
     },
   },
@@ -99,6 +101,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Bitcoin is the best performer in 2026 (vs Gold & S&P 500)",
         gammaMarketId: "950852",
+        marketSlug: "will-bitcoin-have-the-best-performance-in-2026-749",
         conditionId: "0xb276435811dc77171602f790db2b5900e780adfadb7cff57e547d58fb1a8215f",
         questionId: "0x339a89111ad048709ef27ac9da11e70a28ceaae3a4f494e949c9d68be7c39a00",
         outcomeTokenIds: {
@@ -124,17 +127,21 @@ const THEMES: Record<string, Theme> = {
         { venue: "kalshi", id: "KXCRYPTORETURNY-26-SOL", label: "Solana has a positive return in 2026", polarity: 1, relevance: 0.4, seedProb: 0.13, seedVolume: 69_700 },
       ],
       securities: [
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 40000, high: 130000 }, availability: "LIVE-UNISWAP", chain: "polygon", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable ETH exposure on Uniswap (Polygon)." },
-        { ticker: "COIN", name: "Coinbase Global", analystBand: { low: 150, high: 400 }, priceUsd: 260, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Crypto-exchange beta — tokenized as COINx on Solana; coming soon." },
-        { ticker: "MSTR", name: "Strategy (MicroStrategy)", analystBand: { low: 200, high: 600 }, priceUsd: 380, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Leveraged BTC-treasury proxy — tokenized as MSTRx on Solana; coming soon." },
-        { ticker: "HOOD", name: "Robinhood Markets", analystBand: { low: 30, high: 110 }, priceUsd: 65, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Retail crypto brokerage — tokenized as HOODx on Solana; coming soon." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, analystBand: { low: 40000, high: 130000 }, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Headline. Buyable BTC exposure on Uniswap (Polygon)." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable ETH exposure on Uniswap (Polygon)." },
+        // On-chain DeFi blue-chips (display-only; deep Polygon liquidity; near-term integration candidates).
+        { ticker: "UNI", name: "Uniswap", token: "0xb33EaAd8d922B1083446DC23f610c2567fB5180f", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", assetClass: "defi", note: "Governance token of our swap venue — deep Polygon liquidity; a near-term basket-integration candidate." },
+        { ticker: "AAVE", name: "Aave", token: "0xD6DF932A45C0f255f85145f286eA0b292B21C90B", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", assetClass: "defi", note: "Leading lending protocol — deep Polygon liquidity; integration candidate." },
+        { ticker: "POL", name: "Polygon Ecosystem Token", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", assetClass: "major", note: "Polygon's native gas/staking token (native asset, not an ERC-20 here) — also ERC-20 on Ethereum 0x455e…fFC3F6." },
+        { ticker: "COIN", name: "Coinbase Global", analystBand: { low: 150, high: 400 }, priceUsd: 260, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Crypto-exchange beta — tokenized as COINx on Solana; coming soon." },
+        { ticker: "MSTR", name: "Strategy (MicroStrategy)", analystBand: { low: 200, high: 600 }, priceUsd: 380, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Leveraged BTC-treasury proxy — tokenized as MSTRx on Solana; coming soon." },
+        { ticker: "HOOD", name: "Robinhood Markets", analystBand: { low: 30, high: 110 }, priceUsd: 65, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Retail crypto brokerage — tokenized as HOODx on Solana; coming soon." },
         { ticker: "MARA", name: "MARA Holdings", analystBand: { low: 12, high: 40 }, priceUsd: 22, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Bitcoin miner — no EVM-Uniswap venue; tokenized version coming soon." },
       ],
     },
   },
 
-  // MACRO & FED — executable NegRisk "no Fed cuts in 2026" leg + buyable wstETH asset leg.
+  // MACRO & FED — executable NegRisk "no Fed cuts in 2026" leg + buyable WETH + WBTC sleeve.
   macro: {
     slug: "macro",
     title: "Macro & Fed",
@@ -143,6 +150,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "No Fed rate cuts in 2026",
         gammaMarketId: "616902",
+        marketSlug: "will-no-fed-rate-cuts-happen-in-2026",
         conditionId: "0xd4e77ba6f29fc093509d24f508631abd445ecf506bbdc9c4c80e60256a318527",
         questionId: "0xdcd7daabcacdc4ecf4f9a48d0a2708b52f356dd086c8070992136da62eb72b00",
         outcomeTokenIds: {
@@ -173,14 +181,18 @@ const THEMES: Record<string, Theme> = {
         { ticker: "GLD", name: "SPDR Gold Shares", analystBand: { low: 300, high: 460 }, priceUsd: 380, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Real-asset hedge vs higher-for-longer — no EVM-Uniswap venue (no analyst-target feed; illustrative band)." },
         { ticker: "SPY", name: "SPDR S&P 500 ETF", analystBand: { low: 600, high: 860 }, priceUsd: 720, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Broad risk gauge vs the rate path — no EVM-Uniswap venue (illustrative band)." },
         { ticker: "HYG", name: "iShares iBoxx High Yield Bond ETF", analystBand: { low: 70, high: 92 }, priceUsd: 80, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Credit-spread proxy — no EVM-Uniswap venue (illustrative band)." },
-        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain rate-sensitive risk asset." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable rate-sensitive risk asset on Uniswap (Polygon)." },
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable store-of-value hedge on Uniswap (Polygon)." },
+        // On-chain macro / RWA (display-only; MCP-verified addresses; not on our basket rails yet).
+        { ticker: "PAXG", name: "PAX Gold", token: "0x45804880De22913dAFE09f4980848ECE6EcbAf78", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "medium", assetClass: "rwa", note: "Tokenized gold (1 troy oz) — the on-chain inflation/rates hedge; deep on Ethereum, thin Polygon bridge — not a basket leg yet." },
+        { ticker: "USDY", name: "Ondo US Dollar Yield", token: "0x96F6eF951840721AdBF46Ac996b59E0235CB985C", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "low", assetClass: "rwa", note: "Tokenized short-term US Treasuries — the marquee on-chain rates RWA; KYC/permissioned, not freely swappable." },
+        { ticker: "sDAI", name: "Savings DAI", token: "0x83F20F44975D03b1b09e64809B757c47f942BEeA", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "low", assetClass: "rwa", note: "Maker savings-rate token — a pure on-chain proxy for the policy rate; meaningful depth on Ethereum only." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "low", assetClass: "major", note: "Routable via Uniswap (it powers our standalone prize swap) but has no direct USDC.e pool for the fixed-fee sleeve — not a basket leg yet." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable rate-sensitive risk asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable store-of-value hedge on Uniswap (Polygon)." },
       ],
     },
   },
 
-  // GEOPOLITICS & CONFLICT — executable NegRisk "next leader" ladders (Iran, Venezuela) + buyable wstETH.
+  // GEOPOLITICS & CONFLICT — executable NegRisk "next leader" ladders (Iran, Venezuela) + buyable WBTC + WETH sleeve.
   geopolitics: {
     slug: "geopolitics",
     title: "Geopolitics & Conflict",
@@ -189,6 +201,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Mojtaba Khamenei is Iran's head of state at end of 2026",
         gammaMarketId: "1469737",
+        marketSlug: "will-mojtaba-khamenei-be-head-of-state-in-iran-end-of-2026",
         conditionId: "0x25fb28382075f418a944a781a9f8840e2f541152eea0d9798d1cabfa1466adbb",
         questionId: "0xd72f68ada62aff9ba67dd2cbb56fabec9928aa198daafbd8042ac18ccabec003",
         outcomeTokenIds: {
@@ -202,6 +215,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Nicolás Maduro is Venezuela's leader at end of 2026",
         gammaMarketId: "1105744",
+        marketSlug: "will-nicols-maduro-be-the-leader-of-venezuela-end-of-2026",
         conditionId: "0x67f3f8d0a0ecdfc008c99650284a4674388a8c3029b0eb7ca0abd65dde8d996f",
         questionId: "0x45ec1f7704d0ddd047e70443e830028d8801671283883ad1b46a29659488b604",
         outcomeTokenIds: {
@@ -230,14 +244,17 @@ const THEMES: Record<string, Theme> = {
         { ticker: "LMT", name: "Lockheed Martin", analystBand: { low: 400, high: 600 }, priceUsd: 480, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime — no EVM-Uniswap venue." },
         { ticker: "RTX", name: "RTX (Raytheon)", analystBand: { low: 110, high: 180 }, priceUsd: 145, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Missiles / defense systems — no EVM-Uniswap venue." },
         { ticker: "NOC", name: "Northrop Grumman", analystBand: { low: 450, high: 650 }, priceUsd: 540, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Defense prime — no EVM-Uniswap venue." },
-        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable digital safe-haven on Uniswap (Polygon)." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+        // On-chain safe-havens (display-only; MCP-verified addresses; not on our basket rails yet).
+        { ticker: "PAXG", name: "PAX Gold", token: "0x45804880De22913dAFE09f4980848ECE6EcbAf78", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "medium", assetClass: "rwa", note: "Tokenized gold — the classic geopolitical safe-haven; deep on Ethereum, thin Polygon bridge — not a basket leg yet." },
+        { ticker: "XAUT", name: "Tether Gold", token: "0x68749665FF8D2d112Fa859AA293F07A622782F38", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "medium", assetClass: "rwa", note: "Tokenized gold safe-haven — trades on CEX + Ethereum DEXes; no Polygon venue yet." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "low", assetClass: "major", note: "Routable via Uniswap (it powers our standalone prize swap) but has no direct USDC.e pool for the fixed-fee sleeve — not a basket leg yet." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable digital safe-haven on Uniswap (Polygon)." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
     },
   },
 
-  // US POLITICS — executable NegRisk 2028 nomination legs (Newsom, AOC) + buyable wstETH.
+  // US POLITICS — executable NegRisk 2028 nomination legs (Newsom, AOC) + buyable WETH + WBTC sleeve.
   "us-politics": {
     slug: "us-politics",
     title: "US Politics",
@@ -246,6 +263,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Newsom wins the 2028 Democratic nomination",
         gammaMarketId: "559652",
+        marketSlug: "will-gavin-newsom-win-the-2028-democratic-presidential-nomination-568",
         conditionId: "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
         questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814700",
         outcomeTokenIds: {
@@ -260,6 +278,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "AOC wins the 2028 Democratic nomination",
         gammaMarketId: "559653",
+        marketSlug: "will-alexandria-ocasio-cortez-win-the-2028-democratic-presidential-nomination-653",
         conditionId: "0xe6bcc2f1dd025ce5e1833190f7c60a71171c94f805df55b9ab0ded695ec93565",
         questionId: "0x2c3d7e0eee6f058be3006baabf0d54a07da254ba47fe6e3e095e7990c7814701",
         outcomeTokenIds: {
@@ -287,10 +306,14 @@ const THEMES: Record<string, Theme> = {
         { ticker: "DJT", name: "Trump Media & Technology Group", analystBand: { low: 3, high: 14 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Headline politically-correlated equity — no EVM-Uniswap venue." },
         { ticker: "GEO", name: "GEO Group", analystBand: { low: 18, high: 40 }, priceUsd: 28, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Immigration-policy-sensitive equity — no EVM-Uniswap venue." },
         { ticker: "CXW", name: "CoreCivic", analystBand: { low: 15, high: 35 }, priceUsd: 23, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Policy-sensitive equity — no EVM-Uniswap venue." },
-        { ticker: "PLTR", name: "Palantir Technologies", analystBand: { low: 30, high: 120 }, priceUsd: 70, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Government / defense data — tokenized as PLTRx on Solana; coming soon." },
-        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "LIVE-UNISWAP", chain: "polygon", note: "The buyable on-chain risk asset." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+        { ticker: "PLTR", name: "Palantir Technologies", analystBand: { low: 30, high: 120 }, priceUsd: 70, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Government / defense data — tokenized as PLTRx on Solana; coming soon." },
+        // On-chain political tokens (display-only; MCP-verified where EVM; not on our basket rails).
+        { ticker: "TRUMP", name: "Official Trump", availability: "DISPLAY-ONLY", chain: "solana", liquidity: "high", assetClass: "memecoin", note: "The flagship political memecoin — trades on Solana (Raydium/Jupiter) + CEX; not bridgeable to our EVM rails. Mint 6p6x…GiPN." },
+        { ticker: "MAGA", name: "MAGA", token: "0x6aA56e1D98b3805921C170EB4B3fe7D4Fda6D89b", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "low", assetClass: "memecoin", note: "Pro-Trump memecoin on Ethereum — low-cap, ETH-only liquidity; not on our Polygon rails." },
+        { ticker: "WLFI", name: "World Liberty Financial", token: "0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "low", assetClass: "memecoin", note: "Trump-family DeFi governance token — currently non-transferable (not freely swappable); shown as a political on-chain signal." },
+        { ticker: "wstETH", name: "Lido Wrapped Staked ETH", token: "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "low", assetClass: "major", note: "Routable via Uniswap (it powers our standalone prize swap) but has no direct USDC.e pool for the fixed-fee sleeve — not a basket leg yet." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
     },
   },
@@ -306,6 +329,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "USA advances furthest among World Cup hosts",
         gammaMarketId: "2431124",
+        marketSlug: "will-united-states-be-the-furthest-advancing-host-nation-at-the-world-cup-20260603201948567",
         conditionId: "0x5a947653669c8f71ac7b8951f53e3e538dc39025f91482bc606231cf017a3f25",
         questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e102",
         outcomeTokenIds: {
@@ -319,6 +343,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Mexico advances furthest among World Cup hosts",
         gammaMarketId: "2431123",
+        marketSlug: "will-mexico-be-the-furthest-advancing-host-nation-at-the-world-cup-20260603201948566",
         conditionId: "0x0cbee01c8bb40d5a4fc93e08818554e229a424eff354aa189cec4172dcc6ad4c",
         questionId: "0xbbaffe8a92195a7b8d10a27773046a39cac1476b83f32c1cf977acda5899e101",
         outcomeTokenIds: {
@@ -346,8 +371,12 @@ const THEMES: Record<string, Theme> = {
         { ticker: "FLUT", name: "Flutter Entertainment", analystBand: { low: 200, high: 320 }, priceUsd: 250, availability: "DISPLAY-ONLY", chain: "off-rail", note: "FanDuel parent — sports-betting leader; no EVM-Uniswap venue." },
         { ticker: "PENN", name: "PENN Entertainment", analystBand: { low: 14, high: 32 }, priceUsd: 22, availability: "DISPLAY-ONLY", chain: "off-rail", note: "ESPN Bet operator — no EVM-Uniswap venue." },
         { ticker: "MANU", name: "Manchester United", analystBand: { low: 12, high: 28 }, priceUsd: 18, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Listed football club — World-Cup-cycle attention proxy; no EVM-Uniswap venue." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+        // On-chain fan tokens (display-only; CHZ verified on Ethereum; Socios fan tokens live on Chiliz Chain).
+        { ticker: "CHZ", name: "Chiliz", token: "0x3506424F91fD33084466F402d5D97f05F8e3b4AF", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "high", assetClass: "defi", note: "Fan-token platform powering Socios — deep on Ethereum + CEX; Polygon bridge inactive, not on our rails yet." },
+        { ticker: "PSG", name: "Paris Saint-Germain Fan Token", availability: "DISPLAY-ONLY", chain: "chiliz", liquidity: "medium", assetClass: "memecoin", note: "Socios club fan token on Chiliz Chain + Binance — a World-Cup-cycle attention proxy; not on any EVM DEX rail." },
+        { ticker: "BAR", name: "FC Barcelona Fan Token", availability: "DISPLAY-ONLY", chain: "chiliz", liquidity: "low", assetClass: "memecoin", note: "Socios club fan token on Chiliz Chain — CEX-listed; not on our rails." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
     },
   },
@@ -363,6 +392,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Spider-Man: Brand New Day is 2026's highest-grossing film",
         gammaMarketId: "678414",
+        marketSlug: "will-spider-man-brand-new-day-be-the-top-grossing-movie-of-2026",
         conditionId: "0xc4b07998e8f9bf6b95f079d6dc0529f3c6f59698d4e168817ad5f99304de6c57",
         questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7207",
         outcomeTokenIds: {
@@ -376,6 +406,7 @@ const THEMES: Record<string, Theme> = {
         kind: "prediction",
         label: "Toy Story 5 is 2026's highest-grossing film",
         gammaMarketId: "678412",
+        marketSlug: "will-toy-story-5-be-the-top-grossing-movie-of-2026",
         conditionId: "0xcd57f3ad3bbbdaa96aacabd35f50c2d6e30f777e4a33876a4ab2dcd9f0b8c170",
         questionId: "0x1ce409cd4dcd5ff2162b678656d921b8113055f62febc3eb0a32f749980a7205",
         outcomeTokenIds: {
@@ -401,11 +432,15 @@ const THEMES: Record<string, Theme> = {
 
       securities: [
         { ticker: "DIS", name: "The Walt Disney Company", analystBand: { low: 85, high: 135 }, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Box-office/studio beta anchor (makes the marquee 2026 tentpoles) — no EVM-Uniswap venue." },
-        { ticker: "NFLX", name: "Netflix", analystBand: { low: 600, high: 1300 }, priceUsd: 950, availability: "DISPLAY-ONLY", chain: "solana/CEX", note: "Streaming / box-office beta — tokenized as NFLXx on Solana; coming soon." },
+        { ticker: "NFLX", name: "Netflix", analystBand: { low: 600, high: 1300 }, priceUsd: 950, availability: "DISPLAY-ONLY", liquidity: "low", assetClass: "tokenized-equity", chain: "solana/CEX", note: "Streaming / box-office beta — tokenized as NFLXx on Solana; coming soon." },
         { ticker: "WBD", name: "Warner Bros. Discovery", analystBand: { low: 8, high: 20 }, priceUsd: 13, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Studio behind major 2026 tentpoles — no EVM-Uniswap venue." },
         { ticker: "CMCSA", name: "Comcast (Universal)", analystBand: { low: 30, high: 55 }, priceUsd: 42, availability: "DISPLAY-ONLY", chain: "off-rail", note: "Universal / Illumination parent — no EVM-Uniswap venue." },
-        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk-on asset on Uniswap (Polygon)." },
-        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", note: "Buyable risk asset on Uniswap (Polygon)." },
+        // On-chain entertainment / metaverse tokens (display-only; SAND+MANA live on Polygon; APE on Ethereum).
+        { ticker: "SAND", name: "The Sandbox", token: "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", assetClass: "defi", note: "Metaverse/gaming token — live, deep Polygon-Uniswap liquidity; the strongest near-term basket-integration candidate." },
+        { ticker: "MANA", name: "Decentraland", token: "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4", availability: "DISPLAY-ONLY", chain: "polygon", liquidity: "high", assetClass: "defi", note: "Metaverse land/economy token — live Polygon-Uniswap depth; an integration candidate." },
+        { ticker: "APE", name: "ApeCoin", token: "0x4d224452801ACEd8B2F0aebE155379bb5D594381", availability: "DISPLAY-ONLY", chain: "ethereum", liquidity: "medium", assetClass: "defi", note: "Yuga Labs entertainment/NFT ecosystem token — deep on Ethereum, thin on Polygon; not a basket leg yet." },
+        { ticker: "WETH", name: "Wrapped Ether", token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk-on asset on Uniswap (Polygon)." },
+        { ticker: "WBTC", name: "Wrapped Bitcoin", token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", decimals: 8, availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", note: "Buyable risk asset on Uniswap (Polygon)." },
       ],
     },
   },

@@ -3,6 +3,8 @@ export type PredictionLeg = {
   label: string;
   /** Polymarket Gamma numeric market id (for the odds adapter). */
   gammaMarketId: string;
+  /** Polymarket market slug → https://polymarket.com/market/<slug> (the public market page to link to). */
+  marketSlug?: string;
   conditionId: `0x${string}`;
   /** The NegRisk QUESTION id — drives NegRiskAdapter.getPositionId(questionId, true/false). */
   questionId: `0x${string}`;
@@ -42,6 +44,16 @@ export type Leg = PredictionLeg | AssetLeg;
  *  though eligible (non-US) users can trade them elsewhere. Crypto/RWA with real Uniswap liquidity is LIVE-UNISWAP. */
 export type Availability = "LIVE-UNISWAP" | "DISPLAY-ONLY";
 
+/** On-chain market-depth tag for tokenized assets — the visible "liquidity" badge. Reflects the token's
+ *  real market on its primary venue, NOT our-rails buyability (that's `availability`). Off-rail equities
+ *  (NVDAx etc.) never carry this; they are partitioned by `analystBand` instead. */
+export type Liquidity = "high" | "medium" | "low";
+
+/** Class of an on-chain asset — drives membership in the On-chain Assets list AND its ordering
+ *  (tokenized real-world securities first, memecoins/small-caps last). Off-rail equities with no
+ *  on-chain form omit this and appear only in the analyst-band chart. */
+export type AssetClass = "tokenized-equity" | "rwa" | "defi" | "major" | "memecoin";
+
 /** A real-world asset/security thematically tied to a bucket. LIVE-UNISWAP entries are buyable on-chain via
  *  Uniswap/LI.FI; DISPLAY-ONLY entries are the legible analyst anchor that drives the Sentiment Gap (not bought in-app). */
 export type Security = {
@@ -56,6 +68,12 @@ export type Security = {
   /** Published analyst bear/bull band (bear=low, bull=high) — drives the headline security's percentile. */
   analystBand?: { low: number; high: number };
   availability: Availability;
+  /** On-chain market-depth badge for tokenized assets (high/medium/low). Set on every on-chain token
+   *  (buyable + coming-soon); never set on off-rail equities. Drives the On-chain Assets section. */
+  liquidity?: Liquidity;
+  /** On-chain asset class — set on every on-chain asset (incl. tokenized stocks, which ALSO keep their
+   *  analystBand for the chart). Off-rail equities (no on-chain form) omit it. Drives On-chain list order. */
+  assetClass?: AssetClass;
   /** Where the asset trades, e.g. "polygon" (Uniswap) or "solana/CEX" (off-rail, display-only). */
   chain?: string;
   /** Honest one-liner on tradeability, surfaced in the badge tooltip. */

@@ -28,6 +28,7 @@ describe("basket registry", () => {
         expect(leg.questionId).toMatch(/^0x[0-9a-f]{64}$/);
         expect(leg.outcomeTokenIds.yes).toMatch(/^\d+$/);
         expect(leg.outcomeTokenIds.no).toMatch(/^\d+$/);
+        expect(leg.marketSlug, `${t.slug}/${leg.label}`).toMatch(/^[a-z0-9-]+$/); // Polymarket market slug for the public link
       }
     }
   });
@@ -113,9 +114,8 @@ describe("multi-asset on-chain sleeve", () => {
     for (const t of listThemes()) expect(themeWeightsSumToOne(t.slug)).toBe(true);
   });
 
-  // Anti-drift, ONE direction only: every bought asset leg must be a displayed LIVE-UNISWAP security.
-  // The reverse does NOT hold by design — e.g. wstETH is a LIVE-UNISWAP display security (priced via
-  // /quote) but NOT a sleeve leg, because its direct USDC.e pool is empty (Task 0).
+  // Anti-drift, ONE direction: every bought asset leg must be a displayed LIVE-UNISWAP security.
+  // (wstETH is now DISPLAY-ONLY — it has no direct USDC.e pool for the fixed-fee sleeve.)
   it("asset legs are a subset of the bucket's LIVE-UNISWAP securities", () => {
     for (const t of listThemes()) {
       const secTokens = new Set(
@@ -159,6 +159,71 @@ describe("multi-asset analyst graph data", () => {
       const { low, high } = t.display.analystBand;
       const seed = t.display.fallback.equityPrice;
       expect(seed > low && seed < high, `${t.slug} seed ${seed} not inside [${low},${high}]`).toBe(true);
+    }
+  });
+});
+
+describe("on-chain liquidity tags & partition", () => {
+  const LIQ = ["high", "medium", "low"];
+
+  it("every liquidity-tagged security has a valid tier and a chain", () => {
+    for (const t of listThemes()) {
+      for (const s of getSecurities(t.slug)) {
+        if (s.liquidity == null) continue;
+        expect(LIQ, `${t.slug}/${s.ticker}`).toContain(s.liquidity);
+        expect(s.chain, `${t.slug}/${s.ticker} needs a chain`).toBeTruthy();
+      }
+    }
+  });
+
+  const CLASSES = ["tokenized-equity", "rwa", "defi", "major", "memecoin"];
+
+  it("every security with an assetClass has a valid class, a liquidity tier, and a chain", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.assetClass == null) continue;
+      expect(CLASSES, `${t.slug}/${s.ticker}`).toContain(s.assetClass);
+      expect(["high", "medium", "low"], `${t.slug}/${s.ticker}`).toContain(s.liquidity);
+      expect(s.chain, `${t.slug}/${s.ticker}`).toBeTruthy();
+    }
+  });
+
+  it("off-rail equities (chain 'off-rail') stay chart-only (no assetClass)", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.chain === "off-rail") expect(s.assetClass, `${t.slug}/${s.ticker}`).toBeUndefined();
+    }
+  });
+
+  it("tokenized stocks (solana/CEX equities with a band) are classed tokenized-equity", () => {
+    for (const t of listThemes()) for (const s of getSecurities(t.slug)) {
+      if (s.chain === "solana/CEX" && s.analystBand != null) expect(s.assetClass, `${t.slug}/${s.ticker}`).toBe("tokenized-equity");
+    }
+  });
+
+  it("every LIVE-UNISWAP security is a deep Polygon token (chain polygon + token; high unless it's the band headline)", () => {
+    for (const t of listThemes()) {
+      for (const s of getSecurities(t.slug)) {
+        if (s.availability !== "LIVE-UNISWAP") continue;
+        expect(s.chain, `${t.slug}/${s.ticker}`).toBe("polygon");
+        expect(s.token, `${t.slug}/${s.ticker}`).toMatch(/^0x[0-9a-fA-F]{40}$/);
+        if (s.analystBand == null) expect(s.liquidity, `${t.slug}/${s.ticker}`).toBe("high");
+      }
+    }
+  });
+
+  it("wstETH is display-only everywhere (no direct USDC.e pool for the sleeve)", () => {
+    for (const t of listThemes()) {
+      for (const s of getSecurities(t.slug)) {
+        if (s.ticker !== "wstETH") continue;
+        expect(s.availability).toBe("DISPLAY-ONLY");
+        expect(s.liquidity).toBe("low");
+      }
+    }
+  });
+
+  it("every bucket surfaces ≥2 on-chain (liquidity-tagged) securities", () => {
+    for (const t of listThemes()) {
+      const onchain = getSecurities(t.slug).filter((s) => s.liquidity != null);
+      expect(onchain.length, `${t.slug}`).toBeGreaterThanOrEqual(2);
     }
   });
 });

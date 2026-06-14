@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectGraphAssets } from "@/lib/dashboard/graph";
+import { selectGraphAssets, selectOnChainAssets } from "@/lib/dashboard/graph";
 import type { SecurityView } from "@/lib/dashboard/service";
 
 const sec = (over: Partial<SecurityView>): SecurityView => ({
@@ -42,5 +42,36 @@ describe("selectGraphAssets", () => {
     ]);
     expect(a.comingSoon).toBe(false);
     expect(a.changePct).toBe(2.5);
+  });
+});
+
+describe("selectOnChainAssets", () => {
+  it("includes only assetClass'd securities, ordered securities-first by class", () => {
+    const out = selectOnChainAssets([
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major", priceUsd: 4300 }),
+      sec({ ticker: "NVDA", chain: "solana/CEX", liquidity: "low", assetClass: "tokenized-equity", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }),
+      sec({ ticker: "UNI", chain: "polygon", liquidity: "high", assetClass: "defi" }),
+      sec({ ticker: "PAXG", chain: "ethereum", liquidity: "medium", assetClass: "rwa" }),
+      sec({ ticker: "TRUMP", chain: "solana", liquidity: "high", assetClass: "memecoin" }),
+      sec({ ticker: "TLT", chain: "off-rail", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 }), // off-rail equity -> excluded
+    ]);
+    expect(out.map((a) => a.ticker)).toEqual(["NVDA", "PAXG", "UNI", "WETH", "TRUMP"]);
+    expect(out[0]).toMatchObject({ ticker: "NVDA", assetClass: "tokenized-equity", buyable: false });
+  });
+
+  it("orders buyable then tier within a class", () => {
+    const out = selectOnChainAssets([
+      sec({ ticker: "LINK", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "medium", assetClass: "major" }),
+      sec({ ticker: "WETH", availability: "LIVE-UNISWAP", chain: "polygon", liquidity: "high", assetClass: "major" }),
+      sec({ ticker: "wstETH", chain: "polygon", liquidity: "low", assetClass: "major" }),
+    ]);
+    expect(out.map((a) => a.ticker)).toEqual(["WETH", "LINK", "wstETH"]); // buyable high, buyable medium, then coming-soon low
+  });
+
+  it("excludes off-rail equities and a tokenized stock appears in BOTH chart and list", () => {
+    const nvda = sec({ ticker: "NVDA", chain: "solana/CEX", liquidity: "low", assetClass: "tokenized-equity", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 });
+    const tlt = sec({ ticker: "TLT", chain: "off-rail", band: { low: 1, high: 2 }, bandPercentile: 0.5, priceUsd: 1.5 });
+    expect(selectOnChainAssets([nvda, tlt]).map((a) => a.ticker)).toEqual(["NVDA"]); // TLT excluded (no assetClass)
+    expect(selectGraphAssets([nvda, tlt]).map((a) => a.ticker)).toEqual(["NVDA", "TLT"]); // both banded -> chart
   });
 });

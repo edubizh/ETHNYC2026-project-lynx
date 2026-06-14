@@ -1,5 +1,5 @@
 import { getTheme, getSecurities, getHeadlineSecurity } from "@/lib/baskets/registry";
-import type { PredictionLeg, AssetLeg, Security, Availability, Theme, BeliefMarket } from "@/lib/baskets/types";
+import type { PredictionLeg, AssetLeg, Security, Availability, Liquidity, AssetClass, Theme, BeliefMarket } from "@/lib/baskets/types";
 import { fetchBeliefProb, fetchMarketVolumes } from "@/lib/adapters/polymarket";
 import { fetchAssetPrice } from "@/lib/adapters/uniswap";
 import { fetchEquityQuote } from "@/lib/adapters/equities";
@@ -58,10 +58,19 @@ async function withFallback<T>(fn: () => Promise<T>, fallback: T): Promise<[T, S
  *  Falls back to the seed when the live feed is down; returns no price when neither is available. */
 async function priceSecurity(sec: Security, seed: number | undefined): Promise<{ priceUsd?: number; priceSource?: Source; changePct?: number }> {
   const viaUniswap = sec.availability === "LIVE-UNISWAP" && !!sec.token;
+  // On-chain "coming soon" tokens (liquidity-tagged, not buyable) aren't on the equities feed and we
+  // don't live-price them — use the curated seed (usually none) rather than mis-querying equities with a
+  // crypto ticker. LIVE-UNISWAP tokens still price via Uniswap; equities still price via the equity feed.
+  // On-chain CRYPTO tokens (assetClass set, no analyst band) skip the equities feed. Tokenized stocks keep
+  // their band and ARE priced via the equities feed (so the chart percentile still works).
+  const offRailToken = sec.assetClass != null && sec.analystBand == null;
   try {
     if (viaUniswap) {
       const priceUsd = await fetchAssetPrice(sec.token!, { decimals: sec.decimals });
       return { priceUsd, priceSource: "live" };
+    }
+    if (offRailToken) {
+      return seed !== undefined ? { priceUsd: seed, priceSource: "fallback" } : {};
     }
     const q = await fetchEquityQuote(sec.ticker);
     return { priceUsd: q.price, priceSource: "live", changePct: q.changePct };
@@ -133,12 +142,20 @@ export type LegView = {
   beliefSource?: Source;
   priceUsd?: number;
   priceSource?: Source;
+  /** Public Polymarket market page for a prediction leg (undefined for asset legs). */
+  marketUrl?: string;
+  /** This market's normalized weight in the Theme Conviction Index (relevance × liquidity); prediction legs only. */
+  convictionWeight?: number;
 };
 
 export type SecurityView = {
   ticker: string;
   name: string;
   availability: Availability;
+  /** On-chain market-depth badge (high/medium/low) for tokenized assets; undefined for equities. */
+  liquidity?: Liquidity;
+  /** On-chain asset class; undefined for off-rail equities. */
+  assetClass?: AssetClass;
   priceUsd?: number;
   priceSource?: Source;
   /** Where the live price sits within the analyst band (the headline security drives the hero gap). */
@@ -195,7 +212,14 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
     Promise.all(
       predLegs.map(async (leg): Promise<LegView> => {
         const [beliefProb, beliefSource] = await withFallback(() => fetchBeliefProb(leg.gammaMarketId), leg.seedBeliefProb);
-        return { kind: "prediction", label: leg.label, weight: leg.weight, beliefProb, beliefSource };
+        return {
+          kind: "prediction",
+          label: leg.label,
+          weight: leg.weight,
+          beliefProb,
+          beliefSource,
+          marketUrl: leg.marketSlug ? `https://polymarket.com/market/${leg.marketSlug}` : undefined,
+        };
       }),
     ),
     Promise.all(
@@ -224,6 +248,8 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
           ticker: sec.ticker,
           name: sec.name,
           availability: sec.availability,
+          liquidity: sec.liquidity,
+          assetClass: sec.assetClass,
           priceUsd,
           priceSource: src,
           bandPercentile,
@@ -251,6 +277,16 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
   const beliefSource: Source = belief.breakdown.some((b) => b.source === "live") ? "live" : "fallback";
   const beliefLabel = belief.breakdown.length ? `${belief.breakdown.length} markets · ${venues.join(" + ")}` : "no markets";
 
+  // Per-market conviction-index weight for each prediction leg, NORMALIZED among the shown legs so they
+  // sum to 1 (each leg's share = its formula weight ÷ the legs' combined formula weight). The full formula
+  // also weights the off-card belief markets; here we renormalize over just the displayed prediction legs.
+  const legWeights = predLegs.map((leg) => belief.breakdown.find((b) => b.id === leg.gammaMarketId)?.weight ?? 0);
+  const legWeightSum = legWeights.reduce((a, w) => a + w, 0);
+  const predViewsWeighted = predViews.map((pv, i) => ({
+    ...pv,
+    convictionWeight: legWeightSum > 0 ? legWeights[i] / legWeightSum : undefined,
+  }));
+
   return {
     slug: t.slug,
     title: t.title,
@@ -269,7 +305,7 @@ export async function buildDashboard(slug: string): Promise<DashboardView> {
       gapPct: g.gapPct,
       direction: g.direction,
     },
-    legs: [...predViews, ...assetViews],
+    legs: [...predViewsWeighted, ...assetViews],
     securities,
   };
 }
